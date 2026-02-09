@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agrigence - Premium Agriculture Journal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary-earth: #3D2B1F; /* Deep Earth Brown */
+        --secondary-tan: #C29263; /* Golden Harvest Tan */
+        --accent-gold: #D4A373; 
+        --bg-silk: #FDFCFB; /* Warm Silk White */
+        --text-charcoal: #262626;
+        --border-sepia: #E5E1DD;
+      }
+      body {
+        background-color: var(--bg-silk);
+        color: var(--text-charcoal);
+        background-image: radial-gradient(#D6D3D1 0.5px, transparent 0.5px);
+        background-size: 30px 30px;
+      }
+      .premium-shadow {
+        box-shadow: 0 10px 40px -10px rgba(61, 43, 31, 0.1);
+      }
+      .harvest-gradient {
+        background: linear-gradient(135deg, var(--primary-earth) 0%, #5C4033 100%);
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+              serif: ['"Playfair Display"', 'serif'],
+            },
+            colors: {
+              agri: {
+                primary: 'var(--primary-earth)',
+                secondary: 'var(--secondary-tan)',
+                gold: 'var(--accent-gold)',
+                bg: 'var(--bg-silk)',
+                text: 'var(--text-charcoal)',
+                border: 'var(--border-sepia)',
+                accent: '#8B5E34',
+              }
+            },
+            boxShadow: {
+              'premium': '0 20px 50px -12px rgba(61, 43, 31, 0.12)',
+            },
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "framer-motion": "https://esm.sh/framer-motion@^12.33.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-agri-bg text-agri-text antialiased selection:bg-agri-secondary selection:text-white">
+    <div id="root"></div>
+  </body>
+</html>
