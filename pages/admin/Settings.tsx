@@ -137,6 +137,23 @@ const Settings: React.FC = () => {
                     <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block">Merchant UPI ID</label>
                     <input className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-agri-secondary font-mono" value={settings.upiId} onChange={e => setSettings({...settings, upiId: e.target.value})} />
                  </div>
+                 
+                 <div>
+                    <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block">Payment QR Code</label>
+                    <div className="flex items-center gap-6">
+                        <div className="w-24 h-24 rounded-2xl bg-white p-2 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                            <img src={settings.upiQrUrl} className="w-full h-full object-contain" alt="QR Code" />
+                        </div>
+                        <div className="flex-1">
+                            <input type="file" id="qr-up" className="hidden" onChange={handleFileUpload('upiQrUrl')} accept="image/*" />
+                            <label htmlFor="qr-up" className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 text-[10px] font-black cursor-pointer transition-all flex items-center justify-center gap-2 text-white">
+                                <Upload size={14} /> UPLOAD NEW QR
+                            </label>
+                            <p className="text-[9px] text-white/30 mt-2 font-bold uppercase tracking-wide">Upload custom QR to override dynamic generation</p>
+                        </div>
+                    </div>
+                 </div>
+
                  <div>
                     <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block">WhatsApp Support</label>
                     <input className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-agri-secondary" value={settings.whatsappNumber} onChange={e => setSettings({...settings, whatsappNumber: e.target.value})} />

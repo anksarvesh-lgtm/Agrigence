@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../App';
-import { SubscriptionPlan } from '../types';
+import { SubscriptionPlan, SiteSettings } from '../types';
 import { 
   Check, Star, ShieldCheck, CreditCard, QrCode, X, 
   UploadCloud, MessageCircle, AlertTriangle, FileText, 
@@ -15,6 +14,7 @@ const Subscription: React.FC = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   
   // Modal State
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
@@ -29,6 +29,7 @@ const Subscription: React.FC = () => {
 
   useEffect(() => {
     setPlans(mockBackend.getPlans().filter(p => p.isActive));
+    setSettings(mockBackend.getSettings());
   }, []);
 
   const handlePlanSelect = (plan: SubscriptionPlan) => {
@@ -83,7 +84,7 @@ const Subscription: React.FC = () => {
   const blogPlans = plans.filter(p => p.type === 'BLOG_ACCESS');
   const comboPlan = plans.find(p => p.type === 'COMBO_ACCESS');
 
-  const PlanCard = ({ plan }: { plan: SubscriptionPlan }) => (
+  const PlanCard: React.FC<{ plan: SubscriptionPlan }> = ({ plan }) => (
     <motion.div 
       whileHover={{ y: -5 }}
       className="bg-white/40 backdrop-blur-xl border border-white/20 p-8 rounded-[2.5rem] shadow-premium flex flex-col group relative overflow-hidden"
@@ -208,7 +209,7 @@ const Subscription: React.FC = () => {
            </h3>
            <p className="text-sm text-stone-500 font-medium mb-8">All financial transmissions are processed through secure 256-bit encrypted gateways. Your publication limits are synced instantly with your profile node.</p>
            <a 
-            href="https://wa.me/919452571317" 
+            href={`https://wa.me/${settings?.whatsappNumber?.replace('+', '') || '919452571317'}`} 
             target="_blank" 
             rel="noreferrer"
             className="inline-flex items-center gap-2 text-agri-secondary font-black text-[10px] uppercase tracking-widest hover:text-agri-primary transition-colors"
@@ -305,16 +306,26 @@ const Subscription: React.FC = () => {
                        <div className="space-y-10">
                           <div className="flex flex-col md:flex-row items-center gap-10 bg-stone-50 p-8 rounded-[2rem] border border-stone-100">
                              <div className="bg-white p-3 rounded-2xl shadow-sm border border-stone-100 shrink-0">
-                                <img 
-                                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=agrigence@upi&pn=Agrigence&am=${selectedPlan.price}&cu=INR`} 
-                                  alt="Payment QR" 
-                                  className="w-32 h-32"
-                                />
+                                {(() => {
+                                   const upiId = settings?.upiId || 'agrigence@upi';
+                                   const isDynamic = settings?.upiQrUrl?.includes('api.qrserver.com');
+                                   const qrSrc = !isDynamic && settings?.upiQrUrl 
+                                      ? settings.upiQrUrl 
+                                      : `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=${upiId}&pn=Agrigence&am=${selectedPlan.price}&cu=INR`;
+                                   
+                                   return (
+                                      <img 
+                                        src={qrSrc}
+                                        alt="Payment QR" 
+                                        className="w-32 h-32 object-contain"
+                                      />
+                                   );
+                                })()}
                              </div>
                              <div className="text-center md:text-left flex-1">
                                 <p className="text-xs font-bold text-agri-primary mb-2 uppercase tracking-widest">UPI ID Configuration</p>
                                 <div className="bg-white border border-stone-200 rounded-xl p-3 flex items-center justify-between font-mono text-sm font-bold text-agri-primary mb-4">
-                                   <span>agrigence@upi</span>
+                                   <span>{settings?.upiId || 'agrigence@upi'}</span>
                                    <button className="text-agri-secondary hover:text-agri-primary transition-colors"><Zap size={14}/></button>
                                 </div>
                                 <p className="text-[10px] text-stone-400 font-bold uppercase tracking-tighter">Scan with GPay, PhonePe, Paytm, or BHIM</p>

@@ -2,13 +2,14 @@ import React from 'react';
 import { mockBackend } from '../services/mockBackend';
 import { ShoppingBag, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Product } from '../types';
 
 const Products: React.FC = () => {
   const products = mockBackend.getProducts();
   const books = products.filter(p => p.category === 'Book');
   const storeItems = products.filter(p => p.category === 'Store');
 
-  const ProductCard = ({ product }: { product: any }) => (
+  const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
     <motion.div 
       whileHover={{ y: -5 }}
       className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-premium transition-all group flex flex-col h-full"

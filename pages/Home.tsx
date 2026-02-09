@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -47,7 +46,7 @@ const Home: React.FC = () => {
     </div>
   );
 
-  const GlassCard = ({ children, onClick, className = "" }: { children: React.ReactNode; onClick?: () => void; className?: string }) => (
+  const GlassCard: React.FC<{ children: React.ReactNode; onClick?: () => void; className?: string }> = ({ children, onClick, className = "" }) => (
     <motion.div
       whileHover={{ y: -5, shadow: "0 25px 50px -12px rgba(61, 43, 31, 0.15)" }}
       onClick={onClick}
