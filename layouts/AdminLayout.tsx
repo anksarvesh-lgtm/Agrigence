@@ -74,13 +74,23 @@ const AdminLayout: React.FC = () => {
                   isActive 
                     ? 'bg-agri-secondary text-agri-primary font-bold shadow-lg shadow-agri-secondary/10' 
                     : 'text-white/40 hover:bg-white/5 hover:text-white'
-                }`}
+                } ${!isSidebarOpen && 'justify-center'}`}
               >
                 <item.icon size={20} className={isActive ? 'text-agri-primary' : 'text-white/20 group-hover:text-white'} />
                 {isSidebarOpen && <span className="text-[13px] tracking-wide">{item.label}</span>}
               </Link>
             );
           })}
+          
+          <div className="h-4"></div>
+          
+          <button
+            onClick={handleLogout}
+            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group text-white/40 hover:bg-red-500/10 hover:text-red-400 ${!isSidebarOpen && 'justify-center'}`}
+          >
+            <LogOut size={20} className="text-white/20 group-hover:text-red-400" />
+            {isSidebarOpen && <span className="text-[13px] tracking-wide font-bold">Sign Out</span>}
+          </button>
         </nav>
 
         <div className="p-4 border-t border-white/5 bg-black/20">
@@ -91,11 +101,6 @@ const AdminLayout: React.FC = () => {
                 <p className="text-xs font-bold truncate text-white">{user?.name}</p>
                 <p className="text-[10px] text-white/40 truncate uppercase font-black tracking-widest">{user?.role}</p>
               </div>
-            )}
-            {isSidebarOpen && (
-              <button onClick={handleLogout} className="text-white/30 hover:text-red-400">
-                <LogOut size={16} />
-              </button>
             )}
           </div>
         </div>

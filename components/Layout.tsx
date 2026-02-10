@@ -125,10 +125,11 @@ const Header = () => {
                 </Link>
                 <button 
                   onClick={handleLogout} 
-                  className="text-stone-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-stone-100" 
+                  className="group flex items-center gap-2 text-stone-400 hover:text-red-500 transition-colors px-3 py-2 rounded-full hover:bg-stone-100" 
                   title="Sign Out"
                 >
                   <LogOut size={18} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest hidden xl:block group-hover:text-red-600">Logout</span>
                 </button>
               </div>
             ) : (
@@ -154,7 +155,7 @@ const Header = () => {
              {user ? (
                <>
                  <Link to={['SUPER_ADMIN', 'ADMIN'].includes(user.role) ? "/admin" : "/dashboard"} onClick={() => setIsMenuOpen(false)} className="block text-agri-secondary font-black text-xs uppercase tracking-widest mb-4">My Dashboard</Link>
-                 <button onClick={handleLogout} className="flex items-center gap-2 text-red-500 font-black text-xs uppercase tracking-widest">
+                 <button onClick={handleLogout} className="flex items-center gap-2 text-red-500 font-black text-xs uppercase tracking-widest w-full text-left py-2">
                     <LogOut size={14} /> Sign Out
                  </button>
                </>
