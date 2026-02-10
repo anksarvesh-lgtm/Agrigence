@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../App';
@@ -12,7 +13,7 @@ import { SiteSettings } from '../types';
 import { motion } from 'framer-motion';
 
 const Header = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -33,6 +34,14 @@ const Header = () => {
     setSearchTerm(term);
     if (term.length > 2) setSearchResults(mockBackend.getArticles(term));
     else setSearchResults([]);
+  };
+
+  const handleLogout = () => {
+    if (confirm("Are you sure you want to sign out?")) {
+      logout();
+      navigate('/login');
+      setIsMenuOpen(false);
+    }
   };
 
   const menuItems = [
@@ -110,9 +119,18 @@ const Header = () => {
             </div>
 
             {user ? (
-              <Link to={user.role === 'ADMIN' ? "/admin" : "/dashboard"} className="w-9 h-9 rounded-full bg-agri-primary text-white flex items-center justify-center font-black text-xs shadow-lg border-2 border-white ring-1 ring-agri-primary/10 hover:scale-105 transition-transform">
-                {user.name[0]}
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link to={['SUPER_ADMIN', 'ADMIN'].includes(user.role) ? "/admin" : "/dashboard"} className="w-9 h-9 rounded-full bg-agri-primary text-white flex items-center justify-center font-black text-xs shadow-lg border-2 border-white ring-1 ring-agri-primary/10 hover:scale-105 transition-transform" title="Dashboard">
+                  {user.name[0]}
+                </Link>
+                <button 
+                  onClick={handleLogout} 
+                  className="text-stone-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-stone-100" 
+                  title="Sign Out"
+                >
+                  <LogOut size={18} />
+                </button>
+              </div>
             ) : (
               <Link to="/login" className="bg-agri-primary text-white px-6 py-2 rounded-full text-[10px] font-black tracking-widest hover:bg-agri-secondary transition-all shadow-md flex items-center gap-2 uppercase">
                 <UserIcon size={12} /> Sign In
@@ -134,7 +152,12 @@ const Header = () => {
            ))}
            <div className="pt-4 border-t border-stone-100">
              {user ? (
-               <Link to={user.role === 'ADMIN' ? "/admin" : "/dashboard"} onClick={() => setIsMenuOpen(false)} className="text-agri-secondary font-black text-xs uppercase tracking-widest">My Dashboard</Link>
+               <>
+                 <Link to={['SUPER_ADMIN', 'ADMIN'].includes(user.role) ? "/admin" : "/dashboard"} onClick={() => setIsMenuOpen(false)} className="block text-agri-secondary font-black text-xs uppercase tracking-widest mb-4">My Dashboard</Link>
+                 <button onClick={handleLogout} className="flex items-center gap-2 text-red-500 font-black text-xs uppercase tracking-widest">
+                    <LogOut size={14} /> Sign Out
+                 </button>
+               </>
              ) : (
                <Link to="/login" onClick={() => setIsMenuOpen(false)} className="text-agri-primary font-black text-xs uppercase tracking-widest">Sign In</Link>
              )}

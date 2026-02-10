@@ -3,12 +3,13 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
 import { Article } from '../types';
-import { Link } from 'react-router-dom';
-import { Plus, FileText, Calendar, Clock, CheckCircle, AlertTriangle, Star, Send, MessageSquareHeart, ChevronRight, PenTool, Layers } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, FileText, Calendar, Clock, CheckCircle, AlertTriangle, Star, Send, MessageSquareHeart, ChevronRight, PenTool, Layers, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Dashboard: React.FC = () => {
-  const { user, login } = useAuth();
+  const { user, login, logout } = useAuth();
+  const navigate = useNavigate();
   const [articles, setArticles] = useState<Article[]>([]);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [rating, setRating] = useState(0);
@@ -26,6 +27,13 @@ const Dashboard: React.FC = () => {
   if (!user) return null;
 
   const isPlanActive = user.subscriptionExpiry && new Date(user.subscriptionExpiry) > new Date();
+
+  const handleLogout = () => {
+    if (confirm("Are you sure you want to sign out securely?")) {
+      logout();
+      navigate('/login');
+    }
+  };
 
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,9 +97,14 @@ const Dashboard: React.FC = () => {
               </div>
               <h2 className="font-serif font-bold text-xl text-agri-primary">{user.name}</h2>
               <p className="text-xs text-stone-400 font-bold uppercase tracking-widest mt-1">{user.occupation || 'Researcher'}</p>
-              <div className="mt-6 pt-6 border-t border-stone-100 w-full">
-                 <p className="text-[10px] font-black text-stone-300 uppercase tracking-widest mb-1">Email ID</p>
-                 <p className="text-sm text-stone-600 truncate">{user.email}</p>
+              <div className="mt-6 pt-6 border-t border-stone-100 w-full space-y-4">
+                 <div>
+                    <p className="text-[10px] font-black text-stone-300 uppercase tracking-widest mb-1">Email ID</p>
+                    <p className="text-sm text-stone-600 truncate">{user.email}</p>
+                 </div>
+                 <button onClick={handleLogout} className="w-full py-3 bg-stone-50 text-stone-400 hover:bg-red-50 hover:text-red-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                    <LogOut size={14} /> Sign Out
+                 </button>
               </div>
             </div>
 
