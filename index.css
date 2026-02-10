@@ -1,0 +1,34 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-earth: #3D2B1F; /* Deep Earth Brown */
+  --secondary-tan: #C29263; /* Golden Harvest Tan */
+  --accent-gold: #D4A373; 
+  --bg-silk: #FDFCFB; /* Warm Silk White */
+  --text-charcoal: #262626;
+  --border-sepia: #E5E1DD;
+}
+
+body {
+  background-color: var(--bg-silk);
+  color: var(--text-charcoal);
+  background-image: radial-gradient(#D6D3D1 0.5px, transparent 0.5px);
+  background-size: 30px 30px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
