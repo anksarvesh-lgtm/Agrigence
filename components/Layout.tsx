@@ -5,8 +5,7 @@ import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
 import { 
   Menu, X, Search, User as UserIcon, LogOut, 
-  Facebook, Linkedin, Youtube, Twitter, Instagram, LayoutDashboard, ArrowRight, MessageSquare, Clock,
-  Wheat, Sprout, Send, MapPin, Mail, Phone, Users, Cpu, Activity, Terminal
+  Facebook, Linkedin, Youtube, Twitter, Instagram, ArrowRight, Clock
 } from 'lucide-react';
 import Logo from './Logo';
 import { SiteSettings } from '../types';
@@ -49,7 +48,7 @@ const Header = () => {
     { label: 'News', path: '/news' },
     { label: 'Store', path: '/products' },
     { label: 'Guidelines', path: '/guidelines' },
-    { label: 'Board', path: '/editorial-board' },
+    { label: 'Editorial Board', path: '/editorial-board' },
     { label: 'About', path: '/about-contact' },
   ];
 
@@ -61,7 +60,53 @@ const Header = () => {
           : 'bg-white border-b border-transparent py-4'
       }`}
     >
-      <div className="container mx-auto px-6">
+      {/* Realistic Header Vines */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+         {/* Left Vine Cluster */}
+         <motion.div
+           initial={{ opacity: 0, y: -20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 1.5 }}
+           className="absolute top-0 left-0"
+         >
+            <svg width="200" height="150" viewBox="0 0 200 150" className="text-[#4A7C59] opacity-80 fill-current">
+               {/* Main Hanging Vine */}
+               <path d="M0,0 C20,40 10,80 30,120" fill="none" stroke="#3D2B1F" strokeWidth="2" />
+               <path d="M10,0 C30,30 40,70 20,110" fill="none" stroke="#3D2B1F" strokeWidth="1.5" />
+               
+               {/* Leaves Left */}
+               <path d="M20,30 Q5,25 10,45 Q25,45 20,30" />
+               <path d="M25,70 Q10,75 15,90 Q30,85 25,70" />
+               <path d="M15,10 Q0,5 5,20 Q20,20 15,10" />
+               <path d="M30,110 Q15,115 20,130 Q35,125 30,110" />
+
+               {/* Secondary Leaves */}
+               <path d="M5,50 Q-10,45 -5,65 Q10,65 5,50" className="opacity-70" />
+               <path d="M35,50 Q50,45 45,65 Q30,65 35,50" className="opacity-70" />
+            </svg>
+         </motion.div>
+
+         {/* Right Vine Cluster */}
+         <motion.div
+           initial={{ opacity: 0, y: -20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 1.5 }}
+           className="absolute top-0 right-0 transform -scale-x-100"
+         >
+            <svg width="250" height="180" viewBox="0 0 250 180" className="text-[#4A7C59] opacity-80 fill-current">
+               <path d="M0,0 C30,50 10,100 40,150" fill="none" stroke="#3D2B1F" strokeWidth="2" />
+               <path d="M20,0 C50,40 60,90 30,140" fill="none" stroke="#3D2B1F" strokeWidth="1.5" />
+               
+               <path d="M30,40 Q15,35 20,55 Q35,55 30,40" />
+               <path d="M10,80 Q-5,75 0,95 Q15,95 10,80" />
+               <path d="M40,120 Q25,115 30,135 Q45,135 40,120" />
+               
+               <path d="M50,60 Q65,55 60,75 Q45,75 50,60" className="opacity-60" />
+            </svg>
+         </motion.div>
+      </div>
+
+      <div className="container mx-auto px-6 relative z-10">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-3 group">
             <Logo className={isScrolled ? "h-8" : "h-10"} variant="dark" />
@@ -69,22 +114,24 @@ const Header = () => {
               <span className={`font-serif font-bold tracking-tight transition-all duration-300 ${isScrolled ? 'text-xl' : 'text-2xl'} text-agri-primary leading-tight`}>
                 Agrigence
               </span>
-              {/* Refined spacing between Title and ISSN */}
-              <span className="text-[8px] font-black uppercase tracking-[0.3em] text-agri-secondary mt-3 opacity-70 border-t border-agri-secondary/20 pt-1.5">
+              <span className={`text-[10px] text-agri-primary/80 font-serif italic -mt-0.5 whitespace-nowrap transition-all duration-300 ${isScrolled ? 'hidden' : 'block'}`}>
+                Where Agri-Intelligence Meets Agricultural Generation
+              </span>
+              <span className={`text-[9px] font-medium text-agri-secondary/80 ${isScrolled ? 'mt-0' : 'mt-1'}`}>
                 ISSN: {settings?.issn || 'Not Available'}
               </span>
             </div>
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-10">
+          <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
             {menuItems.map((item) => {
                const isActive = location.pathname === item.path;
                return (
                 <Link 
                   key={item.path} 
                   to={item.path} 
-                  className={`text-[11px] font-black uppercase tracking-widest transition-all hover:text-agri-secondary relative group ${
-                    isActive ? 'text-agri-primary' : 'text-stone-400'
+                  className={`text-sm font-medium transition-all hover:text-agri-secondary relative group ${
+                    isActive ? 'text-agri-primary font-bold' : 'text-stone-500'
                   }`}
                 >
                   {item.label}
@@ -96,12 +143,12 @@ const Header = () => {
 
           <div className="hidden lg:flex items-center gap-6">
             <div className="relative">
-              <div className="flex items-center bg-stone-100 rounded-full px-4 py-2 border border-transparent focus-within:border-agri-secondary/30 focus-within:bg-white transition-all">
-                <Search size={14} className="text-stone-400" />
+              <div className="flex items-center bg-stone-50 rounded-full px-4 py-2 border border-stone-200 focus-within:border-agri-secondary/50 focus-within:bg-white transition-all">
+                <Search size={16} className="text-stone-400" />
                 <input 
                   type="text" 
-                  placeholder="Search..." 
-                  className="bg-transparent border-none focus:outline-none text-[10px] font-bold ml-2 w-24 focus:w-40 transition-all uppercase tracking-wider"
+                  placeholder="Search articles..." 
+                  className="bg-transparent border-none focus:outline-none text-sm ml-2 w-32 focus:w-48 transition-all placeholder:text-stone-400 text-agri-primary"
                   value={searchTerm}
                   onChange={handleSearch}
                 />
@@ -111,7 +158,7 @@ const Header = () => {
                   {searchResults.map(a => (
                     <div key={a.id} onClick={() => { setSearchResults([]); navigate('/journals'); }} className="p-3 hover:bg-stone-50 rounded-lg cursor-pointer transition-colors">
                       <p className="font-serif font-bold text-sm text-agri-primary truncate">{a.title}</p>
-                      <p className="text-[9px] text-agri-secondary uppercase font-black mt-0.5 tracking-tighter">{a.authorName}</p>
+                      <p className="text-xs text-stone-500 mt-0.5">{a.authorName}</p>
                     </div>
                   ))}
                 </div>
@@ -120,21 +167,20 @@ const Header = () => {
 
             {user ? (
               <div className="flex items-center gap-3">
-                <Link to={['SUPER_ADMIN', 'ADMIN'].includes(user.role) ? "/admin" : "/dashboard"} className="w-9 h-9 rounded-full bg-agri-primary text-white flex items-center justify-center font-black text-xs shadow-lg border-2 border-white ring-1 ring-agri-primary/10 hover:scale-105 transition-transform" title="Dashboard">
+                <Link to={['SUPER_ADMIN', 'ADMIN'].includes(user.role) ? "/admin" : "/dashboard"} className="w-10 h-10 rounded-full bg-agri-primary text-white flex items-center justify-center font-bold text-sm shadow-md hover:bg-agri-secondary transition-colors" title="Dashboard">
                   {user.name[0]}
                 </Link>
                 <button 
                   onClick={handleLogout} 
-                  className="group flex items-center gap-2 text-stone-400 hover:text-red-500 transition-colors px-3 py-2 rounded-full hover:bg-stone-100" 
+                  className="text-stone-400 hover:text-red-500 transition-colors p-2" 
                   title="Sign Out"
                 >
-                  <LogOut size={18} />
-                  <span className="text-[10px] font-bold uppercase tracking-widest hidden xl:block group-hover:text-red-600">Logout</span>
+                  <LogOut size={20} />
                 </button>
               </div>
             ) : (
-              <Link to="/login" className="bg-agri-primary text-white px-6 py-2 rounded-full text-[10px] font-black tracking-widest hover:bg-agri-secondary transition-all shadow-md flex items-center gap-2 uppercase">
-                <UserIcon size={12} /> Sign In
+              <Link to="/login" className="bg-agri-primary text-white px-6 py-2.5 rounded-full text-xs font-bold tracking-wide hover:bg-agri-secondary transition-all shadow-md flex items-center gap-2">
+                <UserIcon size={14} /> SIGN IN
               </Link>
             )}
           </div>
@@ -149,18 +195,18 @@ const Header = () => {
       {isMenuOpen && (
         <div className="lg:hidden bg-white border-t border-agri-border p-6 space-y-4 shadow-xl">
            {menuItems.map(item => (
-             <Link key={item.path} to={item.path} onClick={() => setIsMenuOpen(false)} className="block text-xs font-black text-agri-primary uppercase tracking-widest">{item.label}</Link>
+             <Link key={item.path} to={item.path} onClick={() => setIsMenuOpen(false)} className="block text-sm font-bold text-agri-primary">{item.label}</Link>
            ))}
            <div className="pt-4 border-t border-stone-100">
              {user ? (
                <>
-                 <Link to={['SUPER_ADMIN', 'ADMIN'].includes(user.role) ? "/admin" : "/dashboard"} onClick={() => setIsMenuOpen(false)} className="block text-agri-secondary font-black text-xs uppercase tracking-widest mb-4">My Dashboard</Link>
-                 <button onClick={handleLogout} className="flex items-center gap-2 text-red-500 font-black text-xs uppercase tracking-widest w-full text-left py-2">
-                    <LogOut size={14} /> Sign Out
+                 <Link to={['SUPER_ADMIN', 'ADMIN'].includes(user.role) ? "/admin" : "/dashboard"} onClick={() => setIsMenuOpen(false)} className="block text-agri-secondary font-bold text-sm mb-4">My Dashboard</Link>
+                 <button onClick={handleLogout} className="flex items-center gap-2 text-red-500 font-bold text-sm w-full text-left py-2">
+                    <LogOut size={16} /> Sign Out
                  </button>
                </>
              ) : (
-               <Link to="/login" onClick={() => setIsMenuOpen(false)} className="text-agri-primary font-black text-xs uppercase tracking-widest">Sign In</Link>
+               <Link to="/login" onClick={() => setIsMenuOpen(false)} className="text-agri-primary font-bold text-sm">Sign In</Link>
              )}
            </div>
         </div>
@@ -171,8 +217,10 @@ const Header = () => {
 
 const Footer = () => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
 
   useEffect(() => {
+    setSettings(mockBackend.getSettings());
     const calculateTimeLeft = () => {
       const now = new Date();
       let targetDate = new Date(now.getFullYear(), now.getMonth(), 25, 23, 59, 59);
@@ -194,102 +242,159 @@ const Footer = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const HUDTimerUnit = ({ val, label, isAccent = false }: { val: number, label: string, isAccent?: boolean }) => (
-    <div className="flex flex-col items-center">
-      <div className="relative">
-        <span className={`text-xl font-mono font-black tabular-nums transition-all ${isAccent ? 'text-agri-secondary drop-shadow-[0_0_8px_rgba(194,146,99,0.5)]' : 'text-white'}`}>
-          {val.toString().padStart(2, '0')}
-        </span>
-      </div>
-      <span className="text-[7px] font-black uppercase tracking-[0.2em] text-white/30 mt-0.5">{label}</span>
-    </div>
-  );
+  const socials = [
+    { icon: Twitter, link: settings?.footerSocials.twitter },
+    { icon: Instagram, link: settings?.footerSocials.instagram },
+    { icon: Facebook, link: settings?.footerSocials.facebook },
+    { icon: Linkedin, link: settings?.footerSocials.linkedin },
+    { icon: Youtube, link: settings?.footerSocials.youtube },
+  ];
 
   return (
-    <footer className="bg-agri-primary text-white border-t-2 border-agri-secondary relative overflow-hidden">
-      {/* HUD Scanline Effect Overlay */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]"></div>
+    <footer className="bg-agri-primary text-white pt-20 pb-0 relative overflow-hidden border-t-4 border-agri-secondary">
       
-      <div className="container mx-auto px-6 py-8 relative z-10">
-        <div className="flex flex-col lg:flex-row justify-between items-center gap-12">
+      {/* Soil & Roots Background */}
+      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#1a110d] via-[#2a1d15] to-[#3D2B1F] z-0">
+         {/* Roots Texture */}
+         <svg className="absolute bottom-0 left-0 w-full h-full opacity-30 text-[#8B5E34]" preserveAspectRatio="none">
+            <defs>
+               <pattern id="soilRoots" x="0" y="0" width="100" height="50" patternUnits="userSpaceOnUse">
+                  <path d="M50,0 C40,20 60,30 50,50 M20,0 C10,15 30,25 20,40 M80,0 C70,10 90,30 80,50" fill="none" stroke="currentColor" strokeWidth="0.5" />
+               </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#soilRoots)" />
+         </svg>
+      </div>
+
+      {/* Vines Growing Up From Soil */}
+      <div className="absolute bottom-28 left-0 w-full h-full pointer-events-none z-0">
+         {/* Left Growing Vine */}
+         <motion.svg 
+           initial={{ height: 0 }}
+           whileInView={{ height: '100%' }}
+           viewport={{ once: true }}
+           transition={{ duration: 2 }}
+           className="absolute bottom-0 left-0 w-64 text-[#6A9955]/30" 
+           viewBox="0 0 100 200" 
+           preserveAspectRatio="none"
+         >
+            <path d="M10,200 Q40,150 20,100 T50,0" fill="none" stroke="currentColor" strokeWidth="2" />
+            <path d="M20,180 Q0,170 10,160 Q25,160 20,180" fill="currentColor" opacity="0.8" />
+            <path d="M30,130 Q10,120 20,110 Q35,115 30,130" fill="currentColor" opacity="0.8" />
+            <path d="M15,80 Q-5,70 5,60 Q20,65 15,80" fill="currentColor" opacity="0.8" />
+         </motion.svg>
+
+         {/* Right Growing Vine */}
+         <motion.svg 
+           initial={{ height: 0 }}
+           whileInView={{ height: '100%' }}
+           viewport={{ once: true }}
+           transition={{ duration: 2.5 }}
+           className="absolute bottom-0 right-0 w-64 text-[#6A9955]/30 transform -scale-x-100" 
+           viewBox="0 0 100 200" 
+           preserveAspectRatio="none"
+         >
+            <path d="M10,200 Q40,150 20,100 T50,0" fill="none" stroke="currentColor" strokeWidth="2" />
+            <path d="M20,180 Q0,170 10,160 Q25,160 20,180" fill="currentColor" opacity="0.8" />
+            <path d="M30,130 Q10,120 20,110 Q35,115 30,130" fill="currentColor" opacity="0.8" />
+            <path d="M15,80 Q-5,70 5,60 Q20,65 15,80" fill="currentColor" opacity="0.8" />
+         </motion.svg>
+      </div>
+
+      <div className="container mx-auto px-6 relative z-10 pb-12">
+        <div className="grid md:grid-cols-4 gap-8 mb-12">
           
-          {/* Identity HUD Section */}
-          <div className="flex items-center gap-8 group">
-            <div className="relative">
-               <div className="absolute -inset-2 bg-agri-secondary/20 rounded-full blur animate-pulse group-hover:bg-agri-secondary/40 transition-all"></div>
-               <Logo className="h-6 relative" variant="light" />
+          {/* Column 1: Brand */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+               <Logo className="h-6" variant="light" />
+               <span className="font-serif font-bold text-xl tracking-tight">Agrigence</span>
             </div>
-            <div className="flex flex-col">
-              <span className="font-serif font-bold text-lg tracking-tighter">AGRIGENCE</span>
-              <div className="flex items-center gap-2 mt-0.5">
-                 <div className="w-1 h-1 bg-green-500 rounded-full animate-ping"></div>
-                 <span className="text-[7px] font-black text-white/40 uppercase tracking-[0.3em]">Core_Node.Online</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Futuristic HUD Countdown Timer */}
-          <div className="flex items-center bg-black/40 backdrop-blur-xl border border-white/5 rounded-2xl px-10 py-5 shadow-[0_0_40px_rgba(0,0,0,0.4)] relative">
-             {/* Tech Corners */}
-             <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-agri-secondary/30 rounded-tl-lg"></div>
-             <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-agri-secondary/30 rounded-br-lg"></div>
-             
-             <div className="flex items-center gap-8">
-                <div className="flex flex-col items-center border-r border-white/10 pr-8 mr-2">
-                   <Terminal size={14} className="text-agri-secondary mb-1 opacity-60" />
-                   <span className="text-[7px] font-black text-white/40 uppercase tracking-[0.3em]">Status:TX</span>
-                </div>
-
-                <div className="flex gap-5">
-                   <HUDTimerUnit val={timeLeft.d} label="Days" />
-                   <div className="w-px h-6 bg-white/10 mt-1.5 opacity-20"></div>
-                   <HUDTimerUnit val={timeLeft.h} label="Hrs" />
-                   <div className="w-px h-6 bg-white/10 mt-1.5 opacity-20"></div>
-                   <HUDTimerUnit val={timeLeft.m} label="Min" />
-                   <div className="w-px h-6 bg-white/10 mt-1.5 opacity-20"></div>
-                   <HUDTimerUnit val={timeLeft.s} label="Sec" isAccent={true} />
-                </div>
-
-                <div className="ml-6 pl-8 border-l border-white/10">
-                   <Link to="/submission" className="flex flex-col items-center group/btn">
-                      <div className="bg-agri-secondary/10 p-2.5 rounded-full border border-agri-secondary/20 group-hover/btn:bg-agri-secondary group-hover/btn:text-agri-primary transition-all shadow-lg shadow-agri-secondary/5 group-hover/btn:shadow-agri-secondary/20">
-                        <ArrowRight size={16} className="group-hover/btn:translate-x-0.5 transition-transform" />
-                      </div>
-                      <span className="text-[7px] font-black text-agri-secondary mt-1.5 tracking-tighter uppercase group-hover/btn:opacity-100 opacity-60 transition-opacity">Protocol:Send</span>
-                   </Link>
-                </div>
-             </div>
-          </div>
-
-          {/* Clean HUD Navigation Links */}
-          <div className="flex items-center gap-12">
-             <div className="flex gap-4">
-                {[Twitter, Instagram, Facebook, Linkedin].map((Icon, i) => (
-                  <a key={i} href="#" className="p-2 rounded-lg text-white/30 hover:text-agri-secondary hover:bg-white/5 transition-all border border-transparent hover:border-white/5">
-                    <Icon size={14} />
+            <p className="text-white/60 text-xs leading-relaxed">
+              A premier peer-reviewed journal dedicated to advancing agricultural sciences and connecting the research community.
+            </p>
+            <div className="flex gap-3 pt-2">
+                {socials.map((social, i) => (
+                  <a 
+                    key={i} 
+                    href={social.link || '#'} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-agri-secondary hover:text-white transition-all"
+                  >
+                    <social.icon size={12} />
                   </a>
                 ))}
-             </div>
-             <div className="h-10 w-px bg-white/5 hidden md:block"></div>
-             <div className="flex gap-8 text-[9px] font-black uppercase tracking-[0.25em] text-white/20">
-                <Link to="/guidelines" className="hover:text-white transition-colors">Author_Req</Link>
-                <Link to="/privacy" className="hover:text-white transition-colors">Privacy_v2</Link>
+            </div>
+          </div>
+
+          {/* Column 2: Quick Links */}
+          <div>
+            <h4 className="font-serif font-bold text-sm mb-4">Quick Links</h4>
+            <ul className="space-y-2 text-xs text-white/60">
+              <li><Link to="/journals" className="hover:text-agri-secondary transition-colors">Journal Archive</Link></li>
+              <li><Link to="/editorial-board" className="hover:text-agri-secondary transition-colors">Editorial Board</Link></li>
+              <li><Link to="/guidelines" className="hover:text-agri-secondary transition-colors">Author Guidelines</Link></li>
+              <li><Link to="/products" className="hover:text-agri-secondary transition-colors">Book Store</Link></li>
+              <li><Link to="/consultation" className="hover:text-agri-secondary transition-colors">Expert Consultation</Link></li>
+            </ul>
+          </div>
+
+          {/* Column 3: Legal & Support */}
+          <div>
+            <h4 className="font-serif font-bold text-sm mb-4">Support</h4>
+            <ul className="space-y-2 text-xs text-white/60">
+              <li><Link to="/about-contact" className="hover:text-agri-secondary transition-colors">Contact Us</Link></li>
+              <li><Link to="/privacy" className="hover:text-agri-secondary transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-agri-secondary transition-colors">Terms of Service</Link></li>
+              <li><a href="mailto:agrigence@gmail.com" className="hover:text-agri-secondary transition-colors">Report an Issue</a></li>
+            </ul>
+          </div>
+
+          {/* Column 4: Next Issue Timer (Simplified) */}
+          <div>
+             <h4 className="font-serif font-bold text-sm mb-4">Next Publication</h4>
+             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                <div className="flex items-center gap-2 mb-2 text-agri-secondary">
+                   <Clock size={14} className="animate-pulse" />
+                   <span className="text-xs font-bold uppercase tracking-wider">Releasing In</span>
+                </div>
+                <div className="flex justify-between text-center">
+                   <div>
+                      <span className="block text-lg font-serif font-bold">{timeLeft.d}</span>
+                      <span className="text-[10px] text-white/40">Days</span>
+                   </div>
+                   <div className="text-white/20 text-lg font-light">:</div>
+                   <div>
+                      <span className="block text-lg font-serif font-bold">{timeLeft.h}</span>
+                      <span className="text-[10px] text-white/40">Hrs</span>
+                   </div>
+                   <div className="text-white/20 text-lg font-light">:</div>
+                   <div>
+                      <span className="block text-lg font-serif font-bold">{timeLeft.m}</span>
+                      <span className="text-[10px] text-white/40">Mins</span>
+                   </div>
+                   <div className="text-white/20 text-lg font-light">:</div>
+                   <div>
+                      <span className="block text-lg font-serif font-bold">{timeLeft.s}</span>
+                      <span className="text-[10px] text-white/40">Secs</span>
+                   </div>
+                </div>
+                <Link to="/submission" className="mt-4 block text-center bg-white text-agri-primary py-2 rounded-lg text-[10px] font-bold hover:bg-agri-secondary hover:text-white transition-colors">
+                   Submit Manuscript
+                </Link>
              </div>
           </div>
 
         </div>
         
-        {/* Bottom Metadata Layer */}
-        <div className="mt-10 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-           <div className="flex items-center gap-3">
-              <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
-              <p className="text-[7px] font-bold text-white/20 uppercase tracking-[0.4em]">
-                © v2.0.{new Date().getFullYear()} CORE_AGRI_NET. SYSTEM_SECURITY_VERIFIED
-              </p>
+        {/* Bottom Bar */}
+        <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/40">
+           <p>© {new Date().getFullYear()} Agrigence. All rights reserved.</p>
+           <div className="flex gap-6">
+              <span>ISSN: 2345-6789</span>
+              <span>Peer-Reviewed Journal</span>
            </div>
-           <p className="text-[7px] font-bold text-white/10 uppercase tracking-[0.5em] hidden md:block">
-             CULTIVATING FUTURES THROUGH PEER-REVIEWED INTELLIGENCE
-           </p>
         </div>
       </div>
     </footer>

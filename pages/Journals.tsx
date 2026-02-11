@@ -13,8 +13,18 @@ const Journals: React.FC = () => {
     <div className="min-h-screen bg-agri-bg">
       
       {/* Header */}
-      <div className="bg-[#0F392B] text-white py-16 px-6">
-         <div className="container mx-auto">
+      <div className="bg-[#0F392B] text-white py-16 px-6 relative overflow-hidden">
+         {/* Background Image */}
+         <div className="absolute inset-0">
+            <img 
+              src="https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=2070&auto=format&fit=crop" 
+              alt="Library Archive" 
+              className="w-full h-full object-cover opacity-20"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0F392B] to-[#0F392B]/90"></div>
+         </div>
+
+         <div className="container mx-auto relative z-10">
             <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">Journal Archive</h1>
             <p className="text-xl text-stone-300 font-light max-w-2xl">Access our complete repository of peer-reviewed agricultural research and monthly magazines.</p>
          </div>

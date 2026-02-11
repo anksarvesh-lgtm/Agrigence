@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { PaymentRecord } from '../../types';
-import { Search, CheckCircle, XCircle, ExternalLink, Eye, ShieldCheck, CreditCard, Smartphone } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Eye, ShieldCheck, QrCode } from 'lucide-react';
 
 const Payments: React.FC = () => {
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
@@ -53,10 +54,12 @@ const Payments: React.FC = () => {
                 <tr key={p.id} className="border-t border-white/5 hover:bg-white/5 transition-colors">
                   <td className="p-6">
                     <div className="flex items-center gap-3">
-                      {p.method === 'STRIPE' ? <CreditCard size={18} className="text-indigo-400" /> : <Smartphone size={18} className="text-agri-secondary" />}
+                      <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center text-white">
+                         <QrCode size={20} />
+                      </div>
                       <div>
                         <p className="text-white font-bold text-xs">{p.method}</p>
-                        <p className="text-[10px] text-white/40 font-mono">{p.upiTxnId || 'Stripe-Auth'}</p>
+                        <p className="text-[10px] text-white/40 font-mono">{p.upiTxnId || 'NO_TXN_ID'}</p>
                       </div>
                     </div>
                   </td>

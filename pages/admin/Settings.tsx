@@ -4,7 +4,7 @@ import { mockBackend } from '../../services/mockBackend';
 import { SiteSettings } from '../../types';
 import { 
   Save, Twitter, Instagram, Facebook, Linkedin, Youtube, 
-  Smartphone, Mail, Globe, Hash, Upload, ShieldAlert, Palette, Type, Layout
+  Smartphone, Mail, Globe, Hash, Upload, ShieldAlert, Palette, Type, Layout, Share2
 } from 'lucide-react';
 
 const Settings: React.FC = () => {
@@ -161,6 +161,34 @@ const Settings: React.FC = () => {
                  <div>
                     <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block">Support Email</label>
                     <input className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-agri-secondary" value={settings.contactEmail} onChange={e => setSettings({...settings, contactEmail: e.target.value})} />
+                 </div>
+              </div>
+            </div>
+
+            <div className="bg-white/5 border border-white/5 rounded-3xl p-8 space-y-6">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-agri-secondary flex items-center gap-2 mb-4">
+                  <Share2 size={16} /> Social Media Connections
+              </h3>
+              <div className="space-y-4">
+                 <div className="flex items-center gap-3">
+                    <Twitter size={16} className="text-white/40" />
+                    <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs outline-none focus:border-agri-secondary" placeholder="Twitter URL" value={settings.footerSocials.twitter} onChange={e => setSettings({...settings, footerSocials: {...settings.footerSocials, twitter: e.target.value}})} />
+                 </div>
+                 <div className="flex items-center gap-3">
+                    <Instagram size={16} className="text-white/40" />
+                    <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs outline-none focus:border-agri-secondary" placeholder="Instagram URL" value={settings.footerSocials.instagram} onChange={e => setSettings({...settings, footerSocials: {...settings.footerSocials, instagram: e.target.value}})} />
+                 </div>
+                 <div className="flex items-center gap-3">
+                    <Facebook size={16} className="text-white/40" />
+                    <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs outline-none focus:border-agri-secondary" placeholder="Facebook URL" value={settings.footerSocials.facebook} onChange={e => setSettings({...settings, footerSocials: {...settings.footerSocials, facebook: e.target.value}})} />
+                 </div>
+                 <div className="flex items-center gap-3">
+                    <Linkedin size={16} className="text-white/40" />
+                    <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs outline-none focus:border-agri-secondary" placeholder="LinkedIn URL" value={settings.footerSocials.linkedin} onChange={e => setSettings({...settings, footerSocials: {...settings.footerSocials, linkedin: e.target.value}})} />
+                 </div>
+                 <div className="flex items-center gap-3">
+                    <Youtube size={16} className="text-white/40" />
+                    <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs outline-none focus:border-agri-secondary" placeholder="YouTube URL" value={settings.footerSocials.youtube} onChange={e => setSettings({...settings, footerSocials: {...settings.footerSocials, youtube: e.target.value}})} />
                  </div>
               </div>
             </div>

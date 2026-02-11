@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
-import { Fingerprint, CheckCircle2 } from 'lucide-react';
-import { User } from '../types';
+import { Fingerprint, CheckCircle2, User, Lock, Mail, Users } from 'lucide-react';
+import { User as UserType } from '../types';
 
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -67,7 +68,7 @@ const Login: React.FC = () => {
 
   const handleInternetIdentity = () => {
     setTimeout(() => {
-        const mockUser: User = {
+        const mockUser: UserType = {
             id: 'ii-user-' + Math.random(),
             name: 'Internet Identity User',
             email: 'user@dfinity.mock',
@@ -87,113 +88,162 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center bg-stone-50 px-4 py-12">
-      <div className="bg-white w-full max-w-md p-8 md:p-10 rounded-3xl shadow-premium border border-stone-100">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-serif font-bold text-agri-primary mb-3">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </h2>
-          <p className="text-stone-500 text-sm">
-            {isLogin 
-              ? 'Access your dashboard and research papers' 
-              : 'Takes less than 10 seconds to create your account'}
-          </p>
+    <div className="min-h-screen flex items-center justify-center bg-stone-50 p-4 md:p-8">
+      <div className="w-full max-w-5xl bg-white rounded-[2.5rem] shadow-premium overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+        
+        {/* Left Side: Image & Branding */}
+        <div className="md:w-1/2 relative hidden md:flex flex-col justify-end p-12 text-white">
+           <div className="absolute inset-0">
+              <img 
+                src="https://images.unsplash.com/photo-1495107334309-fcf20504a5ab?auto=format&fit=crop&q=80" 
+                className="w-full h-full object-cover" 
+                alt="Agriculture Field" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-agri-primary/90 via-agri-primary/40 to-transparent"></div>
+           </div>
+           
+           <div className="relative z-10">
+              <h2 className="text-4xl font-serif font-bold mb-4">Cultivating Knowledge</h2>
+              <p className="text-white/80 font-light mb-8 leading-relaxed">
+                 Join India's premier digital ecosystem for agricultural research. Connect with over 5,000+ researchers and professionals.
+              </p>
+              <div className="flex gap-6">
+                 <div className="flex flex-col">
+                    <span className="text-2xl font-bold">2.4k+</span>
+                    <span className="text-[10px] uppercase font-black tracking-widest text-white/50">Articles</span>
+                 </div>
+                 <div className="w-px bg-white/20"></div>
+                 <div className="flex flex-col">
+                    <span className="text-2xl font-bold">150+</span>
+                    <span className="text-[10px] uppercase font-black tracking-widest text-white/50">Institutions</span>
+                 </div>
+              </div>
+           </div>
         </div>
 
-        {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs mb-6 border border-red-100 font-bold">{error}</div>}
+        {/* Right Side: Form */}
+        <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+          <div className="max-w-md mx-auto w-full">
+            <div className="text-center mb-10">
+              <div className="inline-block p-3 rounded-2xl bg-agri-primary/5 text-agri-primary mb-4 md:hidden">
+                 <User size={32} />
+              </div>
+              <h2 className="text-3xl font-serif font-bold text-agri-primary mb-2">
+                {isLogin ? 'Welcome Back' : 'Join the Network'}
+              </h2>
+              <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">
+                {isLogin ? 'Access your research dashboard' : 'Begin your publishing journey'}
+              </p>
+            </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {!isLogin && (
-            <>
-              <div>
-                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1.5 ml-1">Full Name</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. Rahul Sharma" 
-                  className="w-full p-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm"
-                  required
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                />
+            {error && <div className="bg-red-50 text-red-600 p-4 rounded-xl text-xs mb-6 border border-red-100 font-bold text-center">{error}</div>}
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {!isLogin && (
+                <>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Full Name</label>
+                    <div className="relative">
+                       <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" />
+                       <input 
+                        type="text" 
+                        placeholder="e.g. Dr. Rajesh Kumar" 
+                        className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm font-medium"
+                        required
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Profession</label>
+                    <div className="relative">
+                       <Users size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" />
+                       <select 
+                        className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm appearance-none font-medium"
+                        value={profession}
+                        onChange={e => setProfession(e.target.value)}
+                        required
+                      >
+                        {professionOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </div>
+                    {profession === 'Other' && (
+                      <input 
+                        type="text" 
+                        placeholder="Specify profession" 
+                        className="w-full mt-2 p-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm"
+                        required
+                        value={customProfession}
+                        onChange={e => setCustomProfession(e.target.value)}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
+              
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Email Address</label>
+                <div className="relative">
+                   <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" />
+                   <input 
+                    type="email" 
+                    placeholder="researcher@institute.edu" 
+                    className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm font-medium"
+                    required
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1.5 ml-1">Profession</label>
-                <select 
-                  className="w-full p-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm appearance-none"
-                  value={profession}
-                  onChange={e => setProfession(e.target.value)}
-                  required
-                >
-                  {professionOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                </select>
-                {profession === 'Other' && (
-                  <input 
-                    type="text" 
-                    placeholder="Specify profession" 
-                    className="w-full mt-3 p-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm"
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Password</label>
+                <div className="relative">
+                   <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" />
+                   <input 
+                    type="password" 
+                    placeholder="••••••••" 
+                    className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm font-medium"
                     required
-                    value={customProfession}
-                    onChange={e => setCustomProfession(e.target.value)}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
                   />
+                </div>
+                {!isLogin && (
+                  <p className="text-[10px] text-stone-400 mt-1 ml-1">Must contain 8+ chars, letters & numbers</p>
                 )}
               </div>
-            </>
-          )}
-          
-          <div>
-            <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1.5 ml-1">Email Address</label>
-            <input 
-              type="email" 
-              placeholder="name@example.com" 
-              className="w-full p-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm"
-              required
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
-          </div>
+              
+              <button type="submit" className="w-full bg-agri-primary text-white font-bold py-4 rounded-2xl hover:bg-agri-secondary transition-all shadow-xl shadow-agri-primary/10 mt-6 flex items-center justify-center gap-2">
+                {isLogin ? 'Access Account' : 'Initialize Profile'}
+                {!isLogin && <CheckCircle2 size={18} />}
+              </button>
+            </form>
 
-          <div>
-            <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1.5 ml-1">Password</label>
-            <input 
-              type="password" 
-              placeholder="••••••••" 
-              className="w-full p-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm"
-              required
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
-            {!isLogin && (
-              <p className="text-[10px] text-stone-400 mt-2 ml-1">Min. 8 characters with letters & numbers</p>
-            )}
-          </div>
-          
-          <button type="submit" className="w-full bg-agri-primary text-white font-bold py-4 rounded-2xl hover:bg-agri-secondary transition-all shadow-xl shadow-agri-primary/10 mt-4 flex items-center justify-center gap-2">
-            {isLogin ? 'Sign In' : 'Create My Account'}
-            {!isLogin && <CheckCircle2 size={18} />}
-          </button>
-        </form>
-
-        <div className="mt-8">
-            <div className="relative">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-100"></div></div>
-                <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest"><span className="px-4 bg-white text-stone-400">Secure Connect</span></div>
+            <div className="mt-8">
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-100"></div></div>
+                    <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest"><span className="px-4 bg-white text-stone-400">Or Continue With</span></div>
+                </div>
+                <button 
+                    type="button"
+                    onClick={handleInternetIdentity}
+                    className="mt-6 w-full flex items-center justify-center gap-3 border border-stone-200 p-4 rounded-2xl hover:bg-stone-50 transition-all font-bold text-xs text-stone-600 uppercase tracking-widest group"
+                >
+                    <Fingerprint size={20} className="text-agri-secondary group-hover:scale-110 transition-transform" /> Internet Identity
+                </button>
             </div>
-            <button 
-                type="button"
-                onClick={handleInternetIdentity}
-                className="mt-6 w-full flex items-center justify-center gap-3 border border-stone-200 p-4 rounded-2xl hover:bg-stone-50 transition-all font-bold text-xs text-stone-600 uppercase tracking-widest"
-            >
-                <Fingerprint size={20} className="text-agri-secondary" /> Internet Identity
-            </button>
-        </div>
 
-        <p className="text-center mt-10 text-xs font-bold text-stone-400 uppercase tracking-widest">
-          {isLogin ? "New to Agrigence?" : "Already have an account?"}
-          <button onClick={() => setIsLogin(!isLogin)} className="text-agri-secondary ml-2 hover:underline">
-            {isLogin ? 'Sign Up Free' : 'Log In Now'}
-          </button>
-        </p>
+            <p className="text-center mt-10 text-xs font-bold text-stone-400 uppercase tracking-widest">
+              {isLogin ? "New to Agrigence?" : "Already have an account?"}
+              <button onClick={() => setIsLogin(!isLogin)} className="text-agri-secondary ml-2 hover:text-agri-primary transition-colors underline decoration-2 underline-offset-4">
+                {isLogin ? 'Register Free' : 'Secure Login'}
+              </button>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

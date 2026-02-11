@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { mockBackend } from '../services/mockBackend';
 import { ShoppingBag, BookOpen } from 'lucide-react';
@@ -41,7 +42,16 @@ const Products: React.FC = () => {
     <div className="min-h-screen bg-agri-bg">
       {/* Header */}
       <div className="bg-[#0F392B] text-white py-16 px-6 relative overflow-hidden">
-         <div className="absolute right-0 top-0 w-64 h-64 bg-agri-gold rounded-full mix-blend-overlay filter blur-3xl opacity-20 transform translate-x-1/2 -translate-y-1/2"></div>
+         {/* Background Image */}
+         <div className="absolute inset-0">
+            <img 
+              src="https://images.unsplash.com/photo-1474447976065-67d23accb1e3?q=80&w=2085&auto=format&fit=crop" 
+              alt="Harvest Market" 
+              className="w-full h-full object-cover opacity-20"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0F392B] to-[#0F392B]/80"></div>
+         </div>
+
          <div className="container mx-auto text-center relative z-10">
             <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4">Agri Store</h1>
             <p className="text-xl text-stone-300 font-light">Curated resources, books, and equipment for the modern agriculturist.</p>

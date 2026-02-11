@@ -11,8 +11,18 @@ const News: React.FC = () => {
     <div className="min-h-screen bg-agri-bg">
       
       {/* Header */}
-      <div className="bg-[#0F392B] text-white py-16 px-6">
-         <div className="container mx-auto">
+      <div className="bg-[#0F392B] text-white py-16 px-6 relative overflow-hidden">
+         {/* Background Image */}
+         <div className="absolute inset-0">
+            <img 
+              src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2070&auto=format&fit=crop" 
+              alt="Agricultural News" 
+              className="w-full h-full object-cover opacity-30"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0F392B] to-[#0F392B]/80"></div>
+         </div>
+
+         <div className="container mx-auto relative z-10">
             <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">News & Announcements</h1>
             <p className="text-xl text-stone-300 font-light">Stay updated with the latest in agricultural research and Agrigence events.</p>
          </div>

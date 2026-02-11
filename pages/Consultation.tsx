@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Mail, MessageCircle, ArrowRight } from 'lucide-react';
 
@@ -28,7 +29,16 @@ const Consultation: React.FC = () => {
     <div className="min-h-screen bg-agri-bg">
        
        <div className="bg-[#0F392B] text-white py-16 px-6 relative overflow-hidden">
-          <div className="absolute left-0 bottom-0 w-96 h-96 bg-agri-gold/10 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2"></div>
+          {/* Background Image */}
+          <div className="absolute inset-0">
+             <img 
+               src="https://images.unsplash.com/photo-1556910103-1c02745a30bf?q=80&w=2070&auto=format&fit=crop" 
+               alt="Growth and Connection" 
+               className="w-full h-full object-cover opacity-20"
+             />
+             <div className="absolute inset-0 bg-gradient-to-b from-[#0F392B]/80 to-[#0F392B]"></div>
+          </div>
+
           <div className="container mx-auto text-center relative z-10">
              <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">Expert Consultation</h1>
              <p className="text-xl text-stone-300 font-light">Get professional advice tailored to your agricultural needs.</p>

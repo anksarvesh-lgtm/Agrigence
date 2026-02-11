@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../App';
 import { SubscriptionPlan, SiteSettings } from '../types';
 import { 
-  Check, Star, ShieldCheck, CreditCard, QrCode, X, 
-  UploadCloud, MessageCircle, AlertTriangle, FileText, 
-  PenTool, Layers, ChevronRight, Zap
+  Check, Star, ShieldCheck, QrCode, X, 
+  UploadCloud, MessageCircle, FileText, 
+  PenTool, ChevronRight, Zap, Smartphone, CheckCircle
 } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
 import { useNavigate } from 'react-router-dom';
@@ -18,8 +19,8 @@ const Subscription: React.FC = () => {
   
   // Modal State
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'STRIPE' | 'UPI' | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [step, setStep] = useState<'DETAILS' | 'SUCCESS'>('DETAILS');
 
   // UPI Form State
   const [upiForm, setUpiForm] = useState({
@@ -40,43 +41,33 @@ const Subscription: React.FC = () => {
       return;
     }
     setSelectedPlan(plan);
-    setPaymentMethod(null);
     setUpiForm({ txnId: '', screenshot: null });
-  };
-
-  const handleStripePayment = async () => {
-    if (!selectedPlan || !user) return;
-    setIsProcessing(true);
-
-    setTimeout(async () => {
-      const updatedUser = await mockBackend.purchasePlan(user.id, selectedPlan.id, 'STRIPE');
-      if (updatedUser) {
-        login(updatedUser);
-        alert(`Payment Verified! Your ${selectedPlan.name} is now active.`);
-        navigate('/dashboard');
-      }
-      setIsProcessing(false);
-      setSelectedPlan(null);
-    }, 2000);
+    setStep('DETAILS');
   };
 
   const handleUpiSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPlan || !user) return;
     if (!upiForm.txnId) return alert("Please enter Transaction ID");
+    // Although screenshot is part of form state, for real apps you'd verify file existence here.
+    // For this mock, we assume user attached something if they say they did.
 
     setIsProcessing(true);
 
-    // Prompt says: "On Submit → Immediately activate plan in user account"
+    // Simulate network delay
     setTimeout(async () => {
-      const updatedUser = await mockBackend.purchasePlan(user.id, selectedPlan.id, 'UPI');
-      if (updatedUser) {
-        login(updatedUser);
-        alert("Verification Protocol Initialized! Your plan has been activated instantly.");
-        navigate('/dashboard');
-      }
+      // Create PENDING payment record
+      // In a real app, you would upload the file to a server and get a URL.
+      // Here we just pass a placeholder or object URL if we could.
+      const screenshotUrl = upiForm.screenshot ? URL.createObjectURL(upiForm.screenshot) : undefined;
+
+      await mockBackend.purchasePlan(user.id, selectedPlan.id, {
+        txnId: upiForm.txnId,
+        screenshot: screenshotUrl
+      });
+      
       setIsProcessing(false);
-      setSelectedPlan(null);
+      setStep('SUCCESS');
     }, 1500);
   };
 
@@ -124,20 +115,28 @@ const Subscription: React.FC = () => {
   return (
     <div className="min-h-screen pb-24 bg-agri-bg">
       
+      {/* Hero Section */}
+      <div className="h-[40vh] relative overflow-hidden flex items-center justify-center bg-agri-primary">
+         <div className="absolute inset-0">
+            <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80" className="w-full h-full object-cover opacity-40" alt="Wheat Field" />
+            <div className="absolute inset-0 bg-gradient-to-t from-agri-primary via-transparent to-transparent"></div>
+         </div>
+         <div className="relative z-10 text-center px-6">
+            <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-4">Pricing & Plans</h1>
+            <p className="text-white/60 text-lg font-light max-w-xl mx-auto">Choose a plan that fits your research needs. Secure access to peer-reviewed publishing and exclusive content.</p>
+         </div>
+      </div>
+
       {/* Notice Bar */}
-      <div className="bg-agri-primary text-white py-3 text-center border-b border-agri-secondary/20">
-         <p className="text-[10px] font-black uppercase tracking-[0.25em] flex items-center justify-center gap-3">
+      <div className="bg-white border-b border-agri-secondary/20 py-3 text-center sticky top-[80px] z-30 shadow-sm">
+         <p className="text-[10px] font-black uppercase tracking-[0.25em] flex items-center justify-center gap-3 text-agri-primary">
            <Zap size={14} className="text-agri-secondary animate-pulse" />
-           Login required. Stripe activates instantly. QR activates after payment details submission.
+           Instant Activation requires Admin Verification of Payment Screenshot.
          </p>
       </div>
 
       <div className="container mx-auto px-6 py-16">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h1 className="text-4xl md:text-6xl font-serif font-bold text-agri-primary mb-6 leading-tight">Investment in <span className="text-agri-secondary italic">Research</span></h1>
-          <p className="text-stone-500 leading-relaxed font-light text-lg">Secure your publication protocol with our structured subscription modules, designed for individual and institutional academic growth.</p>
-        </div>
-
+        
         {/* Highlight Section: Combo Plan */}
         {comboPlan && (
           <div className="max-w-4xl mx-auto mb-24 relative group">
@@ -232,12 +231,12 @@ const Subscription: React.FC = () => {
                 {/* Modal Header */}
                 <div className="bg-agri-primary p-10 text-white flex justify-between items-center relative overflow-hidden">
                    <div className="absolute right-0 top-0 p-10 opacity-5">
-                      <CreditCard size={120} />
+                      <QrCode size={120} />
                    </div>
                    <div className="relative z-10">
                       <h2 className="text-3xl font-serif font-bold">{selectedPlan.name}</h2>
                       <p className="text-agri-secondary font-black text-[10px] uppercase tracking-widest mt-2 flex items-center gap-2">
-                        <Zap size={12} fill="currentColor"/> Payment Interface v2.0
+                        <Smartphone size={12} fill="currentColor"/> UPI QR Payment
                       </p>
                    </div>
                    <button onClick={() => setSelectedPlan(null)} className="p-3 bg-white/10 rounded-full hover:bg-white/20 transition-all relative z-10">
@@ -245,137 +244,103 @@ const Subscription: React.FC = () => {
                    </button>
                 </div>
 
-                {/* Body: Select Method or Form */}
-                {!paymentMethod ? (
-                  <div className="p-12 space-y-10">
-                     <div className="text-center">
-                        <div className="text-5xl font-black text-agri-primary mb-2">₹{selectedPlan.price}</div>
-                        <p className="text-stone-400 font-bold text-xs uppercase tracking-widest">Total Transaction Amount</p>
+                {/* Body */}
+                <div className="p-12 overflow-y-auto custom-scrollbar">
+                   {step === 'DETAILS' ? (
+                     <div className="space-y-10">
+                        <div className="text-center">
+                           <div className="text-5xl font-black text-agri-primary mb-2">₹{selectedPlan.price}</div>
+                           <p className="text-stone-400 font-bold text-xs uppercase tracking-widest">Total Amount to Pay</p>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row items-center gap-10 bg-stone-50 p-8 rounded-[2rem] border border-stone-100">
+                           <div className="bg-white p-3 rounded-2xl shadow-sm border border-stone-100 shrink-0">
+                              {(() => {
+                                 const upiId = settings?.upiId || 'agrigence@upi';
+                                 const isDynamic = settings?.upiQrUrl?.includes('api.qrserver.com');
+                                 const qrSrc = !isDynamic && settings?.upiQrUrl 
+                                    ? settings.upiQrUrl 
+                                    : `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=${upiId}&pn=Agrigence&am=${selectedPlan.price}&cu=INR`;
+                                 
+                                 return (
+                                    <img 
+                                      src={qrSrc}
+                                      alt="Payment QR" 
+                                      className="w-32 h-32 object-contain"
+                                    />
+                                 );
+                              })()}
+                           </div>
+                           <div className="text-center md:text-left flex-1">
+                              <p className="text-xs font-bold text-agri-primary mb-2 uppercase tracking-widest">Merchant UPI ID</p>
+                              <div className="bg-white border border-stone-200 rounded-xl p-3 flex items-center justify-between font-mono text-sm font-bold text-agri-primary mb-4">
+                                 <span>{settings?.upiId || 'agrigence@upi'}</span>
+                                 <button className="text-agri-secondary hover:text-agri-primary transition-colors"><Zap size={14}/></button>
+                              </div>
+                              <p className="text-[10px] text-stone-400 font-bold uppercase tracking-tighter">Scan with any UPI App (GPay, PhonePe, Paytm)</p>
+                           </div>
+                        </div>
+
+                        <form onSubmit={handleUpiSubmit} className="space-y-6">
+                           <div className="grid md:grid-cols-2 gap-6">
+                              <div>
+                                 <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 block">Transaction / Ref ID</label>
+                                 <input 
+                                   required
+                                   value={upiForm.txnId}
+                                   onChange={e => setUpiForm({...upiForm, txnId: e.target.value})}
+                                   placeholder="12-digit UTR Number"
+                                   className="w-full bg-stone-50 border border-stone-200 p-4 rounded-xl focus:ring-2 focus:ring-agri-secondary/20 outline-none text-sm font-bold"
+                                 />
+                              </div>
+                              <div>
+                                 <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 block">Upload Screenshot</label>
+                                 <div className="relative group">
+                                    <input 
+                                      type="file" 
+                                      accept="image/*"
+                                      required
+                                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                      onChange={e => setUpiForm({...upiForm, screenshot: e.target.files?.[0] || null})}
+                                    />
+                                    <div className="w-full bg-stone-50 border-2 border-dashed border-stone-200 p-4 rounded-xl text-center group-hover:bg-white transition-all flex items-center justify-center gap-3">
+                                       <UploadCloud size={16} className="text-agri-secondary" />
+                                       <span className="text-[10px] font-black uppercase text-stone-500 truncate max-w-[120px]">
+                                          {upiForm.screenshot ? upiForm.screenshot.name : "Attach Proof"}
+                                       </span>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                           
+                           <button 
+                             type="submit"
+                             disabled={isProcessing}
+                             className="w-full bg-agri-secondary text-agri-primary py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-agri-primary hover:text-white transition-all shadow-xl shadow-agri-secondary/20 flex items-center justify-center gap-3"
+                           >
+                              {isProcessing ? 'VERIFYING...' : 'SUBMIT PAYMENT DETAILS'}
+                           </button>
+                        </form>
                      </div>
-                     
-                     <div className="grid md:grid-cols-2 gap-6">
+                   ) : (
+                     <div className="text-center py-10">
+                        <div className="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                           <CheckCircle size={40} />
+                        </div>
+                        <h3 className="text-2xl font-serif font-bold text-agri-primary mb-4">Request Submitted</h3>
+                        <p className="text-stone-500 text-sm leading-relaxed mb-8 max-w-md mx-auto">
+                           Your payment details have been received and are pending administrator verification. 
+                           Your plan will be activated automatically once approved (usually within 1-2 hours).
+                        </p>
                         <button 
-                          onClick={() => setPaymentMethod('STRIPE')}
-                          className="flex flex-col items-center gap-4 p-8 rounded-[2rem] bg-stone-50 border border-stone-100 hover:border-agri-secondary hover:bg-white transition-all group"
+                           onClick={() => navigate('/dashboard')}
+                           className="bg-agri-primary text-white px-10 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-agri-secondary transition-all"
                         >
-                           <div className="w-14 h-14 bg-indigo-50 text-indigo-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <CreditCard size={28} />
-                           </div>
-                           <div className="text-center">
-                              <span className="block font-black text-[10px] uppercase tracking-widest text-stone-400 mb-1">Method_01</span>
-                              <span className="block font-bold text-agri-primary">Card / Stripe</span>
-                           </div>
-                        </button>
-
-                        <button 
-                          onClick={() => setPaymentMethod('UPI')}
-                          className="flex flex-col items-center gap-4 p-8 rounded-[2rem] bg-stone-50 border border-stone-100 hover:border-agri-secondary hover:bg-white transition-all group"
-                        >
-                           <div className="w-14 h-14 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <QrCode size={28} />
-                           </div>
-                           <div className="text-center">
-                              <span className="block font-black text-[10px] uppercase tracking-widest text-stone-400 mb-1">Method_02</span>
-                              <span className="block font-bold text-agri-primary">UPI / QR Scan</span>
-                           </div>
+                           Go to Dashboard
                         </button>
                      </div>
-                  </div>
-                ) : (
-                  <div className="p-12 overflow-y-auto custom-scrollbar">
-                     <button onClick={() => setPaymentMethod(null)} className="mb-8 text-[10px] font-black text-agri-secondary uppercase tracking-widest flex items-center gap-2 hover:text-agri-primary transition-colors">
-                        <ChevronRight size={14} className="rotate-180" /> Back to methods
-                     </button>
-
-                     {paymentMethod === 'STRIPE' ? (
-                       <div className="text-center py-6">
-                          <div className="w-20 h-20 bg-indigo-50 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
-                             <ShieldCheck size={40} />
-                          </div>
-                          <h3 className="text-2xl font-serif font-bold text-agri-primary mb-4">Secure Gateway Link</h3>
-                          <p className="text-stone-500 text-sm leading-relaxed mb-10 px-10">You will be securely redirected to Stripe to authenticate your card details. Your plan activates immediately upon success.</p>
-                          <button 
-                            onClick={handleStripePayment}
-                            disabled={isProcessing}
-                            className="w-full bg-[#635BFF] text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:opacity-90 shadow-xl shadow-indigo-200 transition-all flex items-center justify-center gap-3"
-                          >
-                             {isProcessing ? 'SYNCHRONIZING...' : `TRANSACT ₹${selectedPlan.price} VIA STRIPE`}
-                          </button>
-                       </div>
-                     ) : (
-                       <div className="space-y-10">
-                          <div className="flex flex-col md:flex-row items-center gap-10 bg-stone-50 p-8 rounded-[2rem] border border-stone-100">
-                             <div className="bg-white p-3 rounded-2xl shadow-sm border border-stone-100 shrink-0">
-                                {(() => {
-                                   const upiId = settings?.upiId || 'agrigence@upi';
-                                   const isDynamic = settings?.upiQrUrl?.includes('api.qrserver.com');
-                                   const qrSrc = !isDynamic && settings?.upiQrUrl 
-                                      ? settings.upiQrUrl 
-                                      : `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=${upiId}&pn=Agrigence&am=${selectedPlan.price}&cu=INR`;
-                                   
-                                   return (
-                                      <img 
-                                        src={qrSrc}
-                                        alt="Payment QR" 
-                                        className="w-32 h-32 object-contain"
-                                      />
-                                   );
-                                })()}
-                             </div>
-                             <div className="text-center md:text-left flex-1">
-                                <p className="text-xs font-bold text-agri-primary mb-2 uppercase tracking-widest">UPI ID Configuration</p>
-                                <div className="bg-white border border-stone-200 rounded-xl p-3 flex items-center justify-between font-mono text-sm font-bold text-agri-primary mb-4">
-                                   <span>{settings?.upiId || 'agrigence@upi'}</span>
-                                   <button className="text-agri-secondary hover:text-agri-primary transition-colors"><Zap size={14}/></button>
-                                </div>
-                                <p className="text-[10px] text-stone-400 font-bold uppercase tracking-tighter">Scan with GPay, PhonePe, Paytm, or BHIM</p>
-                             </div>
-                          </div>
-
-                          <form onSubmit={handleUpiSubmit} className="space-y-6">
-                             <div className="grid md:grid-cols-2 gap-6">
-                                <div>
-                                   <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 block">Transaction / Ref ID</label>
-                                   <input 
-                                     required
-                                     value={upiForm.txnId}
-                                     onChange={e => setUpiForm({...upiForm, txnId: e.target.value})}
-                                     placeholder="12-digit UPI Number"
-                                     className="w-full bg-stone-50 border border-stone-200 p-4 rounded-xl focus:ring-2 focus:ring-agri-secondary/20 outline-none text-sm font-bold"
-                                   />
-                                </div>
-                                <div>
-                                   <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 block">Verify Screenshot</label>
-                                   <div className="relative group">
-                                      <input 
-                                        type="file" 
-                                        accept="image/*"
-                                        required
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                        onChange={e => setUpiForm({...upiForm, screenshot: e.target.files?.[0] || null})}
-                                      />
-                                      <div className="w-full bg-stone-50 border-2 border-dashed border-stone-200 p-4 rounded-xl text-center group-hover:bg-white transition-all flex items-center justify-center gap-3">
-                                         <UploadCloud size={16} className="text-agri-secondary" />
-                                         <span className="text-[10px] font-black uppercase text-stone-500 truncate max-w-[120px]">
-                                            {upiForm.screenshot ? upiForm.screenshot.name : "ATTACH_IMAGE"}
-                                         </span>
-                                      </div>
-                                   </div>
-                                </div>
-                             </div>
-                             
-                             <button 
-                               type="submit"
-                               disabled={isProcessing}
-                               className="w-full bg-agri-secondary text-agri-primary py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-agri-primary hover:text-white transition-all shadow-xl shadow-agri-secondary/20 flex items-center justify-center gap-3"
-                             >
-                                {isProcessing ? 'VERIFYING_TX...' : 'SUBMIT_AND_ACTIVATE_NOW'}
-                             </button>
-                          </form>
-                       </div>
-                     )}
-                  </div>
-                )}
+                   )}
+                </div>
              </motion.div>
           </div>
         )}

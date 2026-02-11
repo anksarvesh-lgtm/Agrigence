@@ -388,42 +388,64 @@ class MockBackendService {
     if (idx !== -1) { this.plans[idx] = p; this.save('agri_plans', this.plans); this.logAction(`Updated Plan ${p.name}`, 'Subscriptions'); }
   }
 
-  async purchasePlan(userId: string, planId: string, method: 'STRIPE' | 'UPI' = 'STRIPE') {
-    const userIndex = this.users.findIndex(u => u.id === userId);
+  // UPDATED: Now requires manual data containing txnId and screenshot. Creates a PENDING record.
+  async purchasePlan(userId: string, planId: string, paymentData: { txnId: string, screenshot?: string }) {
+    const user = this.users.find(u => u.id === userId);
     const plan = this.plans.find(p => p.id === planId);
-    if (userIndex === -1 || !plan) return null;
-    const expiry = new Date();
-    expiry.setMonth(expiry.getMonth() + plan.durationMonths);
-    const updatedUser: User = {
-      ...this.users[userIndex],
-      subscriptionTier: plan.name,
-      subscriptionExpiry: expiry.toISOString(),
-      articleLimit: plan.articleLimit,
-      blogLimit: plan.blogLimit,
-      permissions: { canDownloadArticles: true, canDownloadBlogs: true }
-    };
-    this.users[userIndex] = updatedUser;
-    this.payments.unshift({
+    if (!user || !plan) return null;
+
+    const payment: PaymentRecord = {
       id: Math.random().toString(36).substr(2, 9),
       userId,
-      userName: updatedUser.name,
+      userName: user.name,
       planId,
       planName: plan.name,
       amount: plan.price,
-      method,
-      status: 'COMPLETED',
-      date: new Date().toISOString()
-    });
-    this.save('agri_users', this.users);
+      method: 'QR',
+      status: 'PENDING',
+      date: new Date().toISOString(),
+      upiTxnId: paymentData.txnId,
+      screenshotUrl: paymentData.screenshot
+    };
+    
+    this.payments.unshift(payment);
     this.save('agri_payments', this.payments);
-    this.logAction(`Purchased Plan ${plan.name} via ${method}`, 'Subscriptions');
-    return updatedUser;
+    this.logAction(`New QR Payment Request: ${paymentData.txnId}`, 'Subscriptions');
+    return payment;
   }
 
   getPayments() { return this.payments; }
+  
+  // UPDATED: Activating plan only on admin verification
   async verifyPayment(id: string) {
     const p = this.payments.find(x => x.id === id);
-    if (p) { p.status = 'COMPLETED'; this.save('agri_payments', this.payments); this.logAction(`Verified Payment ${id}`, 'Payments'); }
+    if (!p) return;
+    
+    // Find user and plan associated with this payment
+    const userIndex = this.users.findIndex(u => u.id === p.userId);
+    const plan = this.plans.find(pl => pl.id === p.planId);
+    
+    if (userIndex !== -1 && plan && p.status === 'PENDING') {
+       // Activate Plan
+        const expiry = new Date();
+        expiry.setMonth(expiry.getMonth() + plan.durationMonths);
+        
+        const updatedUser = {
+          ...this.users[userIndex],
+          subscriptionTier: plan.name,
+          subscriptionExpiry: expiry.toISOString(),
+          articleLimit: plan.articleLimit,
+          blogLimit: plan.blogLimit,
+          permissions: { canDownloadArticles: true, canDownloadBlogs: true }
+        };
+        this.users[userIndex] = updatedUser;
+        this.save('agri_users', this.users);
+        
+        // Update Payment
+        p.status = 'COMPLETED';
+        this.save('agri_payments', this.payments);
+        this.logAction(`Verified Payment ${id}`, 'Payments');
+    }
   }
 
   getCoupons() { return this.coupons; }

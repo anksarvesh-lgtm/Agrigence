@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
@@ -60,9 +61,18 @@ const Home: React.FC = () => {
     <div className="bg-agri-bg min-h-screen">
       
       {/* --- HERO SECTION --- */}
-      <section className="relative h-[80vh] flex items-center bg-agri-primary text-white overflow-hidden mb-24">
-        <div className="absolute inset-0 opacity-30 bg-[url('https://images.unsplash.com/photo-1500382017468-9049fee74a62?auto=format&fit=crop&q=80')] bg-cover bg-center"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-agri-primary via-agri-primary/80 to-transparent"></div>
+      <section className="relative h-[85vh] flex items-center bg-agri-primary text-white overflow-hidden mb-24">
+        {/* Updated Background Image: Modern Agriculture Drone */}
+        <div className="absolute inset-0">
+           <img 
+             src="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=2070&auto=format&fit=crop" 
+             alt="Modern Agriculture Drone Technology" 
+             className="w-full h-full object-cover opacity-60"
+           />
+           <div className="absolute inset-0 bg-gradient-to-r from-[#1C1510] via-[#1C1510]/80 to-transparent"></div>
+           <div className="absolute inset-0 bg-gradient-to-t from-[#1C1510] via-transparent to-transparent"></div>
+        </div>
+
         <div className="container mx-auto px-6 relative z-10">
           <motion.div 
             initial={{ opacity: 0, x: -30 }}

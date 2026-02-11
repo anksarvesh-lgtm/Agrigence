@@ -248,7 +248,7 @@ export interface PaymentRecord {
   planId: string;
   planName: string;
   amount: number;
-  method: 'STRIPE' | 'UPI';
+  method: 'QR';
   status: 'PENDING' | 'COMPLETED' | 'FAILED';
   date: string;
   upiTxnId?: string;
