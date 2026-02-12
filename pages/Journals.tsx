@@ -1,13 +1,22 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../services/mockBackend';
 import { BookOpen } from 'lucide-react';
 import PDFAction from '../components/PDFAction';
 import { motion } from 'framer-motion';
+import { Magazine, Article } from '../types';
 
 const Journals: React.FC = () => {
-  const journals = mockBackend.getJournals();
-  const articles = mockBackend.getArticles();
+  const [journals, setJournals] = useState<Magazine[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      setJournals(await mockBackend.getJournals());
+      setArticles(await mockBackend.getArticles());
+    };
+    load();
+  }, []);
 
   return (
     <div className="min-h-screen bg-agri-bg">

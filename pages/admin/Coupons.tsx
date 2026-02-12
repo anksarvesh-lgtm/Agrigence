@@ -16,13 +16,16 @@ const Coupons: React.FC = () => {
   });
 
   useEffect(() => {
-    setCoupons(mockBackend.getCoupons());
+    const load = async () => {
+        setCoupons(await mockBackend.getCoupons());
+    };
+    load();
   }, []);
 
   const handleSave = async () => {
     if (!newCoupon.code || !newCoupon.value) return alert("Code and Value are required");
     await mockBackend.addCoupon(newCoupon);
-    setCoupons(mockBackend.getCoupons());
+    setCoupons(await mockBackend.getCoupons());
     setIsModalOpen(false);
     setNewCoupon({ code: '', discountType: 'PERCENT', value: 0, isActive: true, expiryDate: '' });
   };
@@ -30,7 +33,7 @@ const Coupons: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (confirm('Delete this coupon?')) {
       await mockBackend.deleteCoupon(id);
-      setCoupons(mockBackend.getCoupons());
+      setCoupons(await mockBackend.getCoupons());
     }
   };
 

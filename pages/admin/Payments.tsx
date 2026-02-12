@@ -13,8 +13,8 @@ const Payments: React.FC = () => {
     loadPayments();
   }, [filter]);
 
-  const loadPayments = () => {
-    const data = mockBackend.getPayments();
+  const loadPayments = async () => {
+    const data = await mockBackend.getPayments();
     if (filter === 'ALL') setPayments(data);
     else setPayments(data.filter(p => p.status === filter));
   };

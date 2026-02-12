@@ -38,12 +38,13 @@ const ArticleManager = ({ type }: { type: string }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingArticle, setEditingArticle] = useState<Partial<Article>>({});
 
-    useEffect(() => { loadArticles(); }, [type]);
-
-    const loadArticles = () => {
-        const data = mockBackend.getArticles().filter(a => type === 'articles' ? a.type === 'ARTICLE' : a.type === 'BLOG');
-        setArticles([...data]);
-    };
+    useEffect(() => {
+      const unsub = mockBackend.subscribeToArticles((data) => {
+        const filtered = data.filter(a => type === 'articles' ? a.type === 'ARTICLE' : a.type === 'BLOG');
+        setArticles(filtered);
+      });
+      return () => unsub();
+    }, [type]);
 
     const handleSave = async () => {
         if (!editingArticle.title) return alert("Title is required");
@@ -57,17 +58,14 @@ const ArticleManager = ({ type }: { type: string }) => {
         
         setIsModalOpen(false);
         setEditingArticle({});
-        loadArticles();
     };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setEditingArticle({ ...editingArticle, featuredImage: reader.result as string });
-        };
-        reader.readAsDataURL(file);
+        mockBackend.uploadFile(file, 'articles').then(url => {
+            setEditingArticle({ ...editingArticle, featuredImage: url });
+        });
       }
     };
 
@@ -101,7 +99,7 @@ const ArticleManager = ({ type }: { type: string }) => {
                         </div>
                         <div className="flex items-center gap-4">
                             <button onClick={() => { setEditingArticle(article); setIsModalOpen(true); }} className="p-3 bg-white/5 rounded-xl text-white/20 hover:text-white"><ImageIcon size={18} /></button>
-                            <button onClick={async () => { if(confirm('Delete?')) { await mockBackend.deleteArticle(article.id); loadArticles(); } }} className="p-3 bg-white/5 rounded-xl text-white/20 hover:text-red-400"><Trash2 size={18} /></button>
+                            <button onClick={async () => { if(confirm('Delete?')) { await mockBackend.deleteArticle(article.id); } }} className="p-3 bg-white/5 rounded-xl text-white/20 hover:text-red-400"><Trash2 size={18} /></button>
                         </div>
                     </div>
                 ))}
@@ -204,36 +202,30 @@ const MagazineManager = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMag, setEditingMag] = useState<Partial<Magazine>>({});
 
-    useEffect(() => { loadMagazines(); }, []);
-
-    const loadMagazines = () => {
-        setMagazines([...mockBackend.getMagazines()]);
-    };
+    useEffect(() => {
+        const unsub = mockBackend.subscribeToMagazines(setMagazines);
+        return () => unsub();
+    }, []);
 
     const handleSave = async () => {
         if (!editingMag.title) return alert("Title is required");
         
         if (editingMag.id) {
-          // In a real app we'd have an updateMagazine method
-          const all = mockBackend.getMagazines().map(m => m.id === editingMag.id ? editingMag as Magazine : m);
-          localStorage.setItem('agri_magazines', JSON.stringify(all));
+           await mockBackend.addMagazine(editingMag as Magazine); // Using add/upsert for now as mockBackend handles collection writes
         } else {
           await mockBackend.addMagazine(editingMag as Magazine);
         }
         
         setIsModalOpen(false);
         setEditingMag({});
-        loadMagazines();
     };
 
     const handleFileUpload = (field: 'coverImage' | 'pdfUrl') => (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setEditingMag(prev => ({ ...prev, [field]: reader.result as string }));
-        };
-        reader.readAsDataURL(file);
+        mockBackend.uploadFile(file, 'magazines').then(url => {
+            setEditingMag(prev => ({ ...prev, [field]: url }));
+        });
       }
     };
 

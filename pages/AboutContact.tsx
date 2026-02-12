@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, CheckCircle, Globe, Users, BookOpen, Mic, ArrowRight, Quote } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
@@ -9,7 +10,11 @@ const AboutContact: React.FC = () => {
   const [leadership, setLeadership] = useState<LeadershipMember[]>([]);
 
   useEffect(() => {
-    setLeadership(mockBackend.getLeadership().sort((a,b) => a.order - b.order));
+    const load = async () => {
+        const l = await mockBackend.getLeadership();
+        setLeadership(l.sort((a,b) => a.order - b.order));
+    };
+    load();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

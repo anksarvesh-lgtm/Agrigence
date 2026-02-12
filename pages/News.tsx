@@ -1,11 +1,20 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../services/mockBackend';
 import { motion } from 'framer-motion';
 import { Calendar, ExternalLink, Megaphone } from 'lucide-react';
+import { NewsItem } from '../types';
 
 const News: React.FC = () => {
-  const news = mockBackend.getNews();
+  const [news, setNews] = useState<NewsItem[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const n = await mockBackend.getNews();
+      setNews(n);
+    };
+    load();
+  }, []);
 
   return (
     <div className="min-h-screen bg-agri-bg">

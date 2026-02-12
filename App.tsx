@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { User } from './types';
-import { mockBackend } from './services/mockBackend';
+import { mockBackend, auth, onAuthStateChanged } from './services/mockBackend';
 
 // Layouts and Pages
 import Layout from './components/Layout';
@@ -63,19 +64,33 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('agri_session');
-    if (stored) setUser(JSON.parse(stored));
-    setIsLoading(false);
+    // Listen for Auth state changes from Mock Backend
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          // Sync with backend to get full profile including roles/subscription
+          const appUser = await mockBackend.syncUser(firebaseUser);
+          setUser(appUser);
+        } catch (error) {
+          console.error("Failed to sync user profile", error);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const login = (u: User) => {
     setUser(u);
-    localStorage.setItem('agri_session', JSON.stringify(u));
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await mockBackend.logout();
     setUser(null);
-    localStorage.removeItem('agri_session');
   };
 
   return (
@@ -167,3 +182,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+    

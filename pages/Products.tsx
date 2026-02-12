@@ -1,12 +1,20 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../services/mockBackend';
 import { ShoppingBag, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Product } from '../types';
 
 const Products: React.FC = () => {
-  const products = mockBackend.getProducts();
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      setProducts(await mockBackend.getProducts());
+    };
+    load();
+  }, []);
+
   const books = products.filter(p => p.category === 'Book');
   const storeItems = products.filter(p => p.category === 'Store');
 

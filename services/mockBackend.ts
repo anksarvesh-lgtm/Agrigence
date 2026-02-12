@@ -1,6 +1,10 @@
 
-import { Article, EditorialMember, Magazine, NewsItem, Role, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, AdminLog, NavigationItem, HomepageSection, Category, EmailTemplate, Inquiry, Notification, StaticPage } from '../types';
+import { Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate } from '../types';
 
+// --- CONFIGURATION ---
+// No firebase config needed for mock
+
+// Default settings fallback
 const DEFAULT_SETTINGS: SiteSettings = {
   logoUrl: 'https://cdn-icons-png.flaticon.com/512/3209/3209121.png',
   issn: '2345-6789',
@@ -53,465 +57,490 @@ const DEFAULT_SETTINGS: SiteSettings = {
   }
 };
 
-class MockBackendService {
-  private users: User[] = [];
-  private articles: Article[] = [];
-  private magazines: Magazine[] = [];
-  private products: Product[] = [];
-  private members: EditorialMember[] = [];
-  private leadership: LeadershipMember[] = [];
-  private news: NewsItem[] = [];
-  private plans: SubscriptionPlan[] = [];
-  private payments: PaymentRecord[] = [];
-  private coupons: Coupon[] = [];
-  private feedbacks: Feedback[] = [];
-  private logs: AdminLog[] = [];
-  private settings: SiteSettings = DEFAULT_SETTINGS;
-  private categories: Category[] = [];
-  private templates: EmailTemplate[] = [];
-  private inquiries: Inquiry[] = [];
-  private notifications: Notification[] = [];
-  private staticPages: StaticPage[] = [];
-  private trash: any[] = [];
+// Mock Auth User Type
+export interface MockFirebaseUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL: string | null;
+}
+
+// Mock Auth Class
+class MockAuth {
+  currentUser: MockFirebaseUser | null = null;
+  private listeners: ((user: MockFirebaseUser | null) => void)[] = [];
 
   constructor() {
-    this.loadFromStorage();
-    this.ensureAdminExists();
-    this.ensurePlansExist();
-    this.ensureLeadershipExists();
-    this.ensureEditorialBoardExists();
-    this.ensureDefaultTemplates();
-  }
-
-  private ensureEditorialBoardExists() {
-    if (this.members.length === 0) {
-      this.members = [
-        {
-          id: 'board-1',
-          name: 'Dr. Amitav K. Mallik',
-          designation: 'Editor-in-Chief',
-          qualification: 'Ph.D. in Agronomy',
-          expertise: 'Sustainable Crop Systems, Soil Health',
-          institution: 'ICAR-Indian Agricultural Research Institute',
-          department: 'Division of Agronomy',
-          country: 'India',
-          email: 'amitav.mallik@agrigence.in',
-          bio: 'Dr. Mallik has over 25 years of experience in agricultural research and has published over 100 peer-reviewed papers.',
-          order: 1,
-          isEnabled: true,
-          imageUrl: 'https://ui-avatars.com/api/?name=Amitav+K+Mallik&background=3D2B1F&color=fff'
-        },
-        {
-          id: 'board-2',
-          name: 'Prof. Sarah Jennings',
-          designation: 'Associate Editor',
-          qualification: 'Ph.D. in Plant Pathology',
-          expertise: 'Fungal Diseases, Molecular Breeding',
-          institution: 'Zura Haradhan, Chandauli, Uttar Pradesh, 221115',
-          department: 'Plant Sciences',
-          country: 'India',
-          email: 'sarah.j@agrigence.in',
-          bio: 'Leading researcher in plant disease resistance mechanisms.',
-          order: 2,
-          isEnabled: true,
-          imageUrl: 'https://ui-avatars.com/api/?name=Sarah+Jennings&background=C29263&color=fff'
-        }
-      ];
-      this.save('agri_members', this.members);
-    }
-  }
-
-  private ensureDefaultTemplates() {
-    if (this.templates.length === 0) {
-      this.templates = [
-        { id: 'welcome', name: 'Welcome Email', subject: 'Welcome to Agrigence!', body: 'Hello {name}, welcome to our platform.' },
-        { id: 'submission', name: 'Article Submission', subject: 'Manuscript Received', body: 'Dear {name}, we have received your submission: {title}.' }
-      ];
-      this.save('agri_templates', this.templates);
-    }
-  }
-
-  private ensureAdminExists() {
-    const adminEmail = 'admin@cv.co';
-    if (!this.users.find(u => u.email === adminEmail)) {
-      this.users.push({
-        id: 'admin-001',
-        name: 'Agrigence Admin',
-        email: adminEmail,
-        role: 'ADMIN',
-        articleUsage: 0,
-        blogUsage: 0,
-        permissions: { canDownloadArticles: true, canDownloadBlogs: true },
-        avatar: 'https://ui-avatars.com/api/?name=Admin&background=3D2B1F&color=fff',
-        status: 'ACTIVE'
-      });
-      this.save('agri_users', this.users);
-    }
-  }
-
-  private ensurePlansExist() {
-    this.plans = [
-      { id: 'art-1', name: '1 Article Submission', type: 'ARTICLE_ACCESS', price: 149, durationMonths: 1, description: 'Single manuscript submission for publication.', features: ['1 Article Submission', 'Email Support'], isActive: true, articleLimit: 1, blogLimit: 0, validityLabel: '1 Month' },
-      { id: 'art-10', name: '10 Articles (Annual)', type: 'ARTICLE_ACCESS', price: 499, durationMonths: 12, description: 'Best for active researchers publishing multiple studies.', features: ['10 Article Submissions', 'Valid for 12 months', 'Priority Review'], isActive: true, articleLimit: 10, blogLimit: 0, validityLabel: '12 Months' },
-      { id: 'art-inf', name: 'Unlimited Articles (2 Years)', type: 'ARTICLE_ACCESS', price: 1499, durationMonths: 24, description: 'No-limit publishing for individual high-frequency authors.', features: ['Unlimited Article Submissions', '2 Year Validity', 'Dedicated Support'], isActive: true, articleLimit: 'UNLIMITED', blogLimit: 0, validityLabel: '2 Years' },
-      { id: 'art-inst', name: 'Institute (Unlimited)', type: 'ARTICLE_ACCESS', price: 4999, durationMonths: 12, description: 'Unlimited articles for registered institutions and departments.', features: ['Unlimited Articles for all staff', 'Institute Verification', 'Annual Validity'], isActive: true, articleLimit: 'UNLIMITED', blogLimit: 0, validityLabel: '1 Year' },
-      { id: 'blog-4', name: '4 Blogs (Starter)', type: 'BLOG_ACCESS', price: 119, durationMonths: 1, description: 'Short-term blog publishing for insights.', features: ['4 Blogs Publishing', '1 Month Validity'], isActive: true, articleLimit: 0, blogLimit: 4, validityLabel: '1 Month' },
-      { id: 'blog-25', name: '25 Blogs (Regular)', type: 'BLOG_ACCESS', price: 399, durationMonths: 6, description: 'Publish regular updates for your audience.', features: ['25 Blogs Publishing', '6 Months Validity'], isActive: true, articleLimit: 0, blogLimit: 25, validityLabel: '6 Months' },
-      { id: 'blog-inst', name: 'Institute Blogs (Unlimited)', type: 'BLOG_ACCESS', price: 2499, durationMonths: 24, description: 'Unlimited blog access for educational institutions.', features: ['Unlimited Blogs', '2 Years Validity', 'Institutional Profile'], isActive: true, articleLimit: 0, blogLimit: 'UNLIMITED', validityLabel: '2 Years' },
-      { id: 'combo-max', name: 'Unlimited Articles + Blogs', type: 'COMBO_ACCESS', price: 5999, durationMonths: 18, description: 'The ultimate academic and insight bundle for professionals.', features: ['Unlimited Articles', 'Unlimited Blogs', '18 Months Validity', 'Verified Badge'], isActive: true, isRecommended: true, articleLimit: 'UNLIMITED', blogLimit: 'UNLIMITED', validityLabel: '18 Months' }
-    ];
-    this.save('agri_plans', this.plans);
-  }
-
-  private ensureLeadershipExists() {
-    if (this.leadership.length === 0) {
-      this.leadership = [
-        { id: 'lead-1', name: 'Sarvesh Kumar Yadav', role: 'Founder', bio: 'Sarvesh is a pioneer in agricultural research with over 15 years of experience.', imageUrl: 'https://ui-avatars.com/api/?name=Sarvesh+Kumar+Yadav', order: 1, isEnabled: true },
-        { id: 'lead-2', name: 'Shivi Jaiswal', role: 'Co-Founder', bio: 'Shivi leads our strategic initiatives.', imageUrl: 'https://ui-avatars.com/api/?name=Shivi+Jaiswal', order: 2, isEnabled: true }
-      ];
-      this.save('agri_leadership', this.leadership);
-    }
-  }
-
-  private loadFromStorage() {
-    const getData = (key: string) => JSON.parse(localStorage.getItem(key) || 'null');
-    this.users = getData('agri_users') || [];
-    this.settings = getData('agri_settings') || DEFAULT_SETTINGS;
-    this.leadership = getData('agri_leadership') || [];
-    this.articles = getData('agri_articles') || [];
-    this.magazines = getData('agri_magazines') || [];
-    this.news = getData('agri_news') || [];
-    this.products = getData('agri_products') || [];
-    this.plans = getData('agri_plans') || [];
-    this.payments = getData('agri_payments') || [];
-    this.members = getData('agri_members') || [];
-    this.feedbacks = getData('agri_feedbacks') || [];
-    this.coupons = getData('agri_coupons') || [];
-    this.logs = getData('agri_logs') || [];
-    this.categories = getData('agri_categories') || [];
-    this.templates = getData('agri_templates') || [];
-    this.inquiries = getData('agri_inquiries') || [];
-    this.notifications = getData('agri_notifications') || [];
-    this.staticPages = getData('agri_pages') || [];
-    this.trash = getData('agri_trash') || [];
-  }
-
-  private save(key: string, data: any) {
-    localStorage.setItem(key, JSON.stringify(data));
-  }
-
-  private logAction(action: string, module: string) {
-    const admin = JSON.parse(localStorage.getItem('agri_session') || '{}');
-    const log: AdminLog = {
-      id: Math.random().toString(36).substr(2, 9),
-      adminId: admin.id || 'system',
-      adminName: admin.name || 'System',
-      action,
-      module,
-      timestamp: new Date().toISOString()
-    };
-    this.logs.unshift(log);
-    this.save('agri_logs', this.logs);
-  }
-
-  async login(email: string, pass: string) {
-    // Official Admin Check
-    if (email === 'admin@cv.co' && pass === 'Shivesh@9319') {
-      const admin = this.users.find(u => u.email === email);
-      if (admin) {
-        admin.lastLogin = new Date().toISOString();
-        this.save('agri_users', this.users);
+    const stored = localStorage.getItem('agri_auth_user');
+    if (stored) {
+      try {
+        this.currentUser = JSON.parse(stored);
+      } catch (e) {
+        this.currentUser = null;
       }
-      return admin || null;
     }
-    const user = this.users.find(u => u.email === email);
+  }
+
+  updateUser(user: MockFirebaseUser | null) {
+    this.currentUser = user;
     if (user) {
-      user.lastLogin = new Date().toISOString();
-      this.save('agri_users', this.users);
+      localStorage.setItem('agri_auth_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('agri_auth_user');
     }
-    return user || null;
+    this.notify();
   }
 
-  async register(u: Partial<User>) {
-    const newUser: User = { 
-      ...u, 
-      id: Math.random().toString(36).substr(2, 9), 
-      joinedDate: new Date().toISOString(), 
-      articleUsage: 0, 
-      blogUsage: 0, 
-      status: 'ACTIVE', 
-      permissions: { canDownloadArticles: false, canDownloadBlogs: false } 
-    } as User;
-    this.users.push(newUser);
-    this.save('agri_users', this.users);
-    return newUser;
+  onAuthStateChanged(cb: (user: MockFirebaseUser | null) => void) {
+    this.listeners.push(cb);
+    setTimeout(() => cb(this.currentUser), 0);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== cb);
+    };
   }
 
+  notify() {
+    this.listeners.forEach(cb => cb(this.currentUser));
+  }
+}
+
+export const auth = new MockAuth();
+
+export const onAuthStateChanged = (authObj: any, cb: (user: MockFirebaseUser | null) => void) => {
+  return auth.onAuthStateChanged(cb);
+};
+
+class MockBackendService {
+  private localSettings: SiteSettings = DEFAULT_SETTINGS;
+
+  constructor() {
+    this.refreshSettings();
+    this.initSeedData();
+  }
+
+  private getDB<T>(collection: string): T[] {
+      const d = localStorage.getItem(`agri_${collection}`);
+      return d ? JSON.parse(d) : [];
+  }
+
+  private setDB<T>(collection: string, data: T[]) {
+      localStorage.setItem(`agri_${collection}`, JSON.stringify(data));
+      if (this.listeners[collection]) {
+          this.listeners[collection].forEach(cb => cb(data));
+      }
+  }
+
+  private listeners: Record<string, ((data: any[]) => void)[]> = {};
+
+  private subscribeToCollection<T>(collection: string, cb: (data: T[]) => void, orderBy?: string, dir: 'asc'|'desc' = 'desc'): () => void {
+      if (!this.listeners[collection]) this.listeners[collection] = [];
+      this.listeners[collection].push(cb);
+      
+      const data = this.getDB<T>(collection);
+      if (orderBy) {
+            data.sort((a: any, b: any) => {
+              const va = a[orderBy];
+              const vb = b[orderBy];
+              if (va < vb) return dir === 'asc' ? -1 : 1;
+              if (va > vb) return dir === 'asc' ? 1 : -1;
+              return 0;
+            });
+      }
+
+      setTimeout(() => cb(data), 0);
+      return () => {
+          this.listeners[collection] = this.listeners[collection].filter(c => c !== cb);
+      }
+  }
+
+  async uploadFile(file: File, path: string): Promise<string> {
+      return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+      });
+  }
+
+  async login(email: string, pass: string): Promise<User | null> {
+      const creds: any[] = JSON.parse(localStorage.getItem('agri_creds') || '[]');
+      const userCred = creds.find(c => c.email === email && c.password === pass);
+      
+      if (userCred) {
+          const firebaseUser = { 
+              uid: userCred.uid, 
+              email: userCred.email, 
+              displayName: userCred.name, 
+              photoURL: null 
+          };
+          auth.updateUser(firebaseUser);
+          return this.syncUser(firebaseUser);
+      }
+      
+      throw new Error('auth/invalid-credential');
+  }
+
+  async register(u: Partial<User> & { password?: string }): Promise<void> {
+      const uid = 'user_' + Date.now();
+      const creds: any[] = JSON.parse(localStorage.getItem('agri_creds') || '[]');
+      
+      if (creds.find(c => c.email === u.email)) {
+          throw new Error('auth/email-already-in-use');
+      }
+
+      creds.push({ email: u.email, password: u.password, uid, name: u.name });
+      localStorage.setItem('agri_creds', JSON.stringify(creds));
+
+      const newUser: User = {
+          id: uid,
+          name: u.name || 'User',
+          email: u.email!,
+          role: 'USER',
+          permissions: { canDownloadArticles: false, canDownloadBlogs: false },
+          articleUsage: 0,
+          blogUsage: 0,
+          occupation: u.occupation,
+          avatar: u.avatar,
+          joinedDate: new Date().toISOString()
+      };
+      
+      const users = this.getDB<User>('users');
+      users.push(newUser);
+      this.setDB('users', users);
+
+      const firebaseUser = { uid, email: u.email!, displayName: u.name || null, photoURL: u.avatar || null };
+      auth.updateUser(firebaseUser);
+  }
+
+  async logout() {
+      auth.updateUser(null);
+  }
+  
+  async syncUser(fbUser: MockFirebaseUser): Promise<User> {
+      const users = this.getDB<User>('users');
+      let user = users.find(u => u.id === fbUser.uid);
+      
+      if (user) {
+           if (fbUser.email === 'agrigence@gmail.com' && user.role !== 'SUPER_ADMIN') {
+               user.role = 'SUPER_ADMIN';
+               this.setDB('users', users);
+           }
+           return user;
+      } else {
+           const newUser: User = {
+              id: fbUser.uid,
+              name: fbUser.displayName || fbUser.email?.split('@')[0] || 'User',
+              email: fbUser.email || '',
+              role: fbUser.email === 'agrigence@gmail.com' ? 'SUPER_ADMIN' : 'USER',
+              permissions: { canDownloadArticles: false, canDownloadBlogs: false },
+              articleUsage: 0,
+              blogUsage: 0,
+              joinedDate: new Date().toISOString(),
+              avatar: fbUser.photoURL || undefined
+          };
+          users.push(newUser);
+          this.setDB('users', users);
+          return newUser;
+      }
+  }
+
+  async getUsers() { return this.getDB<User>('users'); }
+  subscribeToUsers(cb: (users: User[]) => void) { return this.subscribeToCollection<User>('users', cb, 'joinedDate'); }
+  async updateUser(u: User) { 
+      const users = this.getDB<User>('users');
+      const idx = users.findIndex(user => user.id === u.id);
+      if (idx !== -1) {
+          users[idx] = u;
+          this.setDB('users', users);
+      }
+  }
   async deleteUser(id: string) {
-    const user = this.users.find(u => u.id === id);
-    if (user) {
-      this.trash.push({ ...user, trashType: 'USER', deletedAt: new Date().toISOString() });
-      this.users = this.users.filter(u => u.id !== id);
-      this.save('agri_users', this.users);
-      this.save('agri_trash', this.trash);
-      this.logAction('Moved User to Trash', 'Users');
-    }
+      const users = this.getDB<User>('users');
+      this.setDB('users', users.filter(u => u.id !== id));
   }
-
-  getTrash() { return this.trash; }
-  async permanentDelete(id: string) {
-    this.trash = this.trash.filter(t => t.id !== id);
-    this.save('agri_trash', this.trash);
+  
+  private generateId() { return Math.random().toString(36).substr(2, 9); }
+  
+  async addArticle(a: Partial<Article>) {
+      const list = this.getDB<Article>('articles');
+      const newArt = { 
+          ...a, 
+          id: this.generateId(),
+          submissionDate: new Date().toISOString(), 
+          views: 0,
+          status: a.status || 'PENDING'
+      } as Article;
+      list.push(newArt);
+      this.setDB('articles', list);
+      if (a.authorId && a.type === 'ARTICLE') {
+          this.sendNotification(a.authorId, 'SUBMISSION', { title: a.title || 'Untitled Article' });
+      }
+      return newArt;
   }
-
-  getSettings() { return this.settings; }
-  async updateSettings(s: SiteSettings) { this.settings = s; this.save('agri_settings', this.settings); this.logAction('Updated Settings', 'System'); }
-
-  getLeadership() { return this.leadership; }
-  async updateLeadership(l: LeadershipMember[]) { this.leadership = l; this.save('agri_leadership', this.leadership); this.logAction('Updated Leadership', 'Team'); }
-
-  getUsers() { return this.users; }
-  async updateUser(u: User) {
-    const idx = this.users.findIndex(x => x.id === u.id);
-    if (idx !== -1) { this.users[idx] = u; this.save('agri_users', this.users); this.logAction(`Updated User ${u.name}`, 'Users'); }
+  
+  async getArticles(queryStr?: string) {
+      let list = this.getDB<Article>('articles');
+      list.sort((a,b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime());
+      if (queryStr) {
+          const qs = queryStr.toLowerCase();
+          list = list.filter(a => a.title.toLowerCase().includes(qs) || a.authorName.toLowerCase().includes(qs));
+      }
+      return list;
   }
-
-  getArticles(query?: string) {
-    if (!query) return this.articles;
-    const q = query.toLowerCase();
-    return this.articles.filter(a => a.title.toLowerCase().includes(q) || a.authorName.toLowerCase().includes(q) || (a.tags && a.tags.some(t => t.toLowerCase().includes(q))));
+  subscribeToArticles(cb: (articles: Article[]) => void) { return this.subscribeToCollection('articles', cb, 'submissionDate'); }
+  async getUserArticles(userId: string) {
+      return this.getDB<Article>('articles').filter(a => a.authorId === userId);
   }
-
-  getUserArticles(userId: string) {
-    return this.articles.filter(a => a.authorId === userId);
+  async submitArticle(a: Partial<Article>) { return this.addArticle(a); }
+  async updateArticle(a: Article) { 
+      const list = this.getDB<Article>('articles');
+      const idx = list.findIndex(i => i.id === a.id);
+      if (idx !== -1) { list[idx] = a; this.setDB('articles', list); }
   }
-
-  async addArticle(a: Partial<Article>) { 
-    const item = { ...a, id: Math.random().toString(), submissionDate: new Date().toISOString(), views: 0 } as Article;
-    this.articles.unshift(item); this.save('agri_articles', this.articles); this.logAction(`Added Article ${item.title}`, 'Articles'); return item;
-  }
-
-  async submitArticle(a: Partial<Article>) {
-    const user = this.users.find(u => u.id === a.authorId);
-    if (user) {
-      if (a.type === 'ARTICLE') user.articleUsage += 1;
-      else user.blogUsage += 1;
-      this.save('agri_users', this.users);
-    }
-    return this.addArticle(a);
-  }
-
-  async updateArticle(a: Article) {
-    const idx = this.articles.findIndex(x => x.id === a.id);
-    if (idx !== -1) { this.articles[idx] = a; this.save('agri_articles', this.articles); this.logAction(`Updated Article ${a.title}`, 'Articles'); }
-  }
-
   async updateArticleStatus(id: string, status: Article['status']) {
-    const article = this.articles.find(a => a.id === id);
-    if (article) {
-      article.status = status;
-      this.save('agri_articles', this.articles);
-      this.logAction(`Updated Article Status to ${status}`, 'Articles');
-    }
+      const list = this.getDB<Article>('articles');
+      const item = list.find(i => i.id === id);
+      if (item) {
+          item.status = status;
+          this.setDB('articles', list);
+          if (item.authorId) {
+              this.sendNotification(item.authorId, 'ARTICLE_STATUS', { title: item.title, status });
+          }
+      }
   }
-
-  async deleteArticle(id: string) { 
-    const item = this.articles.find(a => a.id === id);
-    if (item) {
-      this.trash.push({ ...item, trashType: 'ARTICLE', deletedAt: new Date().toISOString() });
-      this.articles = this.articles.filter(x => x.id !== id);
-      this.save('agri_articles', this.articles);
-      this.save('agri_trash', this.trash);
-      this.logAction('Moved Article to Trash', 'Articles');
-    }
+  async deleteArticle(id: string) {
+      const list = this.getDB<Article>('articles');
+      this.setDB('articles', list.filter(i => i.id !== id));
   }
-
-  getNews() { return this.news; }
+  
+  async getNews() { return this.getDB<NewsItem>('news').sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()); }
+  subscribeToNews(cb: (news: NewsItem[]) => void) { return this.subscribeToCollection('news', cb, 'date'); }
   async addNews(n: Partial<NewsItem>) {
-    const item = { ...n, id: Math.random().toString(), date: new Date().toISOString().split('T')[0] } as NewsItem;
-    this.news.unshift(item); this.save('agri_news', this.news); this.logAction(`Added News ${item.title}`, 'News');
+      const list = this.getDB<NewsItem>('news');
+      list.push({ ...n, id: this.generateId(), date: n.date || new Date().toISOString().split('T')[0] } as NewsItem);
+      this.setDB('news', list);
   }
-
   async deleteNews(id: string) {
-    this.news = this.news.filter(x => x.id !== id);
-    this.save('agri_news', this.news);
-    this.logAction('Deleted News', 'News');
+      this.setDB('news', this.getDB('news').filter((i:any) => i.id !== id));
   }
 
-  getMagazines() { return this.magazines; }
-  getJournals() { return this.magazines; }
-  getLatestMagazine() { return this.magazines[0] || null; }
-
+  async getJournals() { return this.getMagazines(); }
+  async getMagazines() { return this.getDB<Magazine>('magazines'); }
+  subscribeToMagazines(cb: (mags: Magazine[]) => void) { return this.subscribeToCollection('magazines', cb); }
   async addMagazine(m: Partial<Magazine>) {
-    const item = { ...m, id: Math.random().toString(), publishDate: new Date().toISOString() } as Magazine;
-    this.magazines.unshift(item); this.save('agri_magazines', this.magazines); this.logAction(`Added Magazine ${item.title}`, 'Magazines');
+      const list = this.getDB<Magazine>('magazines');
+      if (m.id) {
+           const idx = list.findIndex(i => i.id === m.id);
+           if (idx !== -1) list[idx] = m as Magazine;
+      } else {
+           list.push({ ...m, id: this.generateId() } as Magazine);
+      }
+      this.setDB('magazines', list);
+  }
+  async getLatestMagazine() {
+      const list = this.getDB<Magazine>('magazines');
+      return list.length ? list[0] : null;
   }
 
-  getProducts() { return this.products; }
+  async getProducts() { return this.getDB<Product>('products'); }
+  subscribeToProducts(cb: (p: Product[]) => void) { return this.subscribeToCollection('products', cb); }
   async addProduct(p: Partial<Product>) {
-    const item = { ...p, id: Math.random().toString() } as Product;
-    this.products.unshift(item); this.save('agri_products', this.products); this.logAction(`Added Product ${item.name}`, 'Store');
+      const list = this.getDB<Product>('products');
+      list.push({ ...p, id: this.generateId() } as Product);
+      this.setDB('products', list);
   }
-
   async updateProduct(p: Product) {
-    const idx = this.products.findIndex(x => x.id === p.id);
-    if (idx !== -1) { this.products[idx] = p; this.save('agri_products', this.products); this.logAction(`Updated Product ${p.name}`, 'Store'); }
+      const list = this.getDB<Product>('products');
+      const idx = list.findIndex(i => i.id === p.id);
+      if (idx !== -1) { list[idx] = p; this.setDB('products', list); }
   }
-
   async deleteProduct(id: string) {
-    this.products = this.products.filter(x => x.id !== id);
-    this.save('agri_products', this.products);
-    this.logAction('Deleted Product', 'Store');
+      this.setDB('products', this.getDB('products').filter((i:any) => i.id !== id));
   }
 
-  getMembers() { return this.members; }
+  async getMembers() { return this.getDB<EditorialMember>('editorial_board'); }
+  subscribeToMembers(cb: (m: EditorialMember[]) => void) { return this.subscribeToCollection('editorial_board', cb, 'order', 'asc'); }
   async addMember(m: Partial<EditorialMember>) {
-    const item = { ...m, id: Math.random().toString(), order: this.members.length + 1, isEnabled: true } as EditorialMember;
-    this.members.push(item);
-    this.save('agri_members', this.members);
-    this.logAction(`Added Member ${item.name}`, 'Board');
-    return item;
+      const list = this.getDB<EditorialMember>('editorial_board');
+      list.push({ ...m, id: this.generateId() } as EditorialMember);
+      this.setDB('editorial_board', list);
   }
   async updateMember(m: EditorialMember) {
-    const idx = this.members.findIndex(x => x.id === m.id);
-    if (idx !== -1) { this.members[idx] = m; this.save('agri_members', this.members); this.logAction(`Updated Member ${m.name}`, 'Board'); }
+      const list = this.getDB<EditorialMember>('editorial_board');
+      const idx = list.findIndex(i => i.id === m.id);
+      if (idx !== -1) { list[idx] = m; this.setDB('editorial_board', list); }
   }
   async deleteMember(id: string) {
-    this.members = this.members.filter(m => m.id !== id);
-    this.save('agri_members', this.members);
-    this.logAction('Deleted Member', 'Board');
+      this.setDB('editorial_board', this.getDB('editorial_board').filter((i:any) => i.id !== id));
   }
 
-  getPlans() { return this.plans; }
+  async getPlans() { return this.getDB<SubscriptionPlan>('subscription_plans'); }
+  async addPlan(p: Partial<SubscriptionPlan>) {
+      const list = this.getDB<SubscriptionPlan>('subscription_plans');
+      list.push({ ...p, id: this.generateId() } as SubscriptionPlan);
+      this.setDB('subscription_plans', list);
+  }
   async updatePlan(p: SubscriptionPlan) {
-    const idx = this.plans.findIndex(x => x.id === p.id);
-    if (idx !== -1) { this.plans[idx] = p; this.save('agri_plans', this.plans); this.logAction(`Updated Plan ${p.name}`, 'Subscriptions'); }
+      const list = this.getDB<SubscriptionPlan>('subscription_plans');
+      const idx = list.findIndex(i => i.id === p.id);
+      if (idx !== -1) { list[idx] = p; this.setDB('subscription_plans', list); }
+  }
+  async deletePlan(id: string) {
+      this.setDB('subscription_plans', this.getDB('subscription_plans').filter((i:any) => i.id !== id));
   }
 
-  // UPDATED: Now requires manual data containing txnId and screenshot. Creates a PENDING record.
-  async purchasePlan(userId: string, planId: string, paymentData: { txnId: string, screenshot?: string }) {
-    const user = this.users.find(u => u.id === userId);
-    const plan = this.plans.find(p => p.id === planId);
-    if (!user || !plan) return null;
-
-    const payment: PaymentRecord = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId,
-      userName: user.name,
-      planId,
-      planName: plan.name,
-      amount: plan.price,
-      method: 'QR',
-      status: 'PENDING',
-      date: new Date().toISOString(),
-      upiTxnId: paymentData.txnId,
-      screenshotUrl: paymentData.screenshot
-    };
-    
-    this.payments.unshift(payment);
-    this.save('agri_payments', this.payments);
-    this.logAction(`New QR Payment Request: ${paymentData.txnId}`, 'Subscriptions');
-    return payment;
+  async getPayments() { return this.getDB<PaymentRecord>('payments'); }
+  subscribeToPayments(cb: (p: PaymentRecord[]) => void) { return this.subscribeToCollection('payments', cb, 'date'); }
+  async purchasePlan(userId: string, planId: string, paymentData: any) {
+      const user = (await this.getUsers()).find(u => u.id === userId);
+      const plan = (await this.getPlans()).find(p => p.id === planId);
+      if (user && plan) {
+          const list = this.getDB<PaymentRecord>('payments');
+          list.push({
+              id: this.generateId(),
+              userId, userName: user.name, planId, planName: plan.name, amount: plan.price,
+              method: 'QR', status: 'PENDING', date: new Date().toISOString(),
+              upiTxnId: paymentData.txnId, screenshotUrl: paymentData.screenshot
+          });
+          this.setDB('payments', list);
+      }
   }
-
-  getPayments() { return this.payments; }
-  
-  // UPDATED: Activating plan only on admin verification
   async verifyPayment(id: string) {
-    const p = this.payments.find(x => x.id === id);
-    if (!p) return;
-    
-    // Find user and plan associated with this payment
-    const userIndex = this.users.findIndex(u => u.id === p.userId);
-    const plan = this.plans.find(pl => pl.id === p.planId);
-    
-    if (userIndex !== -1 && plan && p.status === 'PENDING') {
-       // Activate Plan
-        const expiry = new Date();
-        expiry.setMonth(expiry.getMonth() + plan.durationMonths);
-        
-        const updatedUser = {
-          ...this.users[userIndex],
-          subscriptionTier: plan.name,
-          subscriptionExpiry: expiry.toISOString(),
-          articleLimit: plan.articleLimit,
-          blogLimit: plan.blogLimit,
-          permissions: { canDownloadArticles: true, canDownloadBlogs: true }
-        };
-        this.users[userIndex] = updatedUser;
-        this.save('agri_users', this.users);
-        
-        // Update Payment
-        p.status = 'COMPLETED';
-        this.save('agri_payments', this.payments);
-        this.logAction(`Verified Payment ${id}`, 'Payments');
-    }
+      const list = this.getDB<PaymentRecord>('payments');
+      const payment = list.find(p => p.id === id);
+      if (payment && payment.status === 'PENDING') {
+          payment.status = 'COMPLETED';
+          this.setDB('payments', list);
+          
+          const users = this.getDB<User>('users');
+          const user = users.find(u => u.id === payment.userId);
+          const plan = (await this.getPlans()).find(p => p.id === payment.planId);
+          
+          if (user && plan) {
+              const now = new Date();
+              const expiry = new Date(now.setMonth(now.getMonth() + plan.durationMonths));
+              user.subscriptionTier = plan.name;
+              user.subscriptionExpiry = expiry.toISOString();
+              user.articleLimit = plan.articleLimit;
+              user.blogLimit = plan.blogLimit;
+              user.articleUsage = 0;
+              user.blogUsage = 0;
+              user.permissions = { canDownloadArticles: true, canDownloadBlogs: true };
+              this.setDB('users', users);
+              
+              this.sendNotification(user.id, 'SUBSCRIPTION', { plan_name: plan.name, expiry: expiry.toLocaleDateString() });
+          }
+      }
   }
 
-  getCoupons() { return this.coupons; }
+  getSettings() { 
+      const s = this.getDB<SiteSettings>('site_identity');
+      return s.length ? s[0] : DEFAULT_SETTINGS;
+  }
+  async refreshSettings() { this.localSettings = this.getSettings(); }
+  async updateSettings(s: SiteSettings) {
+      this.setDB('site_identity', [s]);
+      this.localSettings = s;
+  }
+
+  async getLeadership() { return this.getDB<LeadershipMember>('leadership'); }
+  async updateLeadership(l: LeadershipMember[]) { this.setDB('leadership', l); }
+
+  async getCoupons() { return this.getDB<Coupon>('coupons'); }
   async addCoupon(c: Partial<Coupon>) {
-    const item = { ...c, id: Math.random().toString(), usageCount: 0 } as Coupon;
-    this.coupons.push(item); this.save('agri_coupons', this.coupons); this.logAction(`Created Coupon ${item.code}`, 'Coupons');
+      const list = this.getDB<Coupon>('coupons');
+      list.push({ ...c, id: this.generateId() } as Coupon);
+      this.setDB('coupons', list);
   }
-  async deleteCoupon(id: string) { this.coupons = this.coupons.filter(c => c.id !== id); this.save('agri_coupons', this.coupons); }
+  async deleteCoupon(id: string) {
+      this.setDB('coupons', this.getDB('coupons').filter((i:any) => i.id !== id));
+  }
 
-  getPositiveFeedback() { return this.feedbacks.filter(f => f.rating >= 4 && f.status === 'APPROVED'); }
+  async getPositiveFeedback() { return this.getDB<Feedback>('feedback').filter(f => f.status === 'APPROVED'); }
+  subscribeToFeedback(cb: (fb: Feedback[]) => void) { 
+      return this.subscribeToCollection<Feedback>('feedback', (data) => {
+           cb(data.filter(f => f.status === 'APPROVED'));
+      });
+  }
   async submitFeedback(f: Partial<Feedback>) {
-    const item = { ...f, id: Math.random().toString(), date: new Date().toISOString(), status: 'APPROVED' } as Feedback;
-    this.feedbacks.unshift(item);
-    this.save('agri_feedbacks', this.feedbacks);
-    return item;
+      const list = this.getDB<Feedback>('feedback');
+      list.push({ ...f, id: this.generateId(), status: 'APPROVED', date: new Date().toISOString() } as Feedback);
+      this.setDB('feedback', list);
   }
 
   async sendMessage(data: any) {
-    const inquiry: Inquiry = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: data.name, email: data.email, message: data.message, status: 'PENDING', date: new Date().toISOString()
-    };
-    this.inquiries.unshift(inquiry);
-    this.save('agri_inquiries', this.inquiries);
-    this.logAction('Sent Contact Message', 'System');
-    return { success: true };
+      const list = this.getDB<Inquiry>('inquiries');
+      list.push({ ...data, id: this.generateId(), status: 'PENDING', date: new Date().toISOString() });
+      this.setDB('inquiries', list);
+      return { success: true };
   }
-
-  getInquiries() { return this.inquiries; }
+  async getInquiries() { return this.getDB<Inquiry>('inquiries'); }
+  subscribeToInquiries(cb: (i: Inquiry[]) => void) { return this.subscribeToCollection('inquiries', cb, 'date'); }
   async resolveInquiry(id: string) {
-    const idx = this.inquiries.findIndex(i => i.id === id);
-    if (idx !== -1) { this.inquiries[idx].status = 'RESOLVED'; this.save('agri_inquiries', this.inquiries); }
+      const list = this.getDB<Inquiry>('inquiries');
+      const item = list.find(i => i.id === id);
+      if (item) { item.status = 'RESOLVED'; this.setDB('inquiries', list); }
   }
 
-  getCategories() { return this.categories; }
-  async addCategory(c: Partial<Category>) {
-    const item = { ...c, id: Math.random().toString() } as Category;
-    this.categories.push(item); this.save('agri_categories', this.categories);
-  }
-
-  getTemplates() { return this.templates; }
+  async getTemplates() { return this.getDB<EmailTemplate>('templates'); }
   async updateTemplate(t: EmailTemplate) {
-    const idx = this.templates.findIndex(x => x.id === t.id);
-    if (idx !== -1) { this.templates[idx] = t; this.save('agri_templates', this.templates); }
+       const list = this.getDB<EmailTemplate>('templates');
+       const idx = list.findIndex(i => i.id === t.id);
+       if (idx !== -1) { list[idx] = t; this.setDB('templates', list); }
   }
 
-  getNotifications() { return this.notifications; }
+  async getNotifications() { return this.getDB<Notification>('notifications'); }
+  subscribeToNotifications(cb: (n: Notification[]) => void) { return this.subscribeToCollection('notifications', cb, 'date'); }
   async addNotification(n: Partial<Notification>) {
-    const item = { ...n, id: Math.random().toString(), date: new Date().toISOString() } as Notification;
-    this.notifications.unshift(item); this.save('agri_notifications', this.notifications);
+      const list = this.getDB<Notification>('notifications');
+      list.push({ ...n, id: this.generateId(), date: new Date().toISOString() } as Notification);
+      this.setDB('notifications', list);
   }
 
-  getPages() { return this.staticPages; }
+  async getPages() { return this.getDB<StaticPage>('static_pages'); }
   async updatePage(p: StaticPage) {
-    const idx = this.staticPages.findIndex(x => x.id === p.id);
-    if (idx !== -1) { this.staticPages[idx] = { ...p, lastUpdated: new Date().toISOString() }; }
-    else { this.staticPages.push({ ...p, id: Math.random().toString(), lastUpdated: new Date().toISOString() }); }
-    this.save('agri_pages', this.staticPages);
+      const list = this.getDB<StaticPage>('static_pages');
+      const idx = list.findIndex(i => i.slug === p.slug);
+      if (idx !== -1) {
+          list[idx] = { ...p, lastUpdated: new Date().toISOString() };
+      } else {
+          list.push({ ...p, lastUpdated: new Date().toISOString() });
+      }
+      this.setDB('static_pages', list);
   }
 
-  getLogs() { return this.logs; }
-  incrementVisitor() { 
-    const v = parseInt(localStorage.getItem('visitor_count') || '2450') + 1;
-    localStorage.setItem('visitor_count', v.toString());
-    return v;
+  getTrash() { return []; }
+  async permanentDelete(id: string) {}
+
+  async triggerEmail(to: string | string[], subject: string, html: string) {
+      console.log(`[MockBackend] Email triggered to ${to}: ${subject}`);
+  }
+  
+  async sendNotification(userId: string, templateType: string, data: any) {
+      console.log(`[MockBackend] Notification for ${userId}: ${templateType}`, data);
+  }
+  
+  private async getUserById(id: string): Promise<User | null> {
+      return this.getDB<User>('users').find(u => u.id === id) || null;
+  }
+
+  private initSeedData() {
+    if (!localStorage.getItem('agri_site_identity')) {
+         localStorage.setItem('agri_site_identity', JSON.stringify([DEFAULT_SETTINGS]));
+    }
+    
+    if (!localStorage.getItem('agri_subscription_plans')) {
+         this.setDB('subscription_plans', this.ensurePlans());
+    }
+  }
+
+  private ensurePlans() {
+    return [
+      { id: 'p1', name: '1 Article Submission', type: 'ARTICLE_ACCESS', price: 149, durationMonths: 1, description: 'Single manuscript submission.', features: ['1 Article Submission', 'Email Support'], isActive: true, articleLimit: 1, blogLimit: 0, validityLabel: '1 Month' },
+      { id: 'p2', name: 'Institute (Unlimited)', type: 'ARTICLE_ACCESS', price: 4999, durationMonths: 12, description: 'Unlimited articles.', features: ['Unlimited Articles', 'Institute Verification'], isActive: true, articleLimit: 'UNLIMITED', blogLimit: 0, validityLabel: '1 Year' },
+    ];
   }
 }
 
 export const mockBackend = new MockBackendService();
+    

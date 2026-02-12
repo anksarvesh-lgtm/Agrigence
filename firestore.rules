@@ -1,0 +1,155 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- HELPER FUNCTIONS ---
+
+    // Check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Check if user is the owner of the document (based on userId field or doc ID)
+    function isOwner(userId) {
+      return isSignedIn() && (request.auth.uid == userId);
+    }
+
+    // Check if user is Admin by reading the user document from Firestore
+    function isAdmin() {
+      return isSignedIn() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['SUPER_ADMIN', 'ADMIN'] ||
+        request.auth.token.email == 'agrigence@gmail.com'
+      );
+    }
+
+    // Check if the user has an active subscription
+    function isSubscribed() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.subscriptionStatus == 'active';
+    }
+
+    // --- PUBLIC CONTENT COLLECTIONS ---
+    
+    match /articles/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /blogs/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /magazines/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /news/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /editorial_board/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /leadership/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /site_identity/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /popup_messages/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /subscription_plans/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /products/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /feedback/{docId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /static_pages/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /branding/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /coupons/{docId} {
+      allow read: if true; // Needed for public checkout
+      allow write: if isAdmin();
+    }
+    
+    match /templates/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // --- MAIL COLLECTION (For Email Trigger Extension) ---
+    match /mail/{docId} {
+      allow create: if isSignedIn(); // Allow app to trigger emails
+      allow read, update, delete: if isAdmin();
+    }
+
+    // --- USER SYSTEM & SUBMISSIONS ---
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) || isAdmin();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Submissions
+    match /submissions/{submissionId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId); // Allow all users to submit, logic handles strictness
+      allow update, delete: if isAdmin();
+    }
+    
+    // Payments
+    match /payments/{paymentId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId);
+      allow update, delete: if isAdmin();
+    }
+
+    // --- INQUIRIES & NOTIFICATIONS ---
+    
+    match /inquiries/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /notifications/{docId} {
+      allow read: if true; // Public notifications might exist
+      allow write: if isAdmin();
+    }
+
+    // --- DEFAULT DENY ---
+    match /{document=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

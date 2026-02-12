@@ -15,13 +15,16 @@ const NotificationManager: React.FC = () => {
   });
 
   useEffect(() => {
-    setNotifications(mockBackend.getNotifications());
+    const load = async () => {
+        setNotifications(await mockBackend.getNotifications());
+    };
+    load();
   }, []);
 
   const handleBroadcast = async () => {
     if (!newNote.title || !newNote.message) return alert("Title and Message required");
     await mockBackend.addNotification(newNote);
-    setNotifications(mockBackend.getNotifications());
+    setNotifications(await mockBackend.getNotifications());
     setIsModalOpen(false);
     setNewNote({ title: '', message: '', type: 'DASHBOARD', targetRole: 'ALL' });
     alert("Broadcasting successful!");

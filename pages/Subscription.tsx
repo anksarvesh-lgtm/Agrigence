@@ -29,7 +29,11 @@ const Subscription: React.FC = () => {
   });
 
   useEffect(() => {
-    setPlans(mockBackend.getPlans().filter(p => p.isActive));
+    const load = async () => {
+      const p = await mockBackend.getPlans();
+      setPlans(p.filter(plan => plan.isActive));
+    };
+    load();
     setSettings(mockBackend.getSettings());
   }, []);
 
@@ -49,17 +53,15 @@ const Subscription: React.FC = () => {
     e.preventDefault();
     if (!selectedPlan || !user) return;
     if (!upiForm.txnId) return alert("Please enter Transaction ID");
-    // Although screenshot is part of form state, for real apps you'd verify file existence here.
-    // For this mock, we assume user attached something if they say they did.
-
+    
     setIsProcessing(true);
 
-    // Simulate network delay
-    setTimeout(async () => {
-      // Create PENDING payment record
-      // In a real app, you would upload the file to a server and get a URL.
-      // Here we just pass a placeholder or object URL if we could.
-      const screenshotUrl = upiForm.screenshot ? URL.createObjectURL(upiForm.screenshot) : undefined;
+    try {
+      // Convert screenshot file to Base64 string if present
+      let screenshotUrl: string | undefined = undefined;
+      if (upiForm.screenshot) {
+        screenshotUrl = await mockBackend.uploadFile(upiForm.screenshot, 'payments');
+      }
 
       await mockBackend.purchasePlan(user.id, selectedPlan.id, {
         txnId: upiForm.txnId,
@@ -68,7 +70,11 @@ const Subscription: React.FC = () => {
       
       setIsProcessing(false);
       setStep('SUCCESS');
-    }, 1500);
+    } catch (error) {
+      console.error(error);
+      setIsProcessing(false);
+      alert("Payment submission failed. Please try again.");
+    }
   };
 
   const articlePlans = plans.filter(p => p.type === 'ARTICLE_ACCESS');

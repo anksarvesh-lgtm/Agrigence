@@ -13,8 +13,8 @@ const ProductManagement: React.FC = () => {
     loadProducts();
   }, []);
 
-  const loadProducts = () => {
-    setProducts([...mockBackend.getProducts()]);
+  const loadProducts = async () => {
+    setProducts([...(await mockBackend.getProducts())]);
   };
 
   const handleSave = async () => {

@@ -11,8 +11,8 @@ const EditorialBoardManagement: React.FC = () => {
 
   useEffect(() => { loadMembers(); }, []);
 
-  const loadMembers = () => {
-    setMembers([...mockBackend.getMembers().sort((a,b) => a.order - b.order)]);
+  const loadMembers = async () => {
+    setMembers([...(await mockBackend.getMembers()).sort((a,b) => a.order - b.order)]);
   };
 
   const handleSave = async () => {

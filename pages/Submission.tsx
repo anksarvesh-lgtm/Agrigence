@@ -67,6 +67,9 @@ const Submission: React.FC = () => {
     setErrorMsg('');
     
     try {
+      // Upload file to get base64 string
+      const fileUrl = await mockBackend.uploadFile(file, 'submissions');
+
       const result = await mockBackend.submitArticle({
         title,
         authorId: user!.id,
@@ -74,12 +77,13 @@ const Submission: React.FC = () => {
         status: 'PENDING',
         type: 'ARTICLE',
         submissionDate: new Date().toISOString(),
-        fileUrl: URL.createObjectURL(file) 
+        fileUrl: fileUrl
       });
       
       if (result) {
         if(user && typeof user.articleLimit === 'number') {
             const updatedUser = { ...user, articleUsage: user.articleUsage + 1 };
+            // Update local state, though page reload will fetch fresh from backend
             login(updatedUser); 
         }
         alert("Article submitted successfully!");

@@ -14,8 +14,8 @@ const AdminNewsManagement: React.FC = () => {
 
   useEffect(() => { loadNews(); }, []);
 
-  const loadNews = () => {
-    setNews([...mockBackend.getNews()]);
+  const loadNews = async () => {
+    setNews([...(await mockBackend.getNews())]);
   };
 
   const handleSave = async () => {

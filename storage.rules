@@ -1,0 +1,76 @@
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // --- HELPER FUNCTIONS ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.role == 'super_admin' || 
+        request.auth.token.email == 'agrigence@gmail.com'
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // --- PUBLIC ASSETS (Read: Public, Write: Admin) ---
+    // Matches the existing folder structure for content
+    
+    match /articles/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /blogs/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /magazines/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /news/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /editorial/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /branding/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- USER UPLOADS (Restricted to specific folders) ---
+
+    // Submissions: Users can upload files ONLY to their specific folder
+    match /submissions/{userId}/{allPaths=**} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // Payments: Users upload screenshots here
+    match /payments/{userId}/{allPaths=**} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // --- DEFAULT DENY ---
+    // Block access to root or undefined paths
+    match /{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

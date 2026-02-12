@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { User, Role } from '../../types';
@@ -12,8 +13,8 @@ const UserManagement: React.FC = () => {
     loadUsers();
   }, []);
 
-  const loadUsers = () => {
-    setUsers([...mockBackend.getUsers()]);
+  const loadUsers = async () => {
+    setUsers([...(await mockBackend.getUsers())]);
   };
 
   const handleSaveUser = async () => {

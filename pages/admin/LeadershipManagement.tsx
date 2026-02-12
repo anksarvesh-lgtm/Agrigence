@@ -9,7 +9,10 @@ const LeadershipManagement: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    setLeaders([...mockBackend.getLeadership().sort((a,b) => a.order - b.order)]);
+    const load = async () => {
+        setLeaders([...(await mockBackend.getLeadership()).sort((a,b) => a.order - b.order)]);
+    };
+    load();
   }, []);
 
   const handleSave = async () => {

@@ -8,12 +8,15 @@ const InquiryManager: React.FC = () => {
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
 
   useEffect(() => {
-    setInquiries(mockBackend.getInquiries());
+    const load = async () => {
+        setInquiries(await mockBackend.getInquiries());
+    };
+    load();
   }, []);
 
   const handleResolve = async (id: string) => {
     await mockBackend.resolveInquiry(id);
-    setInquiries(mockBackend.getInquiries());
+    setInquiries(await mockBackend.getInquiries());
   };
 
   return (

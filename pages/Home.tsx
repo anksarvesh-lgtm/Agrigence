@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  ArrowRight, BookOpen, Newspaper, Calendar, User, 
-  ChevronRight, Bookmark, ExternalLink, Star, Quote,
-  ShoppingBag, Rss, FileText, CheckCircle, Megaphone
+  ArrowRight, Calendar, User, 
+  ChevronRight, Bookmark, Star, Quote,
+  Megaphone, Rss, FileText
 } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
 import { NewsItem, Article, Magazine, Product, Feedback } from '../types';
@@ -21,16 +21,36 @@ const Home: React.FC = () => {
   const [reviews, setReviews] = useState<Feedback[]>([]);
 
   useEffect(() => {
-    const fetchData = () => {
-      setNews(mockBackend.getNews().slice(0, 6));
-      const allArticles = mockBackend.getArticles().filter(a => a.status === 'PUBLISHED' || a.status === 'APPROVED');
-      setArticles(allArticles.filter(a => a.type === 'ARTICLE').slice(0, 4));
-      setBlogs(allArticles.filter(a => a.type === 'BLOG').slice(0, 6));
-      setBooks(mockBackend.getProducts().filter(p => p.category === 'Book').slice(0, 6));
-      setMagazine(mockBackend.getLatestMagazine());
-      setReviews(mockBackend.getPositiveFeedback().slice(0, 6));
+    // Real-time listeners
+    const unsubNews = mockBackend.subscribeToNews((data) => setNews(data.slice(0, 6)));
+    
+    const unsubArticles = mockBackend.subscribeToArticles((data) => {
+        const approved = data.filter(a => a.status === 'PUBLISHED' || a.status === 'APPROVED');
+        setArticles(approved.filter(a => a.type === 'ARTICLE').slice(0, 4));
+        setBlogs(approved.filter(a => a.type === 'BLOG').slice(0, 6));
+    });
+
+    const unsubProducts = mockBackend.subscribeToProducts((data) => {
+        setBooks(data.filter(p => p.category === 'Book').slice(0, 6));
+    });
+
+    const unsubMags = mockBackend.subscribeToMagazines((data) => {
+        // Sort manually since subscription might return unsorted if complex query
+        const sorted = data.sort((a,b) => (b.year - a.year) || (new Date(`${b.month} 1`).getTime() - new Date(`${a.month} 1`).getTime()));
+        setMagazine(sorted.length > 0 ? sorted[0] : null);
+    });
+
+    const unsubReviews = mockBackend.subscribeToFeedback((data) => {
+        setReviews(data.slice(0, 6));
+    });
+
+    return () => {
+        unsubNews();
+        unsubArticles();
+        unsubProducts();
+        unsubMags();
+        unsubReviews();
     };
-    fetchData();
   }, []);
 
   const SectionHeader = ({ title, link, linkText = "View All" }: { title: string; link: string; linkText?: string }) => (

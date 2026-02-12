@@ -1,22 +1,49 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, FileText, ShoppingBag, TrendingUp, DollarSign, Rss, Newspaper, 
   ShieldCheck, Megaphone, Terminal, Hash, Activity, BookOpen, CreditCard, Tag 
 } from 'lucide-react';
 import { mockBackend } from '../../services/mockBackend';
+import { User, Article, Product, PaymentRecord, NewsItem, SiteSettings, Magazine, Coupon } from '../../types';
 
 const Dashboard: React.FC = () => {
-  const users = mockBackend.getUsers();
-  const articles = mockBackend.getArticles();
+  const [users, setUsers] = useState<User[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [magazines, setMagazines] = useState<Magazine[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    // Real-time subscriptions
+    const unsubUsers = mockBackend.subscribeToUsers(setUsers);
+    const unsubArticles = mockBackend.subscribeToArticles(setArticles);
+    const unsubProducts = mockBackend.subscribeToProducts(setProducts);
+    const unsubPayments = mockBackend.subscribeToPayments(setPayments);
+    const unsubNews = mockBackend.subscribeToNews(setNews);
+    const unsubMags = mockBackend.subscribeToMagazines(setMagazines);
+    
+    // One-off or local refresh for settings/coupons (could be real-time too if needed)
+    mockBackend.getCoupons().then(setCoupons);
+    setSettings(mockBackend.getSettings());
+
+    return () => {
+        unsubUsers();
+        unsubArticles();
+        unsubProducts();
+        unsubPayments();
+        unsubNews();
+        unsubMags();
+    };
+  }, []);
+
+  if (!settings) return null;
+
   const blogs = articles.filter(a => a.type === 'BLOG');
   const publications = articles.filter(a => a.type === 'ARTICLE');
-  const products = mockBackend.getProducts();
-  const payments = mockBackend.getPayments();
-  const news = mockBackend.getNews();
-  const settings = mockBackend.getSettings();
-  const magazines = mockBackend.getMagazines();
-  const coupons = mockBackend.getCoupons();
 
   const totalRevenue = payments
     .filter(p => p.status === 'COMPLETED')

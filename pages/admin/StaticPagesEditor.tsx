@@ -13,8 +13,8 @@ const StaticPagesEditor: React.FC = () => {
     loadPages();
   }, []);
 
-  const loadPages = () => {
-    const data = mockBackend.getPages();
+  const loadPages = async () => {
+    const data = await mockBackend.getPages();
     // Pre-seed if empty
     if (data.length === 0) {
       const defaults = [
@@ -22,8 +22,10 @@ const StaticPagesEditor: React.FC = () => {
         { id: '2', title: 'Privacy Policy', slug: 'privacy', content: 'We value your data...', lastUpdated: '' },
         { id: '3', title: 'Author Guidelines', slug: 'guidelines', content: 'Follow these rules...', lastUpdated: '' },
       ];
-      defaults.forEach(p => mockBackend.updatePage(p as StaticPage));
-      setPages(mockBackend.getPages());
+      for(const p of defaults) {
+         await mockBackend.updatePage(p as StaticPage);
+      }
+      setPages(await mockBackend.getPages());
     } else {
       setPages(data);
     }

@@ -9,13 +9,16 @@ const TemplateManager: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null);
 
   useEffect(() => {
-    setTemplates(mockBackend.getTemplates());
+    const load = async () => {
+        setTemplates(await mockBackend.getTemplates());
+    };
+    load();
   }, []);
 
   const handleSave = async () => {
     if (!selectedTemplate) return;
     await mockBackend.updateTemplate(selectedTemplate);
-    setTemplates(mockBackend.getTemplates());
+    setTemplates(await mockBackend.getTemplates());
     setSelectedTemplate(null);
     alert('Email template synced successfully!');
   };

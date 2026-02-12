@@ -20,7 +20,16 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      setArticles(mockBackend.getUserArticles(user.id));
+      const fetchArticles = async () => {
+        try {
+          const userArticles = await mockBackend.getUserArticles(user.id);
+          setArticles(userArticles);
+        } catch (error) {
+          console.error("Failed to load articles", error);
+          setArticles([]);
+        }
+      };
+      fetchArticles();
     }
   }, [user]);
 
@@ -347,3 +356,4 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+    

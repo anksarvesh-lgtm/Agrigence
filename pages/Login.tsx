@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
-import { Fingerprint, CheckCircle2, User, Lock, Mail, Users } from 'lucide-react';
-import { User as UserType } from '../types';
+import { CheckCircle2, User, Lock, Mail, Users, ArrowLeft } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,6 +13,7 @@ const Login: React.FC = () => {
   const [profession, setProfession] = useState('Student');
   const [customProfession, setCustomProfession] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -28,63 +28,70 @@ const Login: React.FC = () => {
   ];
 
   const validatePassword = (pass: string) => {
-    return pass.length >= 8 && /[a-zA-Z]/.test(pass) && /[0-9]/.test(pass);
+    return pass.length >= 6;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    if (isLogin) {
-      const user = await mockBackend.login(email, password);
-      if (user) {
-        login(user);
-        navigate(user.role === 'SUPER_ADMIN' || user.role === 'ADMIN' ? '/admin' : '/dashboard');
+    try {
+      if (isLogin) {
+        const user = await mockBackend.login(email, password);
+        if (user) {
+          navigate('/dashboard');
+        }
       } else {
-        setError('Invalid credentials');
-      }
-    } else {
-      // Register
-      if (!validatePassword(password)) {
-        setError('Password must be at least 8 characters and include letters and numbers.');
-        return;
-      }
+        // Register
+        if (!validatePassword(password)) {
+          setError('Password must be at least 6 characters.');
+          setIsLoading(false);
+          return;
+        }
 
-      const finalProfession = profession === 'Other' ? customProfession : profession;
+        const finalProfession = profession === 'Other' ? customProfession : profession;
 
-      const user = await mockBackend.register({
-        id: '',
-        name,
-        email,
-        occupation: finalProfession,
-        role: 'USER',
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3D2B1F&color=fff`,
-        subscriptionTier: undefined
-      });
-      login(user);
-      navigate('/dashboard');
-    }
-  };
-
-  const handleInternetIdentity = () => {
-    setTimeout(() => {
-        const mockUser: UserType = {
-            id: 'ii-user-' + Math.random(),
-            name: 'Internet Identity User',
-            email: 'user@dfinity.mock',
-            role: 'USER',
-            permissions: {
-              canDownloadArticles: false,
-              canDownloadBlogs: false
-            },
-            status: 'ACTIVE',
-            joinedDate: new Date().toISOString(),
-            articleUsage: 0,
-            blogUsage: 0
-        };
-        login(mockUser);
+        // Register the user
+        await mockBackend.register({
+          name,
+          email,
+          occupation: finalProfession,
+          role: 'USER',
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3D2B1F&color=fff`,
+          // @ts-ignore
+          password: password 
+        });
+        
+        // Auto login success (auth state listener in App.tsx handles context update)
         navigate('/dashboard');
-    }, 1000);
+      }
+    } catch (e: any) {
+      if (isLogin) {
+        // Explicitly check for invalid-credential or related error codes/messages
+        if (
+          e.code === 'auth/invalid-credential' || 
+          e.code === 'auth/user-not-found' || 
+          e.code === 'auth/wrong-password' || 
+          e.code === 'auth/invalid-email' ||
+          e.message?.includes('auth/invalid-credential')
+        ) {
+          setError("Email or password is incorrect");
+        } else {
+          setError(e.message || "Email or password is incorrect");
+        }
+      } else {
+        if (e.code === 'auth/email-already-in-use') {
+          setError("User already exists. Please sign in");
+        } else if (e.code === 'auth/weak-password') {
+          setError("Password is too weak.");
+        } else {
+          setError(e.message || "Registration failed.");
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -212,33 +219,19 @@ const Login: React.FC = () => {
                   />
                 </div>
                 {!isLogin && (
-                  <p className="text-[10px] text-stone-400 mt-1 ml-1">Must contain 8+ chars, letters & numbers</p>
+                  <p className="text-[10px] text-stone-400 mt-1 ml-1">Must contain 6+ characters</p>
                 )}
               </div>
               
-              <button type="submit" className="w-full bg-agri-primary text-white font-bold py-4 rounded-2xl hover:bg-agri-secondary transition-all shadow-xl shadow-agri-primary/10 mt-6 flex items-center justify-center gap-2">
-                {isLogin ? 'Access Account' : 'Initialize Profile'}
-                {!isLogin && <CheckCircle2 size={18} />}
+              <button type="submit" disabled={isLoading} className="w-full bg-agri-primary text-white font-bold py-4 rounded-2xl hover:bg-agri-secondary transition-all shadow-xl shadow-agri-primary/10 mt-6 flex items-center justify-center gap-2 disabled:opacity-70">
+                {isLoading ? 'Processing...' : (isLogin ? 'Access Account' : 'Initialize Profile')}
+                {!isLogin && !isLoading && <CheckCircle2 size={18} />}
               </button>
             </form>
 
-            <div className="mt-8">
-                <div className="relative">
-                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-100"></div></div>
-                    <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest"><span className="px-4 bg-white text-stone-400">Or Continue With</span></div>
-                </div>
-                <button 
-                    type="button"
-                    onClick={handleInternetIdentity}
-                    className="mt-6 w-full flex items-center justify-center gap-3 border border-stone-200 p-4 rounded-2xl hover:bg-stone-50 transition-all font-bold text-xs text-stone-600 uppercase tracking-widest group"
-                >
-                    <Fingerprint size={20} className="text-agri-secondary group-hover:scale-110 transition-transform" /> Internet Identity
-                </button>
-            </div>
-
             <p className="text-center mt-10 text-xs font-bold text-stone-400 uppercase tracking-widest">
               {isLogin ? "New to Agrigence?" : "Already have an account?"}
-              <button onClick={() => setIsLogin(!isLogin)} className="text-agri-secondary ml-2 hover:text-agri-primary transition-colors underline decoration-2 underline-offset-4">
+              <button onClick={() => { setIsLogin(!isLogin); setError(''); }} className="text-agri-secondary ml-2 hover:text-agri-primary transition-colors underline decoration-2 underline-offset-4">
                 {isLogin ? 'Register Free' : 'Secure Login'}
               </button>
             </p>

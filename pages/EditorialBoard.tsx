@@ -1,11 +1,20 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { mockBackend } from '../services/mockBackend';
 import { Mail, MapPin, Award, Quote, BookOpen } from 'lucide-react';
+import { EditorialMember } from '../types';
 
 const EditorialBoard: React.FC = () => {
-  const members = mockBackend.getMembers().sort((a, b) => a.order - b.order);
+  const [members, setMembers] = useState<EditorialMember[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const m = await mockBackend.getMembers();
+      setMembers(m.sort((a, b) => a.order - b.order));
+    };
+    load();
+  }, []);
 
   return (
     <div className="min-h-screen bg-agri-bg pb-20">

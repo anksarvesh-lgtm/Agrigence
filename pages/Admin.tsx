@@ -1,19 +1,30 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../services/mockBackend';
 import { Article, EditorialMember, NewsItem, Product } from '../types';
 import { Plus, Trash2, CheckCircle, XCircle } from 'lucide-react';
 
 const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'articles' | 'news' | 'journals' | 'members' | 'products'>('articles');
-  const [articles, setArticles] = useState(mockBackend.getArticles());
-  const [news, setNews] = useState(mockBackend.getNews());
-  const [members, setMembers] = useState(mockBackend.getMembers());
-  const [products, setProducts] = useState(mockBackend.getProducts());
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [members, setMembers] = useState<EditorialMember[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setArticles(await mockBackend.getArticles());
+      setNews(await mockBackend.getNews());
+      setMembers(await mockBackend.getMembers());
+      setProducts(await mockBackend.getProducts());
+    };
+    fetchData();
+  }, []);
 
   // Article Management
   const handleArticleAction = async (id: string, status: 'APPROVED' | 'REJECTED') => {
     await mockBackend.updateArticleStatus(id, status);
-    setArticles(mockBackend.getArticles());
+    setArticles(await mockBackend.getArticles());
   };
 
   // News Management
@@ -26,12 +37,12 @@ const Admin: React.FC = () => {
       content: newNews.content, 
       date: new Date().toISOString().split('T')[0] 
     });
-    setNews(mockBackend.getNews());
+    setNews(await mockBackend.getNews());
     setNewNews({ title: '', desc: '', content: '' });
   };
   const handleDeleteNews = async (id: string) => {
     await mockBackend.deleteNews(id);
-    setNews(mockBackend.getNews());
+    setNews(await mockBackend.getNews());
   };
 
   // Member Management (Simplified)
@@ -44,7 +55,7 @@ const Admin: React.FC = () => {
         institution: 'Zura Haradhan, Chandauli, Uttar Pradesh, 221115',
         imageUrl: `https://picsum.photos/200/200?random=${Math.random()}`
      });
-     setMembers(mockBackend.getMembers());
+     setMembers(await mockBackend.getMembers());
      setNewMember({ name: '', designation: '', expertise: '' });
   };
 
@@ -61,12 +72,12 @@ const Admin: React.FC = () => {
       imageUrl: `https://picsum.photos/200/300?random=${Math.random()}`,
       stockStatus: 'IN_STOCK'
     });
-    setProducts(mockBackend.getProducts());
+    setProducts(await mockBackend.getProducts());
     setNewProduct({ name: '', category: 'Book', price: '', description: '', buyLink: '' });
   };
   const handleDeleteProduct = async (id: string) => {
     await mockBackend.deleteProduct(id);
-    setProducts(mockBackend.getProducts());
+    setProducts(await mockBackend.getProducts());
   };
 
   const tabs = [
@@ -204,3 +215,4 @@ const Admin: React.FC = () => {
 };
 
 export default Admin;
+    
