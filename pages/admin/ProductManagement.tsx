@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { Product } from '../../types';
-import { Search, Plus, Image as ImageIcon, Trash2, Edit, ExternalLink, Link as LinkIcon, Save, X, Upload } from 'lucide-react';
+import { Search, Plus, Image as ImageIcon, Trash2, Edit, ExternalLink, Link as LinkIcon, Save, X, Upload, Loader2 } from 'lucide-react';
 
 const ProductManagement: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Partial<Product>>({});
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     loadProducts();
@@ -43,14 +44,19 @@ const ProductManagement: React.FC = () => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditingProduct({ ...editingProduct, imageUrl: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+      setIsUploading(true);
+      try {
+        const url = await mockBackend.uploadFile(file, 'products');
+        setEditingProduct({ ...editingProduct, imageUrl: url });
+      } catch (error) {
+        console.error("Upload failed", error);
+        alert("Image upload failed");
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -133,14 +139,21 @@ const ProductManagement: React.FC = () => {
                         <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block tracking-widest">Product Image</label>
                         <div className="flex gap-4 items-center">
                             <div className="w-16 h-16 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center text-white/20 overflow-hidden shrink-0 relative group">
-                                {editingProduct.imageUrl ? <img src={editingProduct.imageUrl} className="w-full h-full object-cover" /> : <ImageIcon size={24} />}
+                                {isUploading ? (
+                                    <Loader2 className="animate-spin text-agri-secondary" size={24} />
+                                ) : editingProduct.imageUrl ? (
+                                    <img src={editingProduct.imageUrl} className="w-full h-full object-cover" />
+                                ) : (
+                                    <ImageIcon size={24} />
+                                )}
                             </div>
                             <div className="flex-1 space-y-2">
-                                <label className="flex items-center gap-2 cursor-pointer bg-white/5 hover:bg-white/10 px-4 py-3 rounded-xl border border-white/10 text-xs font-bold text-white transition-all">
-                                    <Upload size={14} /> Upload Image
-                                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                                <label className={`flex items-center gap-2 cursor-pointer bg-white/5 hover:bg-white/10 px-4 py-3 rounded-xl border border-white/10 text-xs font-bold text-white transition-all ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                                    {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} 
+                                    {isUploading ? 'Uploading...' : 'Upload Image'}
+                                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
                                 </label>
-                                <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white/50 outline-none focus:border-agri-secondary text-[10px] font-mono" placeholder="Or enter image URL..." value={editingProduct.imageUrl || ''} onChange={e => setEditingProduct({...editingProduct, imageUrl: e.target.value})} />
+                                <input className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white/50 outline-none focus:border-agri-secondary text-[10px] font-mono" placeholder="Or enter image URL..." value={editingProduct.imageUrl || ''} onChange={e => setEditingProduct({...editingProduct, imageUrl: e.target.value})} disabled={isUploading} />
                             </div>
                         </div>
                     </div>

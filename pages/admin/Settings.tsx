@@ -4,13 +4,14 @@ import { mockBackend } from '../../services/mockBackend';
 import { SiteSettings } from '../../types';
 import { 
   Save, Twitter, Instagram, Facebook, Linkedin, Youtube, 
-  Smartphone, Mail, Globe, Hash, Upload, ShieldAlert, Palette, Type, Layout, Share2
+  Smartphone, Mail, Globe, Hash, Upload, ShieldAlert, Palette, Type, Layout, Share2, Loader2
 } from 'lucide-react';
 
 const Settings: React.FC = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
 
   useEffect(() => {
     setSettings(mockBackend.getSettings());
@@ -32,16 +33,16 @@ const Settings: React.FC = () => {
     }, 1000);
   };
 
-  const handleFileUpload = (field: keyof SiteSettings) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (field: keyof SiteSettings) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (settings) {
-          setSettings({ ...settings, [field]: reader.result as string });
-        }
-      };
-      reader.readAsDataURL(file);
+    if (file && settings) {
+      setUploadingField(field);
+      try {
+        const url = await mockBackend.uploadFile(file, 'settings');
+        setSettings({ ...settings, [field]: url });
+      } finally {
+        setUploadingField(null);
+      }
     }
   };
 
@@ -71,13 +72,23 @@ const Settings: React.FC = () => {
               <div>
                   <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block tracking-widest">Site Logo</label>
                   <div className="flex items-center gap-6">
-                    <div className="w-24 h-24 rounded-2xl bg-black/40 flex items-center justify-center border border-white/10 p-2 overflow-hidden shrink-0">
-                        <img src={settings.logoUrl} className="max-h-full object-contain" alt="Logo" />
+                    <div className="w-24 h-24 rounded-2xl bg-black/40 flex items-center justify-center border border-white/10 p-2 overflow-hidden shrink-0 relative">
+                        {uploadingField === 'logoUrl' && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+                                <Loader2 className="text-agri-secondary animate-spin" />
+                            </div>
+                        )}
+                        {settings.logoUrl ? (
+                            <img src={settings.logoUrl} className="max-h-full object-contain" alt="Logo" />
+                        ) : (
+                            <div className="text-[9px] text-white/30 font-black uppercase text-center leading-tight">Default<br/>SVG Logo</div>
+                        )}
                     </div>
                     <div className="flex-1">
-                      <input type="file" id="logo-up" className="hidden" onChange={handleFileUpload('logoUrl')} />
-                      <label htmlFor="logo-up" className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 text-[10px] font-black cursor-pointer transition-all flex items-center justify-center gap-2">
-                         <Upload size={14} /> REPLACE LOGO
+                      <input type="file" id="logo-up" className="hidden" onChange={handleFileUpload('logoUrl')} disabled={!!uploadingField} />
+                      <label htmlFor="logo-up" className={`w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 text-[10px] font-black cursor-pointer transition-all flex items-center justify-center gap-2 ${!!uploadingField ? 'opacity-50 pointer-events-none' : ''}`}>
+                         {uploadingField === 'logoUrl' ? <Loader2 size={14} className="animate-spin"/> : <Upload size={14} />} 
+                         {uploadingField === 'logoUrl' ? 'UPLOADING...' : 'REPLACE LOGO'}
                       </label>
                     </div>
                   </div>
@@ -141,13 +152,19 @@ const Settings: React.FC = () => {
                  <div>
                     <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block">Payment QR Code</label>
                     <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 rounded-2xl bg-white p-2 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-24 h-24 rounded-2xl bg-white p-2 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 relative">
+                            {uploadingField === 'upiQrUrl' && (
+                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+                                    <Loader2 className="text-agri-secondary animate-spin" />
+                                </div>
+                            )}
                             <img src={settings.upiQrUrl} className="w-full h-full object-contain" alt="QR Code" />
                         </div>
                         <div className="flex-1">
-                            <input type="file" id="qr-up" className="hidden" onChange={handleFileUpload('upiQrUrl')} accept="image/*" />
-                            <label htmlFor="qr-up" className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 text-[10px] font-black cursor-pointer transition-all flex items-center justify-center gap-2 text-white">
-                                <Upload size={14} /> UPLOAD NEW QR
+                            <input type="file" id="qr-up" className="hidden" onChange={handleFileUpload('upiQrUrl')} accept="image/*" disabled={!!uploadingField} />
+                            <label htmlFor="qr-up" className={`w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 text-[10px] font-black cursor-pointer transition-all flex items-center justify-center gap-2 text-white ${!!uploadingField ? 'opacity-50 pointer-events-none' : ''}`}>
+                                {uploadingField === 'upiQrUrl' ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} 
+                                {uploadingField === 'upiQrUrl' ? 'UPLOADING...' : 'UPLOAD NEW QR'}
                             </label>
                             <p className="text-[9px] text-white/30 mt-2 font-bold uppercase tracking-wide">Upload custom QR to override dynamic generation</p>
                         </div>

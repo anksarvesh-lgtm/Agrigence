@@ -13,7 +13,21 @@ const Journals: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       setJournals(await mockBackend.getJournals());
-      setArticles(await mockBackend.getArticles());
+      
+      // Access Control Filter for Archive
+      const allArticles = await mockBackend.getArticles();
+      // Use getPublicAdmins to securely fetch only permitted profiles (Admins)
+      const users = await mockBackend.getPublicAdmins();
+      const adminIds = new Set(users.map(u => u.id));
+      
+      const publicArticles = allArticles.filter(a => {
+          if (a.status !== 'PUBLISHED' && a.status !== 'APPROVED') return false;
+          // Public if System (no ID) or Admin author
+          if (!a.authorId) return true;
+          return adminIds.has(a.authorId);
+      });
+      
+      setArticles(publicArticles);
     };
     load();
   }, []);
@@ -120,10 +134,16 @@ const Journals: React.FC = () => {
                       type={article.type as any || 'ARTICLE'}
                       accessLevel={article.downloadAccess}
                       fileUrl={article.fileUrl || '#'}
+                      id={article.id}
                    />
                  </div>
               </motion.div>
             ))}
+            {articles.length === 0 && (
+                <div className="text-center py-20 text-stone-400 italic bg-stone-50 rounded-2xl">
+                    No public articles available at this time.
+                </div>
+            )}
           </div>
         </section>
       </div>

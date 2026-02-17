@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../services/mockBackend';
 import { motion } from 'framer-motion';
-import { Calendar, ExternalLink, Megaphone } from 'lucide-react';
+import { Calendar, ExternalLink, Megaphone, ArrowRight } from 'lucide-react';
 import { NewsItem } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 const News: React.FC = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const load = async () => {
@@ -45,14 +47,15 @@ const News: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
-              className="bg-white rounded-2xl shadow-premium border border-stone-100 overflow-hidden hover:border-agri-gold/50 transition-all group flex flex-col md:flex-row"
+              className="bg-white rounded-2xl shadow-premium border border-stone-100 overflow-hidden hover:border-agri-gold/50 transition-all group flex flex-col md:flex-row cursor-pointer"
+              onClick={() => navigate(`/news/${item.id}`)}
             >
               {item.thumbnail && (
                 <div className="md:w-1/3 h-48 md:h-auto overflow-hidden">
                   <img src={item.thumbnail} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="News Thumbnail" />
                 </div>
               )}
-              <div className="p-8 flex-1">
+              <div className="p-8 flex-1 flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2 text-agri-gold font-bold text-xs uppercase tracking-widest">
                     <Calendar size={14} />
@@ -66,26 +69,17 @@ const News: React.FC = () => {
                 </div>
                 
                 <h2 className="text-2xl font-serif font-bold text-[#0F392B] mb-4 group-hover:text-agri-secondary transition-colors leading-tight">{item.title}</h2>
-                <p className="text-stone-600 leading-relaxed mb-6 line-clamp-3">{item.description}</p>
+                <p className="text-stone-600 leading-relaxed mb-6 line-clamp-3 flex-1">{item.description}</p>
                 
-                {item.content && (
-                  <div className="bg-stone-50 p-6 rounded-lg text-sm text-stone-700 italic border-l-4 border-[#0F392B] mb-6">
-                     {item.content}
-                  </div>
-                )}
-                
-                <div className="flex justify-between items-center pt-6 border-t border-stone-100">
+                <div className="flex justify-between items-center pt-6 border-t border-stone-100 mt-auto">
                    {item.relevantLink ? (
-                     <a 
-                      href={item.relevantLink} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      className="inline-flex items-center gap-2 text-agri-secondary font-bold text-xs uppercase tracking-widest hover:underline"
-                     >
-                        View Attached Resource <ExternalLink size={14} />
-                     </a>
+                     <span className="inline-flex items-center gap-2 text-stone-400 font-bold text-xs uppercase tracking-widest">
+                        <ExternalLink size={14} /> Resource Attached
+                     </span>
                    ) : <div />}
-                   <button className="text-sm font-bold text-[#0F392B] hover:text-agri-gold transition-colors uppercase tracking-widest">Read More</button>
+                   <button className="flex items-center gap-2 text-sm font-bold text-[#0F392B] group-hover:text-agri-gold transition-colors uppercase tracking-widest">
+                      Read Full Story <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                   </button>
                 </div>
               </div>
             </motion.div>

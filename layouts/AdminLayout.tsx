@@ -6,7 +6,8 @@ import {
   LayoutDashboard, Users, BookOpen, FileText, ShoppingBag, 
   Settings, LogOut, Menu, X, Image, CreditCard,
   Rss, Award, Newspaper, Tag, ShieldCheck, Megaphone,
-  Navigation, Layout as LayoutIcon, Globe, Mail, MessageSquare, Files, Sliders, Trash2
+  Navigation, Layout as LayoutIcon, Globe, Mail, MessageSquare, Files, Sliders, Trash2,
+  Activity, FolderOpen, Crown, Layers
 } from 'lucide-react';
 import Logo from '../components/Logo';
 
@@ -36,8 +37,12 @@ const AdminLayout: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const menuItems = [
+  const menuItems: { label: string; path: string; icon: any; isExternal?: boolean }[] = [
     { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+    { label: 'All Submissions', path: '/admin/submissions', icon: FolderOpen },
+    { label: 'Status Tracker', path: '/admin/tracker', icon: Activity },
+    { label: 'Leadership Manager', path: '/admin/leadership', icon: Crown },
+    { label: 'Popup Manager', path: '/admin/popup', icon: Layers },
     { label: 'Navigation', path: '/admin/navigation', icon: Navigation },
     { label: 'Layout', path: '/admin/layout', icon: LayoutIcon },
     { label: 'Inquiries', path: '/admin/inquiries', icon: MessageSquare },
@@ -109,6 +114,21 @@ const AdminLayout: React.FC = () => {
             const isActive = location.pathname === item.path;
             const showLabel = isSidebarOpen || isMobile;
             
+            // Render logic for external vs internal links
+            if (item.isExternal) {
+                return (
+                  <a
+                    key={item.path}
+                    href={item.path}
+                    className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group text-white/40 hover:bg-white/5 hover:text-white ${!showLabel && 'justify-center'}`}
+                    title={!showLabel ? item.label : ''}
+                  >
+                    <item.icon size={20} className="shrink-0 text-agri-secondary group-hover:text-white" />
+                    {showLabel && <span className="text-[13px] tracking-wide whitespace-nowrap">{item.label}</span>}
+                  </a>
+                );
+            }
+
             return (
               <Link
                 key={item.path}

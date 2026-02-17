@@ -2,16 +2,25 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { mockBackend } from '../services/mockBackend';
-import { Mail, MapPin, Award, Quote, BookOpen } from 'lucide-react';
+import { Mail, MapPin, Award, Quote, BookOpen, AlertCircle } from 'lucide-react';
 import { EditorialMember } from '../types';
 
 const EditorialBoard: React.FC = () => {
   const [members, setMembers] = useState<EditorialMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      const m = await mockBackend.getMembers();
-      setMembers(m.sort((a, b) => a.order - b.order));
+      try {
+        const m = await mockBackend.getMembers();
+        // Filter enabled members and sort
+        const activeMembers = m.filter(member => member.isEnabled !== false).sort((a, b) => a.order - b.order);
+        setMembers(activeMembers);
+      } catch (err) {
+        console.error("Error loading editorial board", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
     load();
   }, []);
@@ -50,71 +59,86 @@ const EditorialBoard: React.FC = () => {
       </div>
 
       <div className="container mx-auto px-6 -mt-24 relative z-20">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {members.map((member, idx) => (
-            <motion.div
-              key={member.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1, duration: 0.5 }}
-              whileHover={{ y: -10 }}
-              className="bg-white rounded-2xl shadow-xl overflow-hidden group border border-stone-100 flex flex-col h-full"
-            >
-              <div className="p-8 text-center bg-stone-50 border-b border-stone-100 relative">
-                 <div className="absolute top-4 right-4 text-stone-200">
-                    <Quote size={40} />
-                 </div>
-                 <div className="w-32 h-32 mx-auto rounded-full p-1 bg-gradient-to-br from-agri-secondary to-agri-primary mb-6 shadow-lg group-hover:scale-105 transition-transform duration-500">
-                    <img 
-                      src={member.imageUrl} 
-                      alt={member.name} 
-                      className="w-full h-full rounded-full object-cover border-4 border-white"
-                    />
-                 </div>
-                 <h3 className="text-xl font-serif font-bold text-agri-primary mb-2">{member.name}</h3>
-                 <span className="inline-block bg-agri-primary/5 text-agri-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-1">
-                    {member.designation}
-                 </span>
+        {isLoading ? (
+           <div className="bg-white p-12 rounded-[2rem] shadow-xl text-center min-h-[300px] flex items-center justify-center">
+              <div className="text-agri-primary font-bold text-lg animate-pulse">Loading Board Members...</div>
+           </div>
+        ) : members.length === 0 ? (
+           <div className="bg-white p-16 rounded-[2rem] shadow-xl text-center flex flex-col items-center justify-center border border-stone-100">
+              <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center text-stone-400 mb-4">
+                 <AlertCircle size={32} />
               </div>
-              
-              <div className="p-8 flex-1 flex flex-col">
-                 <div className="space-y-4 mb-6 flex-1">
-                    <div className="flex items-start gap-3">
-                       <Award size={18} className="text-agri-secondary mt-0.5 shrink-0" />
-                       <div>
-                          <p className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-0.5">Qualification</p>
-                          <p className="text-sm text-stone-700 font-medium">{member.qualification}</p>
-                       </div>
-                    </div>
-                    <div className="flex items-start gap-3">
-                       <MapPin size={18} className="text-agri-secondary mt-0.5 shrink-0" />
-                       <div>
-                          <p className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-0.5">Institution</p>
-                          <p className="text-sm text-stone-700 font-medium">{member.institution}</p>
-                       </div>
-                    </div>
-                 </div>
-                 
-                 <div className="mt-auto pt-6 border-t border-stone-100">
-                    <p className="text-xs font-bold text-stone-400 uppercase mb-3">Expertise</p>
-                    <div className="flex flex-wrap gap-2">
-                       {member.expertise.split(',').map((exp, i) => (
-                          <span key={i} className="px-2 py-1 bg-stone-100 rounded text-xs text-stone-600 font-medium hover:bg-agri-secondary hover:text-white transition-colors cursor-default">
-                            {exp.trim()}
-                          </span>
-                       ))}
-                    </div>
-                    
-                    {member.email && (
-                       <a href={`mailto:${member.email}`} className="mt-6 flex items-center justify-center gap-2 text-agri-primary font-bold text-sm hover:text-agri-secondary transition-colors w-full py-2 bg-stone-50 rounded-lg group-hover:bg-agri-primary group-hover:text-white">
-                          <Mail size={16} /> Contact Member
-                       </a>
-                    )}
-                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+              <h3 className="text-2xl font-serif font-bold text-agri-primary mb-2">No Members Listed</h3>
+              <p className="text-stone-500 max-w-md mx-auto">The editorial board directory is currently being updated. Please check back soon or contact administration.</p>
+           </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {members.map((member, idx) => (
+              <motion.div
+                key={member.id}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1, duration: 0.5 }}
+                whileHover={{ y: -10 }}
+                className="bg-white rounded-2xl shadow-xl overflow-hidden group border border-stone-100 flex flex-col h-full"
+              >
+                <div className="p-8 text-center bg-stone-50 border-b border-stone-100 relative">
+                   <div className="absolute top-4 right-4 text-stone-200">
+                      <Quote size={40} />
+                   </div>
+                   <div className="w-32 h-32 mx-auto rounded-full p-1 bg-gradient-to-br from-agri-secondary to-agri-primary mb-6 shadow-lg group-hover:scale-105 transition-transform duration-500">
+                      <img 
+                        src={member.imageUrl || `https://ui-avatars.com/api/?name=${member.name}&background=random`} 
+                        alt={member.name} 
+                        className="w-full h-full rounded-full object-cover border-4 border-white"
+                      />
+                   </div>
+                   <h3 className="text-xl font-serif font-bold text-agri-primary mb-2">{member.name}</h3>
+                   <span className="inline-block bg-agri-primary/5 text-agri-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-1">
+                      {member.designation}
+                   </span>
+                </div>
+                
+                <div className="p-8 flex-1 flex flex-col">
+                   <div className="space-y-4 mb-6 flex-1">
+                      <div className="flex items-start gap-3">
+                         <Award size={18} className="text-agri-secondary mt-0.5 shrink-0" />
+                         <div>
+                            <p className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-0.5">Qualification</p>
+                            <p className="text-sm text-stone-700 font-medium">{member.qualification}</p>
+                         </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                         <MapPin size={18} className="text-agri-secondary mt-0.5 shrink-0" />
+                         <div>
+                            <p className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-0.5">Institution</p>
+                            <p className="text-sm text-stone-700 font-medium">{member.institution}</p>
+                         </div>
+                      </div>
+                   </div>
+                   
+                   <div className="mt-auto pt-6 border-t border-stone-100">
+                      <p className="text-xs font-bold text-stone-400 uppercase mb-3">Expertise</p>
+                      <div className="flex flex-wrap gap-2">
+                         {member.expertise && member.expertise.split(',').map((exp, i) => (
+                            <span key={i} className="px-2 py-1 bg-stone-100 rounded text-xs text-stone-600 font-medium hover:bg-agri-secondary hover:text-white transition-colors cursor-default">
+                              {exp.trim()}
+                            </span>
+                         ))}
+                         {!member.expertise && <span className="text-xs text-stone-400 italic">Not specified</span>}
+                      </div>
+                      
+                      {member.email && (
+                         <a href={`mailto:${member.email}`} className="mt-6 flex items-center justify-center gap-2 text-agri-primary font-bold text-sm hover:text-agri-secondary transition-colors w-full py-2 bg-stone-50 rounded-lg group-hover:bg-agri-primary group-hover:text-white">
+                            <Mail size={16} /> Contact Member
+                         </a>
+                      )}
+                   </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

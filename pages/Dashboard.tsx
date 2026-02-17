@@ -6,6 +6,7 @@ import { Article } from '../types';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, FileText, Calendar, Clock, CheckCircle, AlertTriangle, Star, Send, MessageSquareHeart, ChevronRight, PenTool, Layers, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Tracker from '../extensions/submission-tracking/Tracker';
 
 const Dashboard: React.FC = () => {
   const { user, login, logout } = useAuth();
@@ -196,7 +197,7 @@ const Dashboard: React.FC = () => {
                     <tr className="bg-stone-50/50 text-[10px] uppercase font-black tracking-[0.2em] text-stone-400 border-b border-stone-100">
                       <th className="px-8 py-5">Manuscript Title</th>
                       <th className="px-8 py-5">Upload Date</th>
-                      <th className="px-8 py-5 text-right">Status</th>
+                      <th className="px-8 py-5 text-right">Core Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-50">
@@ -211,7 +212,11 @@ const Dashboard: React.FC = () => {
                       </tr>
                     ) : (
                       articles.map(article => (
-                        <tr key={article.id} className="hover:bg-stone-50/80 transition-colors group">
+                        <tr 
+                          key={article.id} 
+                          onClick={() => navigate(`/view-document/${article.id}`)}
+                          className="hover:bg-stone-50/80 transition-colors group cursor-pointer"
+                        >
                           <td className="px-8 py-6">
                              <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-xl bg-agri-secondary/5 flex items-center justify-center text-agri-secondary group-hover:scale-110 transition-transform">
@@ -225,9 +230,9 @@ const Dashboard: React.FC = () => {
                           </td>
                           <td className="px-8 py-6 text-right">
                              <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border
-                                ${article.status === 'APPROVED' || article.status === 'PUBLISHED' ? 'bg-green-50 text-green-600 border-green-200' : 
-                                  article.status === 'REJECTED' ? 'bg-red-50 text-red-600 border-red-200' : 
-                                  'bg-amber-50 text-amber-600 border-amber-200'
+                                ${article.status === 'APPROVED' || article.status === 'PUBLISHED' ? 'bg-green-500/10 text-green-600 border-green-200' : 
+                                  article.status === 'REJECTED' ? 'bg-red-500/10 text-red-600 border-red-200' : 
+                                  'bg-amber-500/10 text-amber-600 border-amber-200'
                                 }`}>
                                 {getStatusLabel(article.status)}
                              </span>
@@ -239,6 +244,9 @@ const Dashboard: React.FC = () => {
                 </table>
               </div>
             </div>
+
+            {/* EXTENSION: Metadata Tracker Widget */}
+            <Tracker articles={articles} />
 
             {/* Support Grid */}
             <div className="grid md:grid-cols-2 gap-8">
@@ -356,4 +364,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-    

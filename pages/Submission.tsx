@@ -4,6 +4,8 @@ import { useAuth } from '../App';
 import { useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
 import { UploadCloud, AlertTriangle, Lock, FileText, CheckCircle } from 'lucide-react';
+import { createMetaFile } from '../extensions/submission-tracking/meta-handler';
+import { sendNotification } from '../extensions/notifications/service';
 
 const Submission: React.FC = () => {
   const { user, login } = useAuth();
@@ -81,6 +83,25 @@ const Submission: React.FC = () => {
       });
       
       if (result) {
+        // --- EXTENSION HOOK: Create Metadata Sidecar ---
+        // This runs independently of the core logic success
+        try {
+           await createMetaFile(result.id, title, authorName);
+           
+           // --- NOTIFICATION HOOK ---
+           sendNotification('SUBMISSION_RECEIVED', {
+             name: authorName,
+             email: user?.email,
+             title: title,
+             id: result.id
+           });
+           // -------------------------
+
+        } catch(e) {
+           console.warn("Meta file creation warning", e);
+        }
+        // -----------------------------------------------
+
         if(user && typeof user.articleLimit === 'number') {
             const updatedUser = { ...user, articleUsage: user.articleUsage + 1 };
             // Update local state, though page reload will fetch fresh from backend

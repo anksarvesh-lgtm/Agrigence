@@ -1,9 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { mockBackend } from '../../services/mockBackend';
 import { Magazine, Article } from '../../types';
-import { FileText, BookOpen, Plus, X, Upload, Save, FileCheck, Image as ImageIcon, Trash2, Globe, Star, Calendar, Bookmark, File } from 'lucide-react';
+import { FileText, BookOpen, Plus, X, Upload, Save, FileCheck, Image as ImageIcon, Trash2, Globe, Star, Calendar, Bookmark, File, Loader2, Bold, Italic, Underline, Heading1, Heading2, List, Eye, Edit3 } from 'lucide-react';
 
 const ContentManagement: React.FC = () => {
   const location = useLocation();
@@ -37,6 +37,9 @@ const ArticleManager = ({ type }: { type: string }) => {
     const [articles, setArticles] = useState<Article[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingArticle, setEditingArticle] = useState<Partial<Article>>({});
+    const [isUploading, setIsUploading] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
+    const editorRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
       const unsub = mockBackend.subscribeToArticles((data) => {
@@ -58,15 +61,44 @@ const ArticleManager = ({ type }: { type: string }) => {
         
         setIsModalOpen(false);
         setEditingArticle({});
+        setShowPreview(false);
     };
 
-    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        mockBackend.uploadFile(file, 'articles').then(url => {
+        setIsUploading(true);
+        try {
+            const url = await mockBackend.uploadFile(file, 'articles');
             setEditingArticle({ ...editingArticle, featuredImage: url });
-        });
+        } finally {
+            setIsUploading(false);
+        }
       }
+    };
+
+    // Text formatting helper
+    const insertTag = (startTag: string, endTag: string = '') => {
+        const textarea = editorRef.current;
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        
+        const before = text.substring(0, start);
+        const selection = text.substring(start, end);
+        const after = text.substring(end);
+
+        const newText = before + startTag + selection + (endTag || startTag.replace('<', '</')) + after;
+        
+        setEditingArticle({ ...editingArticle, content: newText });
+        
+        // Restore focus
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + startTag.length, end + startTag.length);
+        }, 0);
     };
 
     return (
@@ -90,7 +122,7 @@ const ArticleManager = ({ type }: { type: string }) => {
                                   {article.isFeatured && <Star size={12} className="text-agri-secondary fill-agri-secondary" />}
                                   <h4 className="text-white font-bold text-lg">{article.title}</h4>
                                 </div>
-                                <p className="text-[10px] text-white/30 flex items-center gap-2 uppercase font-black tracking-widest">
+                                <p className="text--[10px] text-white/30 flex items-center gap-2 uppercase font-black tracking-widest">
                                     <span>{article.authorName}</span>
                                     <span>•</span>
                                     <span>{article.status}</span>
@@ -107,7 +139,7 @@ const ArticleManager = ({ type }: { type: string }) => {
 
             {isModalOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md">
-                   <div className="bg-[#1C2A22] w-full max-w-4xl rounded-[3rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                   <div className="bg-[#1C2A22] w-full max-w-5xl rounded-[3rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                       <div className="p-10 border-b border-white/5 flex justify-between items-center bg-black/20">
                          <div>
                             <h3 className="text-2xl font-serif font-bold text-white">Editor Control Panel</h3>
@@ -130,7 +162,7 @@ const ArticleManager = ({ type }: { type: string }) => {
                                      <input className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-agri-secondary" value={editingArticle.authorName || ''} onChange={e => setEditingArticle({...editingArticle, authorName: e.target.value})} />
                                   </div>
                                   <div>
-                                     <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block tracking-widest">Submission Status</label>
+                                     <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block tracking-widest">Status</label>
                                      <select className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-agri-secondary appearance-none" value={editingArticle.status || 'PUBLISHED'} onChange={e => setEditingArticle({...editingArticle, status: e.target.value as any})}>
                                         <option className="bg-agri-primary">PUBLISHED</option>
                                         <option className="bg-agri-primary">PENDING</option>
@@ -140,8 +172,51 @@ const ArticleManager = ({ type }: { type: string }) => {
                                   </div>
                                </div>
                                <div>
-                                  <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block tracking-widest">Main Content Body</label>
-                                  <textarea className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-agri-secondary h-64 text-sm" value={editingArticle.content || ''} onChange={e => setEditingArticle({...editingArticle, content: e.target.value})} />
+                                  <div className="flex justify-between items-center mb-2">
+                                    <label className="text-[10px] uppercase font-bold text-white/40 block tracking-widest">
+                                        Content Body (HTML Supported)
+                                    </label>
+                                    <button 
+                                        onClick={() => setShowPreview(!showPreview)}
+                                        className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border transition-all ${showPreview ? 'bg-agri-secondary text-agri-primary border-agri-secondary' : 'bg-white/5 text-white/60 border-white/10'}`}
+                                    >
+                                        {showPreview ? <><Edit3 size={12}/> Edit Mode</> : <><Eye size={12}/> Live Preview</>}
+                                    </button>
+                                  </div>
+                                  
+                                  <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden relative">
+                                     {!showPreview ? (
+                                        <>
+                                            <div className="flex gap-1 p-2 bg-black/20 border-b border-white/5">
+                                                <button onClick={() => insertTag('<b>', '</b>')} className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded" title="Bold"><Bold size={14}/></button>
+                                                <button onClick={() => insertTag('<i>', '</i>')} className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded" title="Italic"><Italic size={14}/></button>
+                                                <button onClick={() => insertTag('<u>', '</u>')} className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded" title="Underline"><Underline size={14}/></button>
+                                                <div className="w-px bg-white/10 mx-1"></div>
+                                                <button onClick={() => insertTag('<h2>', '</h2>')} className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded" title="Heading 2"><Heading1 size={14}/></button>
+                                                <button onClick={() => insertTag('<h3>', '</h3>')} className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded" title="Heading 3"><Heading2 size={14}/></button>
+                                                <button onClick={() => insertTag('<ul>\n<li>', '</li>\n</ul>')} className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded" title="List"><List size={14}/></button>
+                                                <div className="w-px bg-white/10 mx-1"></div>
+                                                <button onClick={() => insertTag('<br/>')} className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded text-[10px] font-bold px-3">BR</button>
+                                            </div>
+                                            <textarea 
+                                                ref={editorRef}
+                                                className="w-full bg-transparent p-4 text-white outline-none h-96 text-sm font-mono leading-relaxed resize-none" 
+                                                value={editingArticle.content || ''} 
+                                                onChange={e => setEditingArticle({...editingArticle, content: e.target.value})} 
+                                                placeholder="Write here... Use 'Enter' for new lines. HTML tags like <b>, <h2> supported."
+                                            />
+                                        </>
+                                     ) : (
+                                        <div className="w-full bg-white p-6 h-[430px] overflow-y-auto">
+                                            {/* Preview matches BlogView styling EXACTLY: prose + whitespace-pre-wrap */}
+                                            <div 
+                                                className="prose prose-stone prose-sm max-w-none font-serif text-stone-700 whitespace-pre-wrap"
+                                                dangerouslySetInnerHTML={{ __html: editingArticle.content || '<p>Start writing to see preview...</p>' }}
+                                            />
+                                        </div>
+                                     )}
+                                  </div>
+                                  <p className="text-[9px] text-white/30 mt-2 ml-1">* Use <b>Shift+Enter</b> for single spacing, <b>Enter</b> for new lines. HTML tags like &lt;b&gt;, &lt;h2&gt; supported.</p>
                                </div>
                             </div>
 
@@ -160,11 +235,16 @@ const ArticleManager = ({ type }: { type: string }) => {
                                <div>
                                   <label className="text-[10px] uppercase font-bold text-white/40 mb-4 block tracking-widest">Featured Thumbnail</label>
                                   <div className="aspect-video bg-black/40 rounded-[2rem] border border-white/5 overflow-hidden mb-4 relative group">
+                                     {isUploading && (
+                                        <div className="absolute inset-0 z-20 bg-black/60 flex items-center justify-center text-agri-secondary">
+                                            <Loader2 size={32} className="animate-spin" />
+                                        </div>
+                                     )}
                                      {editingArticle.featuredImage ? <img src={editingArticle.featuredImage} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-white/10"><ImageIcon size={40}/></div>}
                                      <label htmlFor="art-img" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer">
                                         <span className="text-[10px] font-black text-white uppercase tracking-widest">UPLOAD_NEW_IMG</span>
                                      </label>
-                                     <input type="file" id="art-img" className="hidden" onChange={handleImageUpload} />
+                                     <input type="file" id="art-img" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
                                   </div>
                                </div>
 
@@ -201,6 +281,7 @@ const MagazineManager = () => {
     const [magazines, setMagazines] = useState<Magazine[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMag, setEditingMag] = useState<Partial<Magazine>>({});
+    const [uploadingField, setUploadingField] = useState<string | null>(null);
 
     useEffect(() => {
         const unsub = mockBackend.subscribeToMagazines(setMagazines);
@@ -211,7 +292,7 @@ const MagazineManager = () => {
         if (!editingMag.title) return alert("Title is required");
         
         if (editingMag.id) {
-           await mockBackend.addMagazine(editingMag as Magazine); // Using add/upsert for now as mockBackend handles collection writes
+           await mockBackend.addMagazine(editingMag as Magazine); 
         } else {
           await mockBackend.addMagazine(editingMag as Magazine);
         }
@@ -220,12 +301,16 @@ const MagazineManager = () => {
         setEditingMag({});
     };
 
-    const handleFileUpload = (field: 'coverImage' | 'pdfUrl') => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = (field: 'coverImage' | 'pdfUrl') => async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (file) {
-        mockBackend.uploadFile(file, 'magazines').then(url => {
+        setUploadingField(field);
+        try {
+            const url = await mockBackend.uploadFile(file, 'magazines');
             setEditingMag(prev => ({ ...prev, [field]: url }));
-        });
+        } finally {
+            setUploadingField(null);
+        }
       }
     };
 
@@ -339,10 +424,15 @@ const MagazineManager = () => {
                                <div>
                                   <label className="text-[10px] uppercase font-bold text-white/40 mb-3 block tracking-widest">Cover Artwork</label>
                                   <div className="aspect-[3/4] bg-black/40 rounded-3xl border-2 border-dashed border-white/10 overflow-hidden relative group">
+                                     {uploadingField === 'coverImage' && (
+                                        <div className="absolute inset-0 z-20 bg-black/60 flex items-center justify-center text-agri-secondary">
+                                            <Loader2 size={32} className="animate-spin" />
+                                        </div>
+                                     )}
                                      {editingMag.coverImage ? <img src={editingMag.coverImage} className="w-full h-full object-cover" /> : <div className="w-full h-full flex flex-col items-center justify-center text-white/10"><ImageIcon size={40}/><span className="text-[8px] mt-2">MISSING_ART</span></div>}
                                      <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer">
                                         <span className="text-[10px] font-black text-white uppercase tracking-widest">Replace Cover</span>
-                                        <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload('coverImage')} />
+                                        <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload('coverImage')} disabled={!!uploadingField} />
                                      </label>
                                   </div>
                                </div>
@@ -356,12 +446,12 @@ const MagazineManager = () => {
                                         <div className="flex items-center gap-3">
                                             <File size={20} className={editingMag.pdfUrl ? 'text-green-400' : 'text-white/20'} />
                                             <span className="text-[10px] font-bold text-white/40 uppercase truncate max-w-[120px]">
-                                                {editingMag.pdfUrl ? 'PROTOCOL_LOADED' : 'NO_FILE_QUEUED'}
+                                                {uploadingField === 'pdfUrl' ? 'UPLOADING...' : editingMag.pdfUrl ? 'PROTOCOL_LOADED' : 'NO_FILE_QUEUED'}
                                             </span>
                                         </div>
-                                        <label className="px-4 py-2 bg-agri-secondary text-agri-primary rounded-xl text-[9px] font-black cursor-pointer hover:scale-105 transition-transform">
-                                            UPLOAD PDF
-                                            <input type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload('pdfUrl')} />
+                                        <label className={`px-4 py-2 bg-agri-secondary text-agri-primary rounded-xl text-[9px] font-black cursor-pointer hover:scale-105 transition-transform ${!!uploadingField ? 'opacity-50 pointer-events-none' : ''}`}>
+                                            {uploadingField === 'pdfUrl' ? <Loader2 size={12} className="animate-spin inline" /> : 'UPLOAD PDF'}
+                                            <input type="file" accept="application/pdf" className="hidden" onChange={handleFileUpload('pdfUrl')} disabled={!!uploadingField} />
                                         </label>
                                      </div>
                                   </div>

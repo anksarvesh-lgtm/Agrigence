@@ -5,14 +5,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowRight, Calendar, User, 
   ChevronRight, Bookmark, Star, Quote,
-  Megaphone, Rss, FileText
+  Megaphone, ShoppingBag, BookOpen, FileText, PenTool, ExternalLink
 } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
-import { NewsItem, Article, Magazine, Product, Feedback } from '../types';
+import { NewsItem, Article, Magazine, Product, Feedback, SiteSettings, HomepageSection } from '../types';
 import PDFAction from '../components/PDFAction';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [blogs, setBlogs] = useState<Article[]>([]);
@@ -21,27 +22,45 @@ const Home: React.FC = () => {
   const [reviews, setReviews] = useState<Feedback[]>([]);
 
   useEffect(() => {
+    // Load Settings
+    const s = mockBackend.getSettings();
+    setSettings(s);
+
     // Real-time listeners
-    const unsubNews = mockBackend.subscribeToNews((data) => setNews(data.slice(0, 6)));
+    const unsubNews = mockBackend.subscribeToNews((data) => setNews(data)); 
     
-    const unsubArticles = mockBackend.subscribeToArticles((data) => {
-        const approved = data.filter(a => a.status === 'PUBLISHED' || a.status === 'APPROVED');
-        setArticles(approved.filter(a => a.type === 'ARTICLE').slice(0, 4));
-        setBlogs(approved.filter(a => a.type === 'BLOG').slice(0, 6));
+    const unsubArticles = mockBackend.subscribeToArticles(async (data) => {
+        // --- Access Control Filtering ---
+        // 1. Fetch Users to identify Admins
+        // Use getPublicAdmins to securely fetch only permitted profiles (Admins)
+        const users = await mockBackend.getPublicAdmins();
+        const adminIds = new Set(users.map(u => u.id));
+
+        const publicContent = data.filter(a => {
+            // Must be published/approved
+            if (a.status !== 'PUBLISHED' && a.status !== 'APPROVED') return false;
+            
+            // Check authorship: Public if no authorId (System) or author is Admin
+            if (!a.authorId) return true; 
+            return adminIds.has(a.authorId); 
+        });
+
+        setArticles(publicContent.filter(a => a.type === 'ARTICLE'));
+        setBlogs(publicContent.filter(a => a.type === 'BLOG'));
     });
 
     const unsubProducts = mockBackend.subscribeToProducts((data) => {
-        setBooks(data.filter(p => p.category === 'Book').slice(0, 6));
+        setBooks(data.filter(p => p.category === 'Book' || p.category === 'Store'));
     });
 
     const unsubMags = mockBackend.subscribeToMagazines((data) => {
-        // Sort manually since subscription might return unsorted if complex query
+        // Sort manually
         const sorted = data.sort((a,b) => (b.year - a.year) || (new Date(`${b.month} 1`).getTime() - new Date(`${a.month} 1`).getTime()));
         setMagazine(sorted.length > 0 ? sorted[0] : null);
     });
 
     const unsubReviews = mockBackend.subscribeToFeedback((data) => {
-        setReviews(data.slice(0, 6));
+        setReviews(data);
     });
 
     return () => {
@@ -53,7 +72,7 @@ const Home: React.FC = () => {
     };
   }, []);
 
-  const SectionHeader = ({ title, link, linkText = "View All" }: { title: string; link: string; linkText?: string }) => (
+  const SectionHeader = ({ title, link, linkText = "View All", isExternal = false }: { title: string; link: string; linkText?: string; isExternal?: boolean }) => (
     <div className="flex justify-between items-end mb-10">
       <div>
         <h2 className="text-3xl font-serif font-bold text-agri-primary relative inline-block">
@@ -61,9 +80,15 @@ const Home: React.FC = () => {
           <span className="absolute -bottom-2 left-0 w-1/2 h-1 bg-agri-secondary rounded-full"></span>
         </h2>
       </div>
-      <Link to={link} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-agri-secondary hover:text-agri-primary transition-all">
-        {linkText} <ChevronRight size={14} />
-      </Link>
+      {isExternal ? (
+        <a href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-agri-secondary hover:text-agri-primary transition-all">
+            {linkText} <ExternalLink size={14} />
+        </a>
+      ) : (
+        <Link to={link} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-agri-secondary hover:text-agri-primary transition-all">
+            {linkText} <ChevronRight size={14} />
+        </Link>
+      )}
     </div>
   );
 
@@ -77,10 +102,227 @@ const Home: React.FC = () => {
     </motion.div>
   );
 
+  // --- DYNAMIC SECTION RENDERER ---
+  const renderSection = (section: HomepageSection) => {
+    if (!section.isEnabled) return null;
+
+    switch (section.id) {
+      case 'news':
+        return (
+          <section key={section.id} className="container mx-auto px-6 mb-24">
+            <SectionHeader title={section.label || "News & Updates"} link="/news" />
+            <div className="grid lg:grid-cols-3 gap-8">
+              {news.length > 0 && (
+                <motion.div 
+                  onClick={() => navigate(`/news`)}
+                  className="lg:col-span-1 bg-agri-primary rounded-[2.5rem] p-10 text-white relative overflow-hidden group cursor-pointer shadow-2xl"
+                >
+                  <div className="absolute top-0 right-0 p-10 text-white/5">
+                    <Megaphone size={120} className="group-hover:rotate-12 transition-transform duration-700" />
+                  </div>
+                  <div className="relative z-10">
+                    <span className="bg-agri-secondary text-agri-primary px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest mb-6 inline-block">FEATURED_POST</span>
+                    <h3 className="text-3xl font-serif font-bold mb-4 leading-tight group-hover:text-agri-secondary transition-colors">{news[0].title}</h3>
+                    <p className="text-white/60 text-sm leading-relaxed mb-10 line-clamp-4">{news[0].description}</p>
+                    <div className="flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-widest border-t border-white/10 pt-6">
+                      <Calendar size={14}/> {news[0].date}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              <div className="lg:col-span-2 grid md:grid-cols-2 gap-8">
+                {news.slice(1, section.itemsToShow).map((item) => (
+                  <GlassCard key={item.id} onClick={() => navigate(`/news`)}>
+                    <div className="flex items-center gap-2 text-[10px] font-black text-agri-secondary uppercase tracking-widest mb-4">
+                      <Calendar size={12} /> {item.date}
+                    </div>
+                    <h4 className="text-xl font-serif font-bold text-agri-primary mb-3 line-clamp-2">{item.title}</h4>
+                    <p className="text-stone-500 text-xs leading-relaxed line-clamp-2 mb-6">{item.description}</p>
+                    <div className="text-[10px] font-black text-agri-primary uppercase tracking-widest flex items-center gap-1 opacity-40 group-hover:opacity-100">
+                      Protocol Details <ArrowRight size={10} />
+                    </div>
+                  </GlassCard>
+                ))}
+              </div>
+            </div>
+          </section>
+        );
+
+      case 'magazine':
+        if (!magazine) return null;
+        return (
+          <section key={section.id} className="mb-24 px-6">
+             <div className="container mx-auto">
+                <motion.div 
+                  whileHover={{ y: -10 }}
+                  className="bg-agri-primary rounded-[3rem] overflow-hidden shadow-2xl flex flex-col lg:flex-row group"
+                >
+                   <div className="lg:w-1/3 aspect-[3/4] overflow-hidden cursor-pointer" onClick={() => navigate('/journals')}>
+                      <img src={magazine.coverImage} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt="" />
+                   </div>
+                   <div className="lg:w-2/3 p-12 md:p-20 flex flex-col justify-center text-white relative">
+                      <div className="absolute top-0 right-0 p-12 opacity-5">
+                         <Bookmark size={200} />
+                      </div>
+                      <div className="flex items-center gap-4 mb-8">
+                         <span className="bg-agri-secondary text-agri-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">CURRENT_RELEASE</span>
+                         <span className="text-agri-secondary/60 text-xs font-serif italic">Vol {magazine.volume} • Issue {magazine.issueNumber}</span>
+                      </div>
+                      <h2 className="text-4xl md:text-6xl font-serif font-bold mb-6 group-hover:text-agri-secondary transition-colors cursor-pointer" onClick={() => navigate('/journals')}>{magazine.title}</h2>
+                      <p className="text-lg text-white/50 font-light leading-relaxed mb-12 max-w-2xl">{magazine.description}</p>
+                      <div className="flex gap-4">
+                         <PDFAction 
+                            title={magazine.title}
+                            type="MAGAZINE"
+                            accessLevel={magazine.downloadAccess}
+                            fileUrl={magazine.pdfUrl}
+                          />
+                      </div>
+                   </div>
+                </motion.div>
+             </div>
+          </section>
+        );
+
+      case 'blogs':
+        return (
+          <section key={section.id} className="container mx-auto px-6 mb-24">
+            <SectionHeader title={section.label || "Expert Insights & Blogs"} link="/blogs" />
+            {blogs.length > 0 ? (
+              <div className="grid md:grid-cols-3 gap-8">
+                {blogs.slice(0, section.itemsToShow).map((blog, i) => (
+                  <GlassCard key={blog.id} onClick={() => navigate(`/blog/${blog.id}`)}>
+                     <div className="h-48 rounded-2xl overflow-hidden mb-6 relative">
+                        <img src={blog.featuredImage || `https://images.unsplash.com/photo-1592419044706-39796d40f98c?auto=format&fit=crop&q=80&w=500&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D`} className="w-full h-full object-cover" alt="" />
+                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest text-agri-primary">
+                           BLOG_POST
+                        </div>
+                     </div>
+                     <h4 className="text-xl font-serif font-bold text-agri-primary mb-3 line-clamp-2 leading-tight">{blog.title}</h4>
+                     <div className="flex items-center gap-2 mb-4">
+                        <div className="w-6 h-6 rounded-full bg-agri-secondary/20 flex items-center justify-center text-agri-secondary text-xs">
+                           <User size={12} />
+                        </div>
+                        <span className="text-xs text-stone-500 font-bold">{blog.authorName}</span>
+                     </div>
+                     <p className="text-stone-500 text-xs leading-relaxed line-clamp-3 mb-6">
+                        {blog.excerpt || blog.content.substring(0, 100)}...
+                     </p>
+                     <div className="text-[10px] font-black text-agri-secondary uppercase tracking-widest flex items-center gap-2">
+                        READ ARTICLE <ArrowRight size={12} />
+                     </div>
+                  </GlassCard>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-stone-50 border border-stone-100 rounded-[2rem] p-12 text-center">
+                 <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 text-stone-300 shadow-sm">
+                    <PenTool size={32} />
+                 </div>
+                 <h3 className="text-lg font-serif font-bold text-agri-primary">Insights Loading...</h3>
+                 <p className="text-stone-400 text-xs mt-2 max-w-md mx-auto">Our experts are currently curating new blog content. Check back soon for fresh agricultural insights.</p>
+              </div>
+            )}
+          </section>
+        );
+
+      case 'books':
+        if (books.length === 0) return null;
+        return (
+          <section key={section.id} className="container mx-auto px-6 mb-24">
+             <SectionHeader title={section.label || "Agri-Store & Resources"} link="/products" />
+             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {books.slice(0, section.itemsToShow).map((book) => (
+                   <motion.div 
+                     key={book.id}
+                     whileHover={{ y: -5 }}
+                     className="bg-white rounded-2xl p-4 shadow-sm border border-stone-100 group cursor-pointer"
+                     onClick={() => navigate('/products')}
+                   >
+                      <div className="aspect-[3/4] rounded-xl overflow-hidden bg-stone-100 mb-4 relative">
+                         <img src={book.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={book.name} />
+                         <div className="absolute top-2 right-2 bg-agri-secondary text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg">
+                            ₹{book.price}
+                         </div>
+                      </div>
+                      <h4 className="font-serif font-bold text-agri-primary text-sm mb-1 line-clamp-1">{book.name}</h4>
+                      <p className="text-xs text-stone-400 mb-3 line-clamp-1">{book.description}</p>
+                      <button className="w-full py-2 rounded-lg border border-agri-secondary/30 text-agri-secondary text-[10px] font-black uppercase tracking-widest hover:bg-agri-secondary hover:text-white transition-all flex items-center justify-center gap-2">
+                         <ShoppingBag size={12} /> View Details
+                      </button>
+                   </motion.div>
+                ))}
+             </div>
+          </section>
+        );
+
+      case 'reviews':
+        if (reviews.length === 0) return null;
+        return (
+          <section key={section.id} className="py-20 bg-stone-50 mb-24">
+             <div className="container mx-auto px-6">
+                <div className="text-center mb-12">
+                   <h2 className="text-3xl font-serif font-bold text-agri-primary mb-3">{section.label || "Community Voices"}</h2>
+                   <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Feedback from our network</p>
+                </div>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                   {reviews.slice(0, section.itemsToShow).map((review) => (
+                      <div key={review.id} className="bg-white p-8 rounded-[2rem] shadow-sm border border-stone-100 relative">
+                         <div className="text-agri-secondary mb-4 opacity-20"><Quote size={40} /></div>
+                         <p className="text-stone-600 text-sm leading-relaxed mb-6 italic">"{review.comment}"</p>
+                         <div className="flex items-center gap-3 border-t border-stone-100 pt-4">
+                            <div className="w-10 h-10 rounded-full bg-agri-primary text-white flex items-center justify-center font-serif font-bold">
+                               {review.userName[0]}
+                            </div>
+                            <div>
+                               <p className="text-xs font-bold text-agri-primary">{review.userName}</p>
+                               <div className="flex text-agri-secondary">
+                                  {[...Array(review.rating)].map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
+                               </div>
+                            </div>
+                         </div>
+                      </div>
+                   ))}
+                </div>
+             </div>
+          </section>
+        );
+
+      case 'mission':
+        return (
+          <section key={section.id} className="container mx-auto px-6 mb-24">
+             <div className="bg-agri-primary rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                <div className="relative z-10 max-w-4xl mx-auto">
+                   <div className="w-16 h-16 bg-agri-secondary text-agri-primary rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl">
+                      <BookOpen size={32} />
+                   </div>
+                   <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-8">{section.label || "Our Mission"}</h2>
+                   <p className="text-lg md:text-xl text-white/70 font-light leading-relaxed mb-10">
+                      {settings?.missionText || "To create a seamless bridge between agricultural research and practical application, empowering the next generation of farmers and scientists with verified knowledge."}
+                   </p>
+                   <Link to="/about-contact" className="inline-flex items-center gap-2 bg-white text-agri-primary px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-agri-secondary hover:text-white transition-all">
+                      Read Our Story <ArrowRight size={16} />
+                   </Link>
+                </div>
+             </div>
+          </section>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // Get active layout from settings, or fallback to default order
+  let layout = settings?.homepageLayout 
+    ? [...settings.homepageLayout].sort((a,b) => a.order - b.order) 
+    : [];
+
   return (
     <div className="bg-agri-bg min-h-screen">
       
-      {/* --- HERO SECTION --- */}
+      {/* --- HERO SECTION (Static / Always Top) --- */}
       <section className="relative h-[85vh] flex items-center bg-agri-primary text-white overflow-hidden mb-24">
         {/* Updated Background Image: Modern Agriculture Drone */}
         <div className="absolute inset-0">
@@ -108,7 +350,7 @@ const Home: React.FC = () => {
               Advancing <span className="text-agri-secondary italic">Indian Agriculture</span> Through Peer-Review
             </h1>
             <p className="text-lg text-white/70 font-light leading-relaxed mb-12 max-w-xl">
-              Building a trusted digital ecosystem for agricultural knowledge, research publishing, and practical innovation.
+              Building a Trusted Digital Agriculture Magazine and Research Publishing Platform for Knowledge Sharing and Innovation in Modern Farming.
             </p>
             <div className="flex flex-wrap gap-6">
                <Link to="/submission" className="bg-agri-secondary text-agri-primary px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-2xl">
@@ -122,211 +364,8 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* --- SECTION 1: NEWS & UPDATES --- */}
-      <section className="container mx-auto px-6 mb-24">
-        <SectionHeader title="News & Updates" link="/news" />
-        <div className="grid lg:grid-cols-3 gap-8">
-          {news.length > 0 && (
-            <motion.div 
-              onClick={() => navigate(`/news`)}
-              className="lg:col-span-1 bg-agri-primary rounded-[2.5rem] p-10 text-white relative overflow-hidden group cursor-pointer shadow-2xl"
-            >
-              <div className="absolute top-0 right-0 p-10 text-white/5">
-                <Megaphone size={120} className="group-hover:rotate-12 transition-transform duration-700" />
-              </div>
-              <div className="relative z-10">
-                <span className="bg-agri-secondary text-agri-primary px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest mb-6 inline-block">FEATURED_POST</span>
-                <h3 className="text-3xl font-serif font-bold mb-4 leading-tight group-hover:text-agri-secondary transition-colors">{news[0].title}</h3>
-                <p className="text-white/60 text-sm leading-relaxed mb-10 line-clamp-4">{news[0].description}</p>
-                <div className="flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-widest border-t border-white/10 pt-6">
-                  <Calendar size={14}/> {news[0].date}
-                </div>
-              </div>
-            </motion.div>
-          )}
-          <div className="lg:col-span-2 grid md:grid-cols-2 gap-8">
-            {news.slice(1).map((item) => (
-              <GlassCard key={item.id} onClick={() => navigate(`/news`)}>
-                <div className="flex items-center gap-2 text-[10px] font-black text-agri-secondary uppercase tracking-widest mb-4">
-                  <Calendar size={12} /> {item.date}
-                </div>
-                <h4 className="text-xl font-serif font-bold text-agri-primary mb-3 line-clamp-2">{item.title}</h4>
-                <p className="text-stone-500 text-xs leading-relaxed line-clamp-2 mb-6">{item.description}</p>
-                <div className="text-[10px] font-black text-agri-primary uppercase tracking-widest flex items-center gap-1 opacity-40 group-hover:opacity-100">
-                  Protocol Details <ArrowRight size={10} />
-                </div>
-              </GlassCard>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- SECTION 2: LATEST JOURNAL ARTICLES --- */}
-      <section className="container mx-auto px-6 mb-24">
-        <SectionHeader title="Research Articles" link="/journals" />
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {articles.map((article) => (
-            <GlassCard key={article.id} onClick={() => navigate('/journals')}>
-              <div className="bg-stone-100 h-40 rounded-2xl mb-6 overflow-hidden relative">
-                <img src={article.featuredImage || 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=400'} className="w-full h-full object-cover" alt="" />
-                <div className="absolute top-3 left-3 bg-white px-2 py-1 rounded-md shadow-sm border border-stone-100 flex items-center gap-1">
-                  <FileText size={10} className="text-agri-secondary" />
-                  <span className="text-[8px] font-black text-agri-primary uppercase">PEER_REVIEWED</span>
-                </div>
-              </div>
-              <h4 className="font-serif font-bold text-agri-primary text-lg mb-3 line-clamp-2 h-12 leading-tight">{article.title}</h4>
-              <div className="flex items-center gap-2 text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-6">
-                <User size={12} className="text-agri-secondary" /> {article.authorName}
-              </div>
-              <div className="flex items-center justify-between pt-4 border-t border-stone-100">
-                <PDFAction 
-                  title={article.title}
-                  type="ARTICLE"
-                  accessLevel={article.downloadAccess}
-                  fileUrl={article.fileUrl || '#'}
-                  variant="inline"
-                />
-                <ChevronRight size={14} className="text-agri-secondary" />
-              </div>
-            </GlassCard>
-          ))}
-        </div>
-      </section>
-
-      {/* --- SECTION 5: LATEST MAGAZINE (SINGLE HIGHLIGHT) --- */}
-      {magazine && (
-        <section className="mb-24 px-6">
-           <div className="container mx-auto">
-              <motion.div 
-                whileHover={{ y: -10 }}
-                className="bg-agri-primary rounded-[3rem] overflow-hidden shadow-2xl flex flex-col lg:flex-row group"
-              >
-                 <div className="lg:w-1/3 aspect-[3/4] overflow-hidden cursor-pointer" onClick={() => navigate('/journals')}>
-                    <img src={magazine.coverImage} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt="" />
-                 </div>
-                 <div className="lg:w-2/3 p-12 md:p-20 flex flex-col justify-center text-white relative">
-                    <div className="absolute top-0 right-0 p-12 opacity-5">
-                       <Bookmark size={200} />
-                    </div>
-                    <div className="flex items-center gap-4 mb-8">
-                       <span className="bg-agri-secondary text-agri-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">CURRENT_RELEASE</span>
-                       <span className="text-agri-secondary/60 text-xs font-serif italic">Vol {magazine.volume} • Issue {magazine.issueNumber}</span>
-                    </div>
-                    <h2 className="text-4xl md:text-6xl font-serif font-bold mb-6 group-hover:text-agri-secondary transition-colors cursor-pointer" onClick={() => navigate('/journals')}>{magazine.title}</h2>
-                    <p className="text-lg text-white/50 font-light leading-relaxed mb-12 max-w-2xl">{magazine.description}</p>
-                    <div className="flex gap-4">
-                       <PDFAction 
-                          title={magazine.title}
-                          type="MAGAZINE"
-                          accessLevel={magazine.downloadAccess}
-                          fileUrl={magazine.pdfUrl}
-                        />
-                    </div>
-                 </div>
-              </motion.div>
-           </div>
-        </section>
-      )}
-
-      {/* --- SECTION 3: LATEST BLOGS --- */}
-      <section className="container mx-auto px-6 mb-24">
-        <SectionHeader title="Community Blogs" link="/journals" />
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {blogs.map((blog) => (
-            <GlassCard key={blog.id} onClick={() => navigate('/journals')}>
-              <div className="flex items-center gap-2 text-[10px] font-black text-agri-secondary uppercase tracking-widest mb-4">
-                <Rss size={12} /> Insight Feed
-              </div>
-              <h4 className="text-xl font-serif font-bold text-agri-primary mb-4 leading-tight">{blog.title}</h4>
-              <p className="text-stone-500 text-sm leading-relaxed line-clamp-3 mb-8">{blog.excerpt || 'Practical perspectives from the ground, exploring modernization and traditional farming techniques...'}</p>
-              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-stone-400">
-                <div className="flex items-center gap-2">
-                   <div className="w-6 h-6 rounded-full bg-agri-secondary/10 flex items-center justify-center text-agri-secondary font-black text-[8px]">{blog.authorName[0]}</div>
-                   <span>{blog.authorName}</span>
-                </div>
-                <span>{new Date(blog.submissionDate).toLocaleDateString()}</span>
-              </div>
-            </GlassCard>
-          ))}
-        </div>
-      </section>
-
-      {/* --- SECTION 4: BOOKS (STORE) --- */}
-      <section className="container mx-auto px-6 mb-24">
-        <SectionHeader title="Academic Store" link="/products" />
-        <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-6">
-          {books.map((book) => (
-            <motion.div
-              key={book.id}
-              whileHover={{ scale: 1.02, y: -5 }}
-              onClick={() => navigate('/products')}
-              className="bg-white rounded-2xl shadow-sm border border-stone-100 p-4 cursor-pointer flex flex-col group"
-            >
-              <div className="aspect-[3/4] bg-stone-50 rounded-xl overflow-hidden mb-4 border border-stone-100">
-                <img src={book.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="" />
-              </div>
-              <h4 className="font-bold text-agri-primary text-xs mb-1 line-clamp-2 h-8 leading-tight">{book.name}</h4>
-              <p className="text-agri-secondary font-black text-[10px] mt-auto">₹{book.price}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* --- SECTION 6: COMMUNITY REVIEWS --- */}
-      <section className="bg-stone-100 py-24 mb-24">
-        <div className="container mx-auto px-6">
-          <SectionHeader title="Community Testimonials" link="/dashboard" linkText="Share Feedback" />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {reviews.map((rev) => (
-              <div key={rev.id} className="bg-white p-10 rounded-[2.5rem] shadow-sm relative group border border-transparent hover:border-agri-secondary/30 transition-all">
-                <div className="absolute top-8 right-8 text-agri-secondary/10 group-hover:text-agri-secondary/20 transition-colors">
-                  <Quote size={64} fill="currentColor" />
-                </div>
-                <div className="flex gap-1 mb-6">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={14} fill={i < rev.rating ? "#C29263" : "transparent"} className={i < rev.rating ? "text-agri-secondary" : "text-stone-200"} />
-                  ))}
-                </div>
-                <p className="text-stone-600 text-sm italic leading-relaxed mb-10 min-h-[5rem]">"{rev.comment}"</p>
-                <div className="flex items-center gap-4 border-t border-stone-100 pt-8">
-                  <div className="w-12 h-12 bg-agri-primary rounded-full flex items-center justify-center font-black text-white text-xs border-2 border-white ring-1 ring-agri-primary/10">
-                    {rev.userName[0]}
-                  </div>
-                  <div>
-                    <h5 className="font-bold text-agri-primary text-sm">{rev.userName}</h5>
-                    <p className="text-[10px] font-black uppercase text-stone-400 tracking-widest">{rev.userOccupation || 'Researcher'}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* --- SECTION 7: OUR MISSION (LAST, STATIC) --- */}
-      <section className="container mx-auto px-6 mb-32">
-         <div className="bg-agri-primary rounded-[4rem] p-12 md:p-24 text-center relative overflow-hidden text-white">
-            <div className="absolute top-0 left-0 w-64 h-64 bg-agri-secondary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-            <div className="absolute bottom-0 right-0 w-96 h-96 bg-agri-secondary/5 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
-            
-            <div className="max-w-4xl mx-auto relative z-10">
-               <h2 className="text-4xl md:text-6xl font-serif font-bold mb-10">Our Mission</h2>
-               <div className="space-y-8 text-lg md:text-xl font-light leading-relaxed text-white/80">
-                  <p>Our mission is to build a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation.</p>
-                  <p>We aim to connect researchers, students, educators, and professionals through quality articles, journals, blogs, and verified resources that contribute to sustainable and modern agriculture.</p>
-                  <p>By enabling structured publishing, knowledge sharing, and access to curated content, we strive to strengthen the bridge between agricultural research and real-world farming practices.</p>
-               </div>
-               <div className="mt-16">
-                  <Link 
-                    to="/journals" 
-                    className="inline-flex items-center gap-3 bg-agri-secondary text-agri-primary px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:bg-white transition-all group"
-                  >
-                    Explore Articles <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                  </Link>
-               </div>
-            </div>
-         </div>
-      </section>
+      {/* --- DYNAMIC SECTIONS --- */}
+      {layout.map(section => renderSection(section))}
 
     </div>
   );

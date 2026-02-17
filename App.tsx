@@ -3,6 +3,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { User } from './types';
 import { mockBackend, auth, onAuthStateChanged } from './services/mockBackend';
+import { Mail, LogOut, CheckCircle } from 'lucide-react';
 
 // Layouts and Pages
 import Layout from './components/Layout';
@@ -13,7 +14,10 @@ import Home from './pages/Home';
 import EditorialBoard from './pages/EditorialBoard';
 import AuthorGuidelines from './pages/AuthorGuidelines';
 import News from './pages/News';
+import NewsView from './pages/NewsView';
 import Journals from './pages/Journals';
+import Blogs from './pages/Blogs';
+import BlogView from './pages/BlogView';
 import Submission from './pages/Submission';
 import Dashboard from './pages/Dashboard';
 import Subscription from './pages/Subscription';
@@ -23,6 +27,7 @@ import Products from './pages/Products';
 import Consultation from './pages/Consultation';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import ViewDocument from './pages/ViewDocument';
 import Preloader from './components/Preloader';
 
 // Admin Pages
@@ -47,6 +52,8 @@ import SEOSettings from './pages/admin/SEOSettings';
 import MediaLibrary from './pages/admin/MediaLibrary';
 import NotificationManager from './pages/admin/NotificationManager';
 import TrashManager from './pages/admin/TrashManager';
+import AdminManager from './extensions/submission-tracking/AdminManager';
+import SubmissionAdminPanel from './extensions/submission-admin/SubmissionAdminPanel';
 
 // Auth Context
 interface AuthContextType {
@@ -64,24 +71,38 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Listen for Auth state changes from Mock Backend
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    // Listen for Auth state changes from Firebase
+    let userUnsub: (() => void) | null = null;
+
+    const authUnsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Sync with backend to get full profile including roles/subscription
-          const appUser = await mockBackend.syncUser(firebaseUser);
-          setUser(appUser);
+          // 1. Ensure user record exists (Create if first time login)
+          await mockBackend.syncUser(firebaseUser);
+          
+          // 2. Subscribe to the real-time record to get plan updates instantly
+          if (userUnsub) userUnsub(); // cleanup previous if any
+          
+          userUnsub = mockBackend.subscribeToUser(firebaseUser.uid, (userData) => {
+             if (userData) setUser(userData);
+          });
+
         } catch (error) {
           console.error("Failed to sync user profile", error);
           setUser(null);
         }
       } else {
+        if (userUnsub) userUnsub();
+        userUnsub = null;
         setUser(null);
       }
       setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      authUnsub();
+      if (userUnsub) userUnsub();
+    };
   }, []);
 
   const login = (u: User) => {
@@ -125,12 +146,18 @@ const App: React.FC = () => {
       <HashRouter>
         <PopupAnnouncement />
         <Routes>
+          {/* Secure Document Viewer Route (No Layout) */}
+          <Route path="/view-document/:id" element={<ViewDocument />} />
+
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="editorial-board" element={<EditorialBoard />} />
             <Route path="guidelines" element={<AuthorGuidelines />} />
             <Route path="news" element={<News />} />
+            <Route path="news/:id" element={<NewsView />} />
             <Route path="journals" element={<Journals />} />
+            <Route path="blogs" element={<Blogs />} />
+            <Route path="blog/:id" element={<BlogView />} />
             <Route path="about-contact" element={<AboutContact />} />
             <Route path="products" element={<Products />} />
             <Route path="consultation" element={<Consultation />} />
@@ -152,6 +179,8 @@ const App: React.FC = () => {
           >
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="submissions" element={<SubmissionAdminPanel />} />
+            <Route path="tracker" element={<AdminManager />} />
             <Route path="navigation" element={<NavigationManager />} />
             <Route path="layout" element={<LayoutManager />} />
             <Route path="inquiries" element={<InquiryManager />} />
@@ -182,4 +211,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-    

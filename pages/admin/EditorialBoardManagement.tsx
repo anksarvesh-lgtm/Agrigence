@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { EditorialMember } from '../../types';
-import { Plus, Trash2, Edit, Save, X, Award, MapPin, Mail, ChevronUp, ChevronDown, ImageIcon, Globe, Linkedin, BookOpen, User } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, Award, MapPin, Mail, ChevronUp, ChevronDown, ImageIcon, Globe, Linkedin, BookOpen, User, Loader2 } from 'lucide-react';
 
 const EditorialBoardManagement: React.FC = () => {
   const [members, setMembers] = useState<EditorialMember[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<Partial<EditorialMember>>({});
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => { loadMembers(); }, []);
 
@@ -43,6 +44,19 @@ const EditorialBoardManagement: React.FC = () => {
   const handleToggleStatus = async (member: EditorialMember) => {
     await mockBackend.updateMember({ ...member, isEnabled: !member.isEnabled });
     loadMembers();
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsUploading(true);
+      try {
+        const url = await mockBackend.uploadFile(file, 'editorial');
+        setEditingMember({...editingMember, imageUrl: url});
+      } finally {
+        setIsUploading(false);
+      }
+    }
   };
 
   return (
@@ -120,17 +134,15 @@ const EditorialBoardManagement: React.FC = () => {
                        <div className="space-y-4">
                           <label className="text-[10px] uppercase font-bold text-white/40 block tracking-widest ml-2">Academic Portrait</label>
                           <div className="aspect-square rounded-[3rem] bg-black/40 border-2 border-dashed border-white/10 overflow-hidden relative group">
+                             {isUploading && (
+                                <div className="absolute inset-0 z-20 bg-black/60 flex items-center justify-center text-agri-secondary">
+                                   <Loader2 size={32} className="animate-spin" />
+                                </div>
+                             )}
                              {editingMember.imageUrl ? <img src={editingMember.imageUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex flex-col items-center justify-center text-white/10"><ImageIcon size={48} /><span className="text-[8px] mt-2">MISSING_ASSET</span></div>}
                              <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer">
                                 <span className="text-[10px] font-black text-white uppercase tracking-widest">Replace Photo</span>
-                                <input type="file" className="hidden" onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if(file) {
-                                    const reader = new FileReader();
-                                    reader.onload = () => setEditingMember({...editingMember, imageUrl: reader.result as string});
-                                    reader.readAsDataURL(file);
-                                  }
-                                }} />
+                                <input type="file" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
                              </label>
                           </div>
                        </div>

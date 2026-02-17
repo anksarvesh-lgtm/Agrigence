@@ -2,15 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { LeadershipMember } from '../../types';
-import { Save, UserCircle, Camera, Trash2, Eye, EyeOff, ChevronUp, ChevronDown } from 'lucide-react';
+import { Save, UserCircle, Camera, Trash2, Eye, EyeOff, ChevronUp, ChevronDown, Loader2, Plus } from 'lucide-react';
 
 const LeadershipManagement: React.FC = () => {
   const [leaders, setLeaders] = useState<LeadershipMember[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
-        setLeaders([...(await mockBackend.getLeadership()).sort((a,b) => a.order - b.order)]);
+        const data = await mockBackend.getLeadership();
+        setLeaders([...data.sort((a,b) => a.order - b.order)]);
     };
     load();
   }, []);
@@ -24,35 +26,75 @@ const LeadershipManagement: React.FC = () => {
     }, 800);
   };
 
+  const handleAddProfile = () => {
+    const newProfile: LeadershipMember = {
+        id: `l${Date.now()}`,
+        name: 'New Leader',
+        role: 'Designation',
+        bio: 'Enter biography here...',
+        imageUrl: '',
+        order: leaders.length + 1,
+        isEnabled: true
+    };
+    setLeaders([...leaders, newProfile]);
+  };
+
+  const handleDeleteProfile = async (id: string) => {
+      if(confirm("Are you sure you want to remove this profile?")) {
+          setLeaders(prev => prev.filter(l => l.id !== id));
+      }
+  };
+
   const updateLeader = (id: string, field: keyof LeadershipMember, value: any) => {
     setLeaders(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
   };
 
-  const handleImageUpload = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        updateLeader(id, 'imageUrl', reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setUploadingId(id);
+      try {
+        const url = await mockBackend.uploadFile(file, 'leadership');
+        updateLeader(id, 'imageUrl', url);
+      } finally {
+        setUploadingId(null);
+      }
     }
   };
 
+  const moveProfile = (index: number, direction: 'up' | 'down') => {
+      const newLeaders = [...leaders];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex >= 0 && targetIndex < newLeaders.length) {
+          [newLeaders[index], newLeaders[targetIndex]] = [newLeaders[targetIndex], newLeaders[index]];
+          // Update orders
+          newLeaders.forEach((l, i) => l.order = i + 1);
+          setLeaders(newLeaders);
+      }
+  };
+
   return (
-    <div className="space-y-8 max-w-5xl">
+    <div className="space-y-8 max-w-5xl pb-24">
       <div className="flex justify-between items-center bg-agri-secondary/10 p-6 rounded-2xl border border-agri-secondary/20">
         <div>
           <h1 className="text-2xl font-bold text-white">Founding Leadership</h1>
           <p className="text-white/40 text-xs mt-1 uppercase tracking-widest font-bold">Manage profiles shown on About page</p>
         </div>
-        <button 
-          onClick={handleSave} 
-          disabled={isSaving}
-          className="bg-agri-secondary text-agri-primary px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 disabled:opacity-50"
-        >
-           <Save size={18} /> {isSaving ? 'UPDATING...' : 'SYNC ALL PROFILES'}
-        </button>
+        <div className="flex gap-3">
+            <button 
+            onClick={handleAddProfile} 
+            className="bg-white/10 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-white/20 transition-transform active:scale-95 text-xs uppercase tracking-widest"
+            >
+            <Plus size={18} /> Add Profile
+            </button>
+            <button 
+            onClick={handleSave} 
+            disabled={isSaving}
+            className="bg-agri-secondary text-agri-primary px-8 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 disabled:opacity-50 text-xs uppercase tracking-widest"
+            >
+            <Save size={18} /> {isSaving ? 'SYNCING...' : 'SAVE CHANGES'}
+            </button>
+        </div>
       </div>
 
       <div className="space-y-10">
@@ -61,19 +103,33 @@ const LeadershipManagement: React.FC = () => {
               <div className="flex flex-col md:flex-row gap-12 items-start">
                  {/* Portrait */}
                  <div className="relative shrink-0">
-                    <div className="w-56 h-56 rounded-[2.5rem] overflow-hidden border-2 border-white/10 group-hover:border-agri-secondary transition-all shadow-2xl relative">
-                       <img src={lead.imageUrl} className="w-full h-full object-cover" />
-                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                          <label htmlFor={`lead-img-${lead.id}`} className="cursor-pointer bg-white text-agri-primary p-4 rounded-2xl shadow-xl hover:scale-110 transition-transform">
+                    <div className="w-56 h-56 rounded-[2.5rem] overflow-hidden border-2 border-white/10 group-hover:border-agri-secondary transition-all shadow-2xl relative bg-black/20">
+                       {uploadingId === lead.id && (
+                          <div className="absolute inset-0 z-20 bg-black/60 flex items-center justify-center text-agri-secondary">
+                             <Loader2 size={32} className="animate-spin" />
+                          </div>
+                       )}
+                       {lead.imageUrl ? (
+                           <img src={lead.imageUrl} className="w-full h-full object-cover" />
+                       ) : (
+                           <div className="w-full h-full flex items-center justify-center text-white/10">
+                               <UserCircle size={64} />
+                           </div>
+                       )}
+                       
+                       {/* Always visible upload overlay for better UX */}
+                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 flex items-center justify-center transition-all">
+                          <label htmlFor={`lead-img-${lead.id}`} className="cursor-pointer bg-white text-agri-primary p-4 rounded-2xl shadow-xl hover:scale-110 transition-transform opacity-80 group-hover:opacity-100">
                              <Camera size={24} />
                           </label>
-                          <input type="file" id={`lead-img-${lead.id}`} className="hidden" onChange={e => handleImageUpload(lead.id, e)} />
+                          <input type="file" id={`lead-img-${lead.id}`} className="hidden" onChange={e => handleImageUpload(lead.id, e)} disabled={uploadingId === lead.id} />
                        </div>
                     </div>
                     <div className="absolute -bottom-4 -right-4 flex gap-2">
                        <button 
                         onClick={() => updateLeader(lead.id, 'isEnabled', !lead.isEnabled)}
                         className={`p-3 rounded-2xl shadow-xl transition-all ${lead.isEnabled ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+                        title="Toggle Visibility"
                        >
                           {lead.isEnabled ? <Eye size={18} /> : <EyeOff size={18} />}
                        </button>
@@ -112,15 +168,20 @@ const LeadershipManagement: React.FC = () => {
 
                     <div className="flex items-center justify-between pt-4 border-t border-white/5">
                        <div className="flex gap-4">
-                          <button className="flex items-center gap-2 text-[10px] font-bold text-white/20 hover:text-white"><ChevronUp size={14}/> MOVE UP</button>
-                          <button className="flex items-center gap-2 text-[10px] font-bold text-white/20 hover:text-white"><ChevronDown size={14}/> MOVE DOWN</button>
+                          <button onClick={() => moveProfile(idx, 'up')} className="flex items-center gap-2 text-[10px] font-bold text-white/20 hover:text-white"><ChevronUp size={14}/> MOVE UP</button>
+                          <button onClick={() => moveProfile(idx, 'down')} className="flex items-center gap-2 text-[10px] font-bold text-white/20 hover:text-white"><ChevronDown size={14}/> MOVE DOWN</button>
                        </div>
-                       <button className="text-[10px] font-bold text-red-400/40 hover:text-red-400 flex items-center gap-2"><Trash2 size={14} /> REMOVE PROFILE</button>
+                       <button onClick={() => handleDeleteProfile(lead.id)} className="text-[10px] font-bold text-red-400/40 hover:text-red-400 flex items-center gap-2"><Trash2 size={14} /> REMOVE PROFILE</button>
                     </div>
                  </div>
               </div>
            </div>
          ))}
+         {leaders.length === 0 && (
+             <div className="text-center py-20 text-white/20 italic border-2 border-dashed border-white/5 rounded-[3rem]">
+                 No leadership profiles found. Click "Add Profile" to begin.
+             </div>
+         )}
       </div>
     </div>
   );

@@ -24,15 +24,100 @@ const Header = () => {
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
-    setSettings(mockBackend.getSettings());
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    // Subscribe to settings for real-time updates (e.g. Logo change)
+    const unsubSettings = mockBackend.subscribeToSettings((data) => {
+        setSettings(data);
+        
+        // --- DYNAMIC FAVICON SYNC ---
+        if (data.logoUrl) {
+            const updateFavicon = (url: string) => {
+                const linkId = 'dynamic-favicon';
+                const oldLink = document.getElementById(linkId);
+                const newLink = document.createElement('link');
+                newLink.id = linkId;
+                newLink.rel = 'shortcut icon';
+                newLink.type = 'image/png';
+                newLink.href = url;
+
+                if (oldLink) {
+                    document.head.removeChild(oldLink);
+                } else {
+                    // Remove any other existing icons to avoid conflicts
+                    const existingIcons = document.querySelectorAll("link[rel*='icon']");
+                    existingIcons.forEach(el => el.remove());
+                }
+                document.head.appendChild(newLink);
+            };
+
+            // Attempt to use Canvas for resizing and ensuring transparency (if CORS allows)
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            
+            if (ctx) {
+                const img = new Image();
+                // 'Anonymous' allows canvas export if server sends Access-Control-Allow-Origin
+                img.crossOrigin = "Anonymous"; 
+                
+                img.onload = () => {
+                    try {
+                        ctx.clearRect(0, 0, 64, 64);
+                        
+                        // Maintain Aspect Ratio, Center Image
+                        const scale = Math.min(64 / img.width, 64 / img.height);
+                        const w = img.width * scale;
+                        const h = img.height * scale;
+                        const x = (64 - w) / 2;
+                        const y = (64 - h) / 2;
+                        
+                        ctx.drawImage(img, x, y, w, h);
+                        
+                        // Export to data URI
+                        const faviconUrl = canvas.toDataURL('image/png');
+                        updateFavicon(faviconUrl);
+                    } catch (e) {
+                        // Canvas Tainted (CORS) - Fallback to raw URL
+                        updateFavicon(data.logoUrl);
+                    }
+                };
+                
+                img.onerror = () => {
+                    // Image load failed (likely CORS blocking the request entirely) - Fallback
+                    updateFavicon(data.logoUrl);
+                };
+
+                img.src = data.logoUrl;
+            }
+        }
+    });
+
+    return () => {
+        window.removeEventListener('scroll', handleScroll);
+        unsubSettings();
+    };
   }, []);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
     setSearchTerm(term);
-    if (term.length > 2) setSearchResults(mockBackend.getArticles(term));
-    else setSearchResults([]);
+    if (term.length > 2) {
+      const results = await mockBackend.getArticles(term);
+      
+      const allUsers = await mockBackend.getPublicAdmins();
+      const adminIds = new Set(allUsers.map(u => u.id));
+
+      const publicResults = results.filter(a => {
+         if (a.status !== 'PUBLISHED' && a.status !== 'APPROVED') return false;
+         if (!a.authorId) return true; 
+         return adminIds.has(a.authorId);
+      });
+
+      setSearchResults(publicResults);
+    } else {
+      setSearchResults([]);
+    }
   };
 
   const handleLogout = () => {
@@ -43,14 +128,21 @@ const Header = () => {
     }
   };
 
-  const menuItems = [
+  const menuItems = settings?.navigation 
+    ? settings.navigation.filter(item => item.isEnabled).sort((a,b) => a.order - b.order) 
+    : [];
+
+  const defaultItems = [
     { label: 'Archive', path: '/journals' },
     { label: 'News', path: '/news' },
+    { label: 'Blogs', path: '/blogs' },
     { label: 'Store', path: '/products' },
     { label: 'Guidelines', path: '/guidelines' },
     { label: 'Editorial Board', path: '/editorial-board' },
     { label: 'About', path: '/about-contact' },
   ];
+
+  const activeMenuItems = menuItems.length > 0 ? menuItems : defaultItems.map(i => ({ ...i, id: i.path, isExternal: false, order: 0, isEnabled: true }));
 
   return (
     <header 
@@ -60,9 +152,7 @@ const Header = () => {
           : 'bg-white border-b border-transparent py-4'
       }`}
     >
-      {/* Realistic Header Vines */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-         {/* Left Vine Cluster */}
          <motion.div
            initial={{ opacity: 0, y: -20 }}
            animate={{ opacity: 1, y: 0 }}
@@ -70,23 +160,17 @@ const Header = () => {
            className="absolute top-0 left-0"
          >
             <svg width="200" height="150" viewBox="0 0 200 150" className="text-[#4A7C59] opacity-80 fill-current">
-               {/* Main Hanging Vine */}
                <path d="M0,0 C20,40 10,80 30,120" fill="none" stroke="#3D2B1F" strokeWidth="2" />
                <path d="M10,0 C30,30 40,70 20,110" fill="none" stroke="#3D2B1F" strokeWidth="1.5" />
-               
-               {/* Leaves Left */}
                <path d="M20,30 Q5,25 10,45 Q25,45 20,30" />
                <path d="M25,70 Q10,75 15,90 Q30,85 25,70" />
                <path d="M15,10 Q0,5 5,20 Q20,20 15,10" />
                <path d="M30,110 Q15,115 20,130 Q35,125 30,110" />
-
-               {/* Secondary Leaves */}
                <path d="M5,50 Q-10,45 -5,65 Q10,65 5,50" className="opacity-70" />
                <path d="M35,50 Q50,45 45,65 Q30,65 35,50" className="opacity-70" />
             </svg>
          </motion.div>
 
-         {/* Right Vine Cluster */}
          <motion.div
            initial={{ opacity: 0, y: -20 }}
            animate={{ opacity: 1, y: 0 }}
@@ -96,11 +180,9 @@ const Header = () => {
             <svg width="250" height="180" viewBox="0 0 250 180" className="text-[#4A7C59] opacity-80 fill-current">
                <path d="M0,0 C30,50 10,100 40,150" fill="none" stroke="#3D2B1F" strokeWidth="2" />
                <path d="M20,0 C50,40 60,90 30,140" fill="none" stroke="#3D2B1F" strokeWidth="1.5" />
-               
                <path d="M30,40 Q15,35 20,55 Q35,55 30,40" />
                <path d="M10,80 Q-5,75 0,95 Q15,95 10,80" />
                <path d="M40,120 Q25,115 30,135 Q45,135 40,120" />
-               
                <path d="M50,60 Q65,55 60,75 Q45,75 50,60" className="opacity-60" />
             </svg>
          </motion.div>
@@ -109,7 +191,11 @@ const Header = () => {
       <div className="container mx-auto px-6 relative z-10">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-3 group">
-            <Logo className={isScrolled ? "h-8" : "h-10"} variant="dark" />
+            {settings?.logoUrl ? (
+               <img src={settings.logoUrl} className={`w-auto object-contain transition-all duration-300 ${isScrolled ? "h-8" : "h-12"}`} alt="Agrigence" />
+            ) : (
+               <Logo className={isScrolled ? "h-8" : "h-10"} variant="dark" />
+            )}
             <div className="flex flex-col">
               <span className={`font-serif font-bold tracking-tight transition-all duration-300 ${isScrolled ? 'text-xl' : 'text-2xl'} text-agri-primary leading-tight`}>
                 Agrigence
@@ -117,18 +203,29 @@ const Header = () => {
               <span className={`text-[10px] text-agri-primary/80 font-serif italic -mt-0.5 whitespace-nowrap transition-all duration-300 ${isScrolled ? 'hidden' : 'block'}`}>
                 Where Agri-Intelligence Meets Agricultural Generation
               </span>
-              <span className={`text-[9px] font-medium text-agri-secondary/80 ${isScrolled ? 'mt-0' : 'mt-1'}`}>
-                ISSN: {settings?.issn || 'Not Available'}
-              </span>
             </div>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
-            {menuItems.map((item) => {
+            {activeMenuItems.map((item) => {
                const isActive = location.pathname === item.path;
+               if (item.isExternal) {
+                   return (
+                     <a 
+                       key={item.id} 
+                       href={item.path}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       className="text-sm font-medium transition-all hover:text-agri-secondary relative group text-stone-500"
+                     >
+                       {item.label}
+                       <span className="absolute -bottom-1 left-0 h-0.5 bg-agri-secondary transition-all duration-300 w-0 group-hover:w-full"></span>
+                     </a>
+                   );
+               }
                return (
                 <Link 
-                  key={item.path} 
+                  key={item.id} 
                   to={item.path} 
                   className={`text-sm font-medium transition-all hover:text-agri-secondary relative group ${
                     isActive ? 'text-agri-primary font-bold' : 'text-stone-500'
@@ -155,9 +252,12 @@ const Header = () => {
               </div>
               {searchResults.length > 0 && (
                 <div className="absolute top-full right-0 mt-3 w-80 bg-white shadow-2xl rounded-xl border border-stone-100 p-2 z-50 overflow-hidden">
+                  <div className="bg-stone-50 px-3 py-1 text-[9px] font-bold uppercase text-stone-400 tracking-widest border-b border-stone-100 mb-1">
+                     Public Registry
+                  </div>
                   {searchResults.map(a => (
-                    <div key={a.id} onClick={() => { setSearchResults([]); navigate('/journals'); }} className="p-3 hover:bg-stone-50 rounded-lg cursor-pointer transition-colors">
-                      <p className="font-serif font-bold text-sm text-agri-primary truncate">{a.title}</p>
+                    <div key={a.id} onClick={() => { setSearchResults([]); navigate('/journals'); }} className="p-3 hover:bg-stone-50 rounded-lg cursor-pointer transition-colors group">
+                      <p className="font-serif font-bold text-sm text-agri-primary truncate group-hover:text-agri-secondary transition-colors">{a.title}</p>
                       <p className="text-xs text-stone-500 mt-0.5">{a.authorName}</p>
                     </div>
                   ))}
@@ -191,11 +291,12 @@ const Header = () => {
         </div>
       </div>
       
-      {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="lg:hidden bg-white border-t border-agri-border p-6 space-y-4 shadow-xl">
-           {menuItems.map(item => (
-             <Link key={item.path} to={item.path} onClick={() => setIsMenuOpen(false)} className="block text-sm font-bold text-agri-primary">{item.label}</Link>
+           {activeMenuItems.map(item => (
+             item.isExternal 
+               ? <a key={item.id} href={item.path} target="_blank" className="block text-sm font-bold text-agri-primary">{item.label}</a>
+               : <Link key={item.id} to={item.path} onClick={() => setIsMenuOpen(false)} className="block text-sm font-bold text-agri-primary">{item.label}</Link>
            ))}
            <div className="pt-4 border-t border-stone-100">
              {user ? (
@@ -218,9 +319,11 @@ const Header = () => {
 const Footer = () => {
   const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
   const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [visitorCount, setVisitorCount] = useState<number>(0);
 
   useEffect(() => {
-    setSettings(mockBackend.getSettings());
+    const unsub = mockBackend.subscribeToSettings(setSettings);
+    
     const calculateTimeLeft = () => {
       const now = new Date();
       let targetDate = new Date(now.getFullYear(), now.getMonth(), 25, 23, 59, 59);
@@ -239,7 +342,28 @@ const Footer = () => {
 
     calculateTimeLeft();
     const interval = setInterval(calculateTimeLeft, 1000);
-    return () => clearInterval(interval);
+
+    const trackVisitor = async () => {
+        try {
+            const hasVisited = localStorage.getItem('agri_visitor_tracked');
+            let count = 0;
+            if (!hasVisited) {
+                count = await mockBackend.incrementVisitorCount();
+                localStorage.setItem('agri_visitor_tracked', 'true');
+            } else {
+                count = await mockBackend.getVisitorCount();
+            }
+            setVisitorCount(count);
+        } catch (e) {
+            console.error("Visitor tracking failed", e);
+        }
+    };
+    trackVisitor();
+
+    return () => {
+        clearInterval(interval);
+        unsub();
+    };
   }, []);
 
   const socials = [
@@ -252,10 +376,7 @@ const Footer = () => {
 
   return (
     <footer className="bg-agri-primary text-white pt-20 pb-0 relative overflow-hidden border-t-4 border-agri-secondary">
-      
-      {/* Soil & Roots Background */}
       <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#1a110d] via-[#2a1d15] to-[#3D2B1F] z-0">
-         {/* Roots Texture */}
          <svg className="absolute bottom-0 left-0 w-full h-full opacity-30 text-[#8B5E34]" preserveAspectRatio="none">
             <defs>
                <pattern id="soilRoots" x="0" y="0" width="100" height="50" patternUnits="userSpaceOnUse">
@@ -266,9 +387,7 @@ const Footer = () => {
          </svg>
       </div>
 
-      {/* Vines Growing Up From Soil */}
       <div className="absolute bottom-28 left-0 w-full h-full pointer-events-none z-0">
-         {/* Left Growing Vine */}
          <motion.svg 
            initial={{ height: 0 }}
            whileInView={{ height: '100%' }}
@@ -284,7 +403,6 @@ const Footer = () => {
             <path d="M15,80 Q-5,70 5,60 Q20,65 15,80" fill="currentColor" opacity="0.8" />
          </motion.svg>
 
-         {/* Right Growing Vine */}
          <motion.svg 
            initial={{ height: 0 }}
            whileInView={{ height: '100%' }}
@@ -304,10 +422,13 @@ const Footer = () => {
       <div className="container mx-auto px-6 relative z-10 pb-12">
         <div className="grid md:grid-cols-4 gap-8 mb-12">
           
-          {/* Column 1: Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-               <Logo className="h-6" variant="light" />
+               {settings?.logoUrl ? (
+                  <img src={settings.logoUrl} className="h-8 w-auto object-contain brightness-0 invert" alt="Agrigence" />
+               ) : (
+                  <Logo className="h-6" variant="light" />
+               )}
                <span className="font-serif font-bold text-xl tracking-tight">Agrigence</span>
             </div>
             <p className="text-white/60 text-xs leading-relaxed">
@@ -328,19 +449,17 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Column 2: Quick Links */}
           <div>
             <h4 className="font-serif font-bold text-sm mb-4">Quick Links</h4>
             <ul className="space-y-2 text-xs text-white/60">
               <li><Link to="/journals" className="hover:text-agri-secondary transition-colors">Journal Archive</Link></li>
+              <li><Link to="/blogs" className="hover:text-agri-secondary transition-colors">Blogs</Link></li>
               <li><Link to="/editorial-board" className="hover:text-agri-secondary transition-colors">Editorial Board</Link></li>
               <li><Link to="/guidelines" className="hover:text-agri-secondary transition-colors">Author Guidelines</Link></li>
               <li><Link to="/products" className="hover:text-agri-secondary transition-colors">Book Store</Link></li>
-              <li><Link to="/consultation" className="hover:text-agri-secondary transition-colors">Expert Consultation</Link></li>
             </ul>
           </div>
 
-          {/* Column 3: Legal & Support */}
           <div>
             <h4 className="font-serif font-bold text-sm mb-4">Support</h4>
             <ul className="space-y-2 text-xs text-white/60">
@@ -351,7 +470,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column 4: Next Issue Timer (Simplified) */}
           <div>
              <h4 className="font-serif font-bold text-sm mb-4">Next Publication</h4>
              <div className="bg-white/5 rounded-xl p-4 border border-white/10">
@@ -388,11 +506,15 @@ const Footer = () => {
 
         </div>
         
-        {/* Bottom Bar */}
         <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/40">
-           <p>© {new Date().getFullYear()} Agrigence. All rights reserved.</p>
+           <div className="flex flex-col md:flex-row items-center gap-4">
+               <p>© {new Date().getFullYear()} Agrigence. All rights reserved.</p>
+               <span className="hidden md:inline text-white/20">|</span>
+               <span className="text-[10px] font-mono tracking-wider opacity-60">
+                   Visitor Count: {visitorCount.toLocaleString()}
+               </span>
+           </div>
            <div className="flex gap-6">
-              <span>ISSN: 2345-6789</span>
               <span>Peer-Reviewed Journal</span>
            </div>
         </div>

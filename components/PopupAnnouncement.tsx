@@ -4,28 +4,46 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowRight } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
 import { Link } from 'react-router-dom';
+import { PopupSettings } from '../types';
 
 const PopupAnnouncement: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [settings, setSettings] = useState<any>(null);
+  const [popupConfig, setPopupConfig] = useState<PopupSettings | null>(null);
 
   useEffect(() => {
-    const config = mockBackend.getSettings().popup;
-    const hasSeen = sessionStorage.getItem('agri_popup_seen');
-    
-    if (config?.isEnabled && !hasSeen) {
-      setSettings(config);
-      const timer = setTimeout(() => setIsOpen(true), 2500);
-      return () => clearTimeout(timer);
-    }
+    // Subscribe to real-time settings updates
+    const unsub = mockBackend.subscribeToSettings((data) => {
+      setPopupConfig(data.popup);
+    });
+    return () => unsub();
   }, []);
+
+  useEffect(() => {
+    // Only attempt to open if config is loaded and enabled
+    if (popupConfig?.isEnabled) {
+      const lastSeen = localStorage.getItem('agri_popup_last_seen');
+      const now = Date.now();
+      const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+      
+      // Check if never seen OR seen more than 24 hours ago
+      if (!lastSeen || (now - parseInt(lastSeen, 10) > ONE_DAY_MS)) {
+        // Maintain the 2.5s delay for better UX
+        const timer = setTimeout(() => setIsOpen(true), 2500);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      // If disabled in real-time (e.g. by admin while user is on site), close it
+      setIsOpen(false);
+    }
+  }, [popupConfig?.isEnabled]);
 
   const handleClose = () => {
     setIsOpen(false);
-    sessionStorage.setItem('agri_popup_seen', 'true');
+    // Set timestamp for 24h cooldown
+    localStorage.setItem('agri_popup_last_seen', Date.now().toString());
   };
 
-  if (!settings) return null;
+  if (!popupConfig) return null;
 
   return (
     <AnimatePresence>
@@ -45,7 +63,7 @@ const PopupAnnouncement: React.FC = () => {
             </button>
 
             <div className="h-64 relative overflow-hidden">
-               <img src={settings.imageUrl} className="w-full h-full object-cover" alt="Announcement" />
+               <img src={popupConfig.imageUrl} className="w-full h-full object-cover" alt="Announcement" />
                <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent"></div>
             </div>
 
@@ -54,19 +72,19 @@ const PopupAnnouncement: React.FC = () => {
                 Special Update
               </span>
               <h2 className="text-3xl font-serif font-bold text-agri-primary mb-4 leading-tight">
-                {settings.title}
+                {popupConfig.title}
               </h2>
               <p className="text-stone-500 text-sm leading-relaxed mb-8">
-                {settings.description}
+                {popupConfig.description}
               </p>
               
-              {settings.buttonLink && (
+              {popupConfig.buttonLink && (
                 <Link 
-                  to={settings.buttonLink} 
+                  to={popupConfig.buttonLink} 
                   onClick={handleClose}
                   className="inline-flex items-center gap-2 bg-agri-primary text-white px-10 py-4 rounded-2xl font-bold hover:bg-agri-secondary transition-all shadow-xl shadow-agri-primary/10"
                 >
-                  {settings.buttonText || 'Learn More'} <ArrowRight size={18} />
+                  {popupConfig.buttonText || 'Learn More'} <ArrowRight size={18} />
                 </Link>
               )}
             </div>

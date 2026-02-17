@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
-import { CheckCircle2, User, Lock, Mail, Users, ArrowLeft } from 'lucide-react';
+import { CheckCircle2, User, Lock, Mail, Users, LogIn } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -63,12 +63,12 @@ const Login: React.FC = () => {
           password: password 
         });
         
-        // Auto login success (auth state listener in App.tsx handles context update)
+        setIsLoading(false);
         navigate('/dashboard');
+        return;
       }
     } catch (e: any) {
       if (isLogin) {
-        // Explicitly check for invalid-credential or related error codes/messages
         if (
           e.code === 'auth/invalid-credential' || 
           e.code === 'auth/user-not-found' || 
@@ -78,7 +78,7 @@ const Login: React.FC = () => {
         ) {
           setError("Email or password is incorrect");
         } else {
-          setError(e.message || "Email or password is incorrect");
+          setError("Email or password is incorrect");
         }
       } else {
         if (e.code === 'auth/email-already-in-use') {

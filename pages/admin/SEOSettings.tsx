@@ -2,28 +2,62 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { SEOSettings as SEOTypes } from '../../types';
-import { Save, Globe, Code, Search, ImageIcon, Terminal } from 'lucide-react';
+import { Save, Globe, Code, Search, ImageIcon, Terminal, Upload, Loader2 } from 'lucide-react';
 
 const SEOSettings: React.FC = () => {
   const [seo, setSeo] = useState<SEOTypes | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
-    setSeo(mockBackend.getSettings().seo);
+    const init = async () => {
+        // Force refresh to ensure we don't load stale/default data if sync is pending
+        await mockBackend.refreshSettings();
+        const settings = mockBackend.getSettings();
+        setSeo(settings.seo || {
+            metaTitle: '',
+            metaDescription: '',
+            ogImage: '',
+            googleAnalyticsId: '',
+            robotsTxt: ''
+        });
+    };
+    init();
   }, []);
 
   const handleSave = async () => {
     if (!seo) return;
     setIsSaving(true);
+    
+    // Refresh base settings before merging to prevent overwriting other fields (e.g. navigation) with stale data
+    await mockBackend.refreshSettings();
     const settings = mockBackend.getSettings();
+    
     await mockBackend.updateSettings({ ...settings, seo });
+    
     setTimeout(() => {
       setIsSaving(false);
       alert('Global SEO protocols updated!');
     }, 800);
   };
 
-  if (!seo) return null;
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && seo) {
+      setIsUploading(true);
+      try {
+        const url = await mockBackend.uploadFile(file, 'seo');
+        setSeo({ ...seo, ogImage: url });
+      } catch (error) {
+        console.error("Upload failed", error);
+        alert("Image upload failed");
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  if (!seo) return <div className="text-white/50 p-10 text-center animate-pulse">Loading SEO Architecture...</div>;
 
   return (
     <div className="space-y-8 max-w-5xl">
@@ -57,10 +91,21 @@ const SEOSettings: React.FC = () => {
             <div>
                <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block tracking-widest">OpenGraph Social Image URL</label>
                <div className="flex gap-4 items-center">
-                  <div className="w-14 h-14 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center text-white/20 overflow-hidden shrink-0">
+                  <div className="w-14 h-14 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center text-white/20 overflow-hidden shrink-0 relative">
+                     {isUploading && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+                            <Loader2 className="animate-spin text-agri-secondary" size={16} />
+                        </div>
+                     )}
                      {seo.ogImage ? <img src={seo.ogImage} className="w-full h-full object-cover" /> : <ImageIcon size={24} />}
                   </div>
-                  <input className="flex-1 bg-black/40 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-agri-secondary text-xs" value={seo.ogImage} onChange={e => setSeo({...seo, ogImage: e.target.value})} placeholder="https://..." />
+                  <div className="flex-1 flex gap-2">
+                      <input className="flex-1 bg-black/40 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-agri-secondary text-xs" value={seo.ogImage} onChange={e => setSeo({...seo, ogImage: e.target.value})} placeholder="https://..." />
+                      <label className={`bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 flex items-center justify-center cursor-pointer transition-colors ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                          <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
+                          <Upload size={16} className="text-white/40" />
+                      </label>
+                  </div>
                </div>
             </div>
          </div>

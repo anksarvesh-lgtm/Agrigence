@@ -1,100 +1,60 @@
 
 import React from 'react';
-import { Eye, Download, Lock } from 'lucide-react';
-import { useAuth } from '../App';
+import { Eye } from 'lucide-react';
 import { DownloadAccessLevel } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 interface PDFActionProps {
   title: string;
   fileUrl: string;
-  accessLevel: DownloadAccessLevel;
-  type: 'ARTICLE' | 'BLOG' | 'MAGAZINE';
   variant?: 'inline' | 'button';
+  // Optional ID for secure viewer routing
+  id?: string;
+  // Props kept for interface compatibility
+  accessLevel?: DownloadAccessLevel; 
+  type?: string; 
 }
 
-const PDFAction: React.FC<PDFActionProps> = ({ title, fileUrl, accessLevel, type, variant = 'button' }) => {
-  const { user } = useAuth();
-
-  const hasAccess = () => {
-    if (accessLevel === 'FREE') return true;
-    if (!user) return false;
-    
-    // Check specific permissions from user object
-    if (type === 'ARTICLE' || type === 'MAGAZINE') return user.permissions.canDownloadArticles;
-    if (type === 'BLOG') return user.permissions.canDownloadBlogs;
-    
-    return false;
-  };
+const PDFAction: React.FC<PDFActionProps> = ({ title, fileUrl, variant = 'button', id, type }) => {
+  const navigate = useNavigate();
 
   const handleView = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    if (!hasAccess()) {
-      alert("Subscription Required: Please subscribe to access and read this content online.");
-      return;
+    if (!fileUrl || fileUrl === '#') {
+        alert("File not available.");
+        return;
     }
 
-    // Open PDF in new tab for direct browser viewing
-    window.open(fileUrl, '_blank');
-  };
-
-  const handleDownload = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!hasAccess()) {
-      alert("Subscription Required: Please subscribe to download this content.");
-      return;
+    // Use Secure Viewer for Articles/Blogs if ID is present
+    if (id && (type === 'ARTICLE' || type === 'BLOG')) {
+        navigate(`/view-document/${id}`);
+    } else {
+        // Fallback for Magazines or Legacy items
+        window.open(fileUrl, '_blank');
     }
-
-    const link = document.createElement('a');
-    link.href = fileUrl;
-    link.download = `${title.replace(/\s+/g, '_')}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
-
-  const label = type === 'MAGAZINE' ? 'Read Magazine' : 'Read Article PDF';
 
   if (variant === 'inline') {
     return (
-      <div className="flex gap-2">
-        <button 
-          onClick={handleView}
-          className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-agri-primary hover:text-agri-secondary transition-colors"
-        >
-          {hasAccess() ? <Eye size={12} /> : <Lock size={12} />} {label}
-        </button>
-      </div>
+      <button 
+        onClick={handleView}
+        className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-agri-primary hover:text-agri-secondary transition-colors"
+      >
+        <Eye size={12} /> Read PDF
+      </button>
     );
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2 w-full md:w-auto">
       <button 
         onClick={handleView}
-        className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all shadow-md group ${
-          hasAccess() 
-            ? 'bg-agri-primary text-white hover:bg-agri-secondary' 
-            : 'bg-stone-200 text-stone-400 cursor-not-allowed'
-        }`}
+        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs font-bold transition-all shadow-md group bg-agri-primary text-white hover:bg-agri-secondary hover:scale-[1.02] active:scale-[0.98]"
       >
-        {hasAccess() ? <Eye size={14} className="group-hover:scale-110 transition-transform" /> : <Lock size={14} />}
-        <span>{label}</span>
-      </button>
-      
-      <button 
-        onClick={handleDownload}
-        className={`p-2.5 rounded-full transition-all border ${
-          hasAccess() 
-            ? 'border-agri-border text-agri-primary hover:bg-stone-50' 
-            : 'border-stone-100 text-stone-300 cursor-not-allowed'
-        }`}
-        title="Download PDF"
-      >
-        <Download size={14} />
+        <Eye size={16} className="group-hover:scale-110 transition-transform" />
+        <span>Read PDF Online</span>
       </button>
     </div>
   );

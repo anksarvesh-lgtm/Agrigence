@@ -126,6 +126,14 @@ export interface SiteSettings {
 
 export type DownloadAccessLevel = 'FREE' | 'SUBSCRIBERS_ONLY';
 
+export interface Reference {
+  id: string;
+  rawText: string;
+  formattedText: string;
+  isValid: boolean;
+  type: 'JOURNAL' | 'BOOK' | 'WEB' | 'UNKNOWN';
+}
+
 export interface Article {
   id: string;
   title: string;
@@ -146,6 +154,22 @@ export interface Article {
   isFeatured?: boolean;
   seoTitle?: string;
   metaDescription?: string;
+  
+  // Enterprise Fields
+  internalId?: string; // UUID based internal identifier replacing DOI
+  plagiarismReport?: PlagiarismReport;
+  citationKey?: string;
+  canonicalUrl?: string;
+  
+  // Publishing Hierarchy
+  issueId?: string;
+  volume?: string;
+  issueNumber?: string;
+  
+  // AI Enhancements
+  formattedContent?: string; // AI normalized version
+  references?: Reference[];
+  keywords?: string[];
 }
 
 export interface Magazine {
@@ -248,11 +272,13 @@ export interface PaymentRecord {
   planId: string;
   planName: string;
   amount: number;
-  method: 'QR';
+  method: 'QR' | 'RAZORPAY';
   status: 'PENDING' | 'COMPLETED' | 'FAILED';
   date: string;
   upiTxnId?: string;
   screenshotUrl?: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
 }
 
 export interface Coupon {
@@ -284,4 +310,34 @@ export interface Feedback {
   comment: string;
   date: string;
   status: 'APPROVED' | 'PENDING' | 'HIDDEN';
+}
+
+// Enterprise Publishing Types
+export interface PlagiarismReport {
+  originality_score: number;
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  flagged_sections: string[];
+  confidence: number;
+  generatedAt: string;
+}
+
+export interface OAIRecord {
+  identifier: string;
+  datestamp: string;
+  setSpec: string[];
+  metadata: {
+    title: string;
+    creator: string;
+    subject: string[];
+    description: string;
+    date: string;
+    type: string;
+    identifier: string; // Permanent URL
+  }
+}
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
 }
