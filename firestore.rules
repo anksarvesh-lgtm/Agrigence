@@ -9,146 +9,160 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Check if user is the owner of the document (based on userId field or doc ID)
+    // Check if user is the owner of the document
     function isOwner(userId) {
       return isSignedIn() && (request.auth.uid == userId);
     }
 
-    // Check if user is Admin
-    function isAdmin() {
+    // SUPER_ADMIN: Full System Authority
+    function isSuperAdmin() {
       return isSignedIn() && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['SUPER_ADMIN', 'ADMIN'] ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPER_ADMIN' ||
         request.auth.token.email == 'agrigence@gmail.com'
       );
     }
 
-    // --- PUBLIC CONTENT COLLECTIONS (Read: Public, Write: Admin/Specific) ---
+    // ADMIN: Operational Manager (includes SuperAdmin for inheritance)
+    function isAdmin() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['SUPER_ADMIN', 'ADMIN'];
+    }
+
+    // EDITORIAL: Reviewer
+    function isEditorialMember() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'EDITORIAL_MEMBER';
+    }
+
+    // --- SYSTEM CONFIGURATION (SUPER_ADMIN ONLY) ---
     
-    match /articles/{docId} {
+    match /site_identity/{docId} {
       allow read: if true;
-      allow create: if isSignedIn(); // Allow users to submit articles
-      allow update, delete: if isAdmin();
+      allow write: if isSuperAdmin();
+    }
+    match /subscription_plans/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    match /static_pages/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    match /products/{docId} { // Store is managed by SuperAdmin (pricing implication)
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    match /coupons/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    match /editorial_board/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    match /leadership/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    match /popup_messages/{docId} {
+      allow read: if true;
+      allow write: if isSuperAdmin();
+    }
+    match /templates/{docId} {
+      allow read, write: if isSuperAdmin();
     }
     
-    match /blogs/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /magazines/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
+    // --- CONTENT: NEWS & BLOGS (ADMIN ALLOWED) ---
     
     match /news/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }
     
-    match /editorial_board/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /leadership/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /site_identity/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    // Site Stats (Visitor Counter)
-    match /site_stats/{docId} {
-      allow read: if true;
-      allow write: if true; // Allow incrementing
-    }
-    
-    match /popup_messages/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /subscription_plans/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /products/{docId} {
+    match /blogs/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    match /static_pages/{docId} {
+    // --- CONTENT: MAGAZINES (SUPER_ADMIN ONLY - FINAL ACADEMIC CONTENT) ---
+    match /magazines/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /branding/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /coupons/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /templates/{docId} {
-      allow read, write: if isAdmin();
+      allow write: if isSuperAdmin();
     }
 
-    // --- INTERACTIVE COLLECTIONS ---
+    // --- CONTENT: ARTICLES (HIERARCHICAL CONTROL) ---
+    match /articles/{docId} {
+      allow read: if true;
+      allow create: if isSignedIn(); 
+      
+      // SuperAdmin: Full Control
+      // Admin: Can Update (Assign, Verify) but CANNOT Publish Research (status 'PUBLISHED')
+      allow update: if isSuperAdmin() || (
+        isAdmin() && 
+        (request.resource.data.status != 'PUBLISHED' || resource.data.status == 'PUBLISHED') // Cannot change TO published, can edit IF already published (metadata)
+      ) || (
+        isEditorialMember() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewAssignments', 'reviewThreads', 'status'])
+      );
+      
+      // Delete: SuperAdmin Only
+      allow delete: if isSuperAdmin();
+    }
 
+    // --- USER MANAGEMENT ---
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin() || resource.data.role in ['ADMIN', 'SUPER_ADMIN', 'EDITORIAL_MEMBER'];
+      // Only SuperAdmin can create/delete/change roles of other staff
+      allow create: if isOwner(userId) || isSuperAdmin();
+      // CHANGED: Allow isAdmin() to update users (necessary for Subscription Activation)
+      allow update: if isOwner(userId) || isAdmin(); 
+      allow delete: if isSuperAdmin();
+    }
+
+    // --- OPERATIONAL DATA (ADMIN ALLOWED) ---
+
+    // Payments: Admin can verify/update status
+    match /payments/{paymentId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId);
+      allow update: if isAdmin(); // Verify payment
+      allow delete: if isSuperAdmin();
+    }
+
+    // Inquiries
+    match /inquiries/{docId} {
+      allow create: if true;
+      allow read, update: if isAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Feedback: Public read for homepage, Auth create for users
     match /feedback/{docId} {
       allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isAdmin();
     }
 
-    // Email Trigger Extension Collection
-    match /mail/{docId} {
-      allow create: if isSignedIn(); 
-      allow read, update, delete: if isAdmin();
-    }
-
-    // --- USER DATA & SUBMISSIONS ---
-
-    // Users Collection
-    match /users/{userId} {
-      // Allow read if owner, admin, or if the target profile is an Admin (Public Staff)
-      allow read: if isOwner(userId) || isAdmin() || resource.data.role in ['ADMIN', 'SUPER_ADMIN'];
-      allow create: if isOwner(userId) || isAdmin();
-      allow update: if isOwner(userId) || isAdmin();
-      allow delete: if isAdmin();
-    }
-
-    // Submissions
-    match /submissions/{submissionId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isOwner(request.resource.data.userId); 
-      allow update, delete: if isAdmin();
-    }
-    
-    // Payments
-    match /payments/{paymentId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow create: if isOwner(request.resource.data.userId);
-      allow update, delete: if isAdmin();
-    }
-
-    // Inquiries (Contact Form)
-    match /inquiries/{docId} {
-      allow create: if true;
-      allow read, update, delete: if isAdmin();
-    }
-
     // Notifications
     match /notifications/{docId} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
+    }
+
+    // Site Stats
+    match /site_stats/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Mail Triggers
+    match /mail/{docId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if isSuperAdmin();
+    }
+
+    // Trash
+    match /trash/{docId} {
+      allow read: if isAdmin();
+      allow write: if isSuperAdmin(); // Only SuperAdmin can restore/delete permanently
     }
 
     // --- DEFAULT DENY ---

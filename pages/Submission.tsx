@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../App';
 import { useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
-import { UploadCloud, AlertTriangle, Lock, FileText, CheckCircle } from 'lucide-react';
+import { UploadCloud, AlertTriangle, Lock, FileText, CheckCircle, PenTool, Type } from 'lucide-react';
 import { createMetaFile } from '../extensions/submission-tracking/meta-handler';
 import { sendNotification } from '../extensions/notifications/service';
 
@@ -11,9 +11,12 @@ const Submission: React.FC = () => {
   const { user, login } = useAuth();
   const navigate = useNavigate();
   
+  const [submissionMode, setSubmissionMode] = useState<'FILE' | 'TEXT'>('FILE');
+  const [contentType, setContentType] = useState<'ARTICLE' | 'BLOG'>('ARTICLE');
   const [title, setTitle] = useState('');
   const [authorName, setAuthorName] = useState(user?.name || '');
   const [file, setFile] = useState<File | null>(null);
+  const [textContent, setTextContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -61,30 +64,35 @@ const Submission: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
-    if (!file) return setErrorMsg("Please upload your article file (.docx)");
-    if (!title.trim()) return setErrorMsg("Article title is required");
+    if (!title.trim()) return setErrorMsg("Title is required");
     if (!authorName.trim()) return setErrorMsg("Author name is required");
+    
+    if (submissionMode === 'FILE' && !file) return setErrorMsg("Please upload your file (.docx)");
+    if (submissionMode === 'TEXT' && !textContent.trim()) return setErrorMsg("Please write your content.");
 
     setIsSubmitting(true);
     setErrorMsg('');
     
     try {
-      // Upload file to get base64 string
-      const fileUrl = await mockBackend.uploadFile(file, 'submissions');
+      let fileUrl = '';
+      // Upload file to get base64 string if in file mode
+      if (submissionMode === 'FILE' && file) {
+        fileUrl = await mockBackend.uploadFile(file, 'submissions');
+      }
 
       const result = await mockBackend.submitArticle({
         title,
         authorId: user!.id,
         authorName: authorName,
         status: 'PENDING',
-        type: 'ARTICLE',
+        type: contentType,
         submissionDate: new Date().toISOString(),
-        fileUrl: fileUrl
+        fileUrl: fileUrl,
+        content: submissionMode === 'TEXT' ? textContent : undefined
       });
       
       if (result) {
         // --- EXTENSION HOOK: Create Metadata Sidecar ---
-        // This runs independently of the core logic success
         try {
            await createMetaFile(result.id, title, authorName);
            
@@ -95,19 +103,17 @@ const Submission: React.FC = () => {
              title: title,
              id: result.id
            });
-           // -------------------------
 
         } catch(e) {
            console.warn("Meta file creation warning", e);
         }
-        // -----------------------------------------------
 
         if(user && typeof user.articleLimit === 'number') {
             const updatedUser = { ...user, articleUsage: user.articleUsage + 1 };
             // Update local state, though page reload will fetch fresh from backend
             login(updatedUser); 
         }
-        alert("Article submitted successfully!");
+        alert(`${contentType === 'BLOG' ? 'Blog' : 'Article'} submitted successfully! Plagiarism check initiated.`);
         navigate('/dashboard');
       }
     } catch (error: any) {
@@ -177,11 +183,11 @@ const Submission: React.FC = () => {
       <div className="max-w-xl mx-auto bg-white p-8 md:p-10 rounded-[2.5rem] shadow-premium border border-stone-100">
         <div className="flex items-center gap-4 mb-8">
            <div className="bg-agri-secondary/10 p-3 rounded-2xl text-agri-secondary">
-              <UploadCloud size={24} />
+              {submissionMode === 'FILE' ? <UploadCloud size={24} /> : <PenTool size={24} />}
            </div>
            <div>
-              <h1 className="text-2xl font-serif font-bold text-agri-primary">Submit New Article</h1>
-              <p className="text-stone-400 text-xs uppercase tracking-widest font-black">Minimal Research Upload</p>
+              <h1 className="text-2xl font-serif font-bold text-agri-primary">Submit Content</h1>
+              <p className="text-stone-400 text-xs uppercase tracking-widest font-black">Fast-Track Publishing Protocol</p>
            </div>
         </div>
         
@@ -191,9 +197,46 @@ const Submission: React.FC = () => {
           </div>
         )}
 
+        {/* Content Category Toggle */}
+        <div className="mb-6">
+            <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 ml-1">Content Category</label>
+            <div className="flex gap-4">
+                <button 
+                    type="button" 
+                    onClick={() => setContentType('ARTICLE')} 
+                    className={`flex-1 py-3 rounded-xl border font-bold text-xs transition-all ${contentType === 'ARTICLE' ? 'bg-agri-primary text-white border-agri-primary shadow-lg' : 'bg-white border-stone-200 text-stone-500 hover:border-agri-secondary'}`}
+                >
+                    Research Article
+                </button>
+                <button 
+                    type="button" 
+                    onClick={() => setContentType('BLOG')} 
+                    className={`flex-1 py-3 rounded-xl border font-bold text-xs transition-all ${contentType === 'BLOG' ? 'bg-agri-primary text-white border-agri-primary shadow-lg' : 'bg-white border-stone-200 text-stone-500 hover:border-agri-secondary'}`}
+                >
+                    Blog Post
+                </button>
+            </div>
+        </div>
+
+        {/* Submission Mode Toggle */}
+        <div className="flex bg-stone-100 p-1 rounded-2xl mb-8">
+            <button 
+                onClick={() => setSubmissionMode('FILE')}
+                className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${submissionMode === 'FILE' ? 'bg-white shadow-sm text-agri-primary' : 'text-stone-400 hover:text-stone-600'}`}
+            >
+                <UploadCloud size={14} /> Upload File
+            </button>
+            <button 
+                onClick={() => setSubmissionMode('TEXT')}
+                className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${submissionMode === 'TEXT' ? 'bg-white shadow-sm text-agri-primary' : 'text-stone-400 hover:text-stone-600'}`}
+            >
+                <Type size={14} /> Write Text
+            </button>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-8">
           <div>
-            <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 ml-1">Article Title</label>
+            <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 ml-1">Title</label>
             <input 
               type="text" 
               required 
@@ -216,37 +259,51 @@ const Submission: React.FC = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 ml-1">Upload Article File (.docx only)</label>
-            <div className={`border-2 border-dashed rounded-[2rem] p-10 text-center transition-all cursor-pointer ${file ? 'border-agri-secondary bg-agri-secondary/5' : 'border-stone-200 bg-stone-50 hover:bg-white hover:border-agri-secondary/30'}`}>
-              <input 
-                type="file" 
-                id="file" 
-                accept=".docx" 
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              <label htmlFor="file" className="cursor-pointer flex flex-col items-center">
-                {file ? (
-                  <div className="flex flex-col items-center animate-in fade-in zoom-in">
-                    <div className="bg-agri-secondary text-white p-4 rounded-full mb-3 shadow-lg">
-                       <FileText size={32} />
+          {submissionMode === 'FILE' ? (
+            <div>
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 ml-1">Upload File (.docx only)</label>
+                <div className={`border-2 border-dashed rounded-[2rem] p-10 text-center transition-all cursor-pointer ${file ? 'border-agri-secondary bg-agri-secondary/5' : 'border-stone-200 bg-stone-50 hover:bg-white hover:border-agri-secondary/30'}`}>
+                <input 
+                    type="file" 
+                    id="file" 
+                    accept=".docx" 
+                    className="hidden"
+                    onChange={handleFileChange}
+                />
+                <label htmlFor="file" className="cursor-pointer flex flex-col items-center">
+                    {file ? (
+                    <div className="flex flex-col items-center animate-in fade-in zoom-in">
+                        <div className="bg-agri-secondary text-white p-4 rounded-full mb-3 shadow-lg">
+                        <FileText size={32} />
+                        </div>
+                        <span className="text-agri-primary font-bold text-sm truncate max-w-[200px]">{file.name}</span>
+                        <span className="text-[10px] text-agri-secondary font-black mt-1 uppercase tracking-widest">File Ready</span>
                     </div>
-                    <span className="text-agri-primary font-bold text-sm truncate max-w-[200px]">{file.name}</span>
-                    <span className="text-[10px] text-agri-secondary font-black mt-1 uppercase tracking-widest">File Ready for Submission</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="bg-stone-200 text-stone-400 p-4 rounded-full mb-3">
-                       <UploadCloud size={32} />
-                    </div>
-                    <span className="text-stone-700 font-bold text-sm">Click to Select Manuscript</span>
-                    <span className="text-[10px] text-stone-400 mt-1 uppercase tracking-widest font-black">DOCX Max 10MB</span>
-                  </>
-                )}
-              </label>
+                    ) : (
+                    <>
+                        <div className="bg-stone-200 text-stone-400 p-4 rounded-full mb-3">
+                        <UploadCloud size={32} />
+                        </div>
+                        <span className="text-stone-700 font-bold text-sm">Click to Select Manuscript</span>
+                        <span className="text-[10px] text-stone-400 mt-1 uppercase tracking-widest font-black">DOCX Max 10MB</span>
+                    </>
+                    )}
+                </label>
+                </div>
             </div>
-          </div>
+          ) : (
+            <div>
+                <label className="block text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 ml-1">Content Editor</label>
+                <textarea 
+                    required 
+                    className="w-full border border-stone-200 bg-stone-50 rounded-2xl p-4 focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm font-medium h-64 leading-relaxed"
+                    value={textContent}
+                    onChange={e => setTextContent(e.target.value)}
+                    placeholder="Write or paste your content here. Basic HTML is supported..."
+                />
+                <p className="text-[10px] text-stone-400 mt-2 ml-1">* Plagiarism check will be performed on this text.</p>
+            </div>
+          )}
 
           <div className="bg-stone-50 rounded-2xl p-4 flex items-center justify-between">
              <div className="flex items-center gap-2">
@@ -263,7 +320,7 @@ const Submission: React.FC = () => {
             disabled={isSubmitting}
             className={`w-full py-5 rounded-2xl text-white font-black text-xs uppercase tracking-[0.2em] shadow-xl transition-all ${isSubmitting ? 'bg-stone-400' : 'bg-agri-primary hover:bg-agri-secondary shadow-agri-primary/20 hover:scale-[1.02] active:scale-[0.98]'}`}
           >
-            {isSubmitting ? 'UPLOADING_PROTOCOL...' : 'SUBMIT_ARTICLE'}
+            {isSubmitting ? 'UPLOADING_PROTOCOL...' : 'SUBMIT_CONTENT'}
           </button>
         </form>
       </div>

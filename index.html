@@ -5,25 +5,53 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- SEO & Link Previews -->
-    <title>Agrigence - Digital Agriculture Magazine</title>
-    <meta name="description" content="A professional agriculture journal publication platform. Bridging the gap between research and practical application in Indian Agriculture.">
-    <meta name="keywords" content="agriculture magazine, indian agriculture, agrigence, farming journal, agri research, crop science">
+    <!-- Global Targeting & SEO -->
+    <title>Agrigence - International Agriculture Journal</title>
+    <meta name="description" content="Agrigence is an international platform for agricultural research, innovation, and scholarly publication connecting authors, reviewers, and institutions worldwide.">
+    <meta name="keywords" content="international agriculture journal, global research publication, agricultural innovation, peer-reviewed articles, worldwide authors, academic publishing platform">
     <meta name="author" content="Agrigence">
     
+    <!-- International SEO Signals -->
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <meta name="audience" content="Global">
+    <meta name="content-language" content="en">
+    <meta http-equiv="Content-Language" content="en">
+    
+    <link rel="alternate" hreflang="x-default" href="https://agrigence.com/" />
+    <link rel="alternate" hreflang="en" href="https://agrigence.com/" />
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://agrigence.com/">
-    <meta property="og:title" content="Agrigence - Advancing Indian Agriculture">
-    <meta property="og:description" content="Join India's premier digital ecosystem for agricultural knowledge, research publishing, and innovation.">
+    <meta property="og:title" content="Agrigence - Global Agricultural Research & Publication">
+    <meta property="og:description" content="Join the premier international ecosystem for agricultural knowledge, research publishing, and global innovation.">
     <meta property="og:image" content="https://images.unsplash.com/photo-1625246333195-58197bdc0700?auto=format&fit=crop&q=80">
     <meta property="og:site_name" content="Agrigence">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Agrigence - Digital Agriculture Magazine">
-    <meta name="twitter:description" content="Building a Trusted Digital Agriculture Magazine and Research Publishing Platform.">
+    <meta name="twitter:title" content="Agrigence - International Agriculture Journal">
+    <meta name="twitter:description" content="Building a Trusted International Digital Agriculture Magazine and Research Publishing Platform.">
     <meta name="twitter:image" content="https://images.unsplash.com/photo-1625246333195-58197bdc0700?auto=format&fit=crop&q=80">
+
+    <!-- Structured Data (Organization) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Agrigence",
+      "url": "https://agrigence.com",
+      "areaServed": {
+        "@type": "Place",
+        "name": "Worldwide"
+      },
+      "sameAs": [
+        "https://www.linkedin.com/company/agrigence",
+        "https://www.youtube.com/@agrigence"
+      ]
+    }
+    </script>
 
     <link id="dynamic-favicon" rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/1164/1164620.png" />
     
@@ -72,10 +100,27 @@
                 text: 'var(--text-charcoal)',
                 border: 'var(--border-sepia)',
                 accent: '#8B5E34',
+              },
+              admin: {
+                bg: '#FDFCFB',       // Bright Warm White
+                card: '#FFFFFF',     // Pure White
+                text: '#000000',     // Pure Black for Text
+                secondary: '#333333',// Dark Charcoal for secondary text
+                muted: '#57534E',    // Stone 600 for muted text
+                border: '#E7E5E4',   // Stone 200 for borders
+                hover: '#F5F5F4',    // Stone 100 for hover states
+                header: '#FFFFFF',   // White Headers
+                sidebar: '#F5F5F4',  // Light Stone Sidebar
+                sidebarText: '#000000', // Black Sidebar Text
+                sidebarHover: '#E7E5E4', // Darker Stone Hover
+                input: '#FFFFFF',
+                inputBorder: '#D6D3D1', // Stone 300
+                inputFocus: '#000000'
               }
             },
             boxShadow: {
               'premium': '0 20px 50px -12px rgba(61, 43, 31, 0.12)',
+              'admin': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
             },
           }
         }

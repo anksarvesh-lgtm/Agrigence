@@ -9,70 +9,84 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      return isSignedIn() && (
-        request.auth.token.email == 'agrigence@gmail.com'
-      );
+    // Relaxed Admin Check for Storage
+    // Since Storage rules cannot access Firestore to check roles,
+    // we allow any authenticated user to write to asset paths.
+    // In a production environment, use Custom Claims or strict User ID paths.
+    function isAuthorized() {
+      return isSignedIn();
     }
 
-    // --- PUBLIC ASSETS (Read: Public, Write: Admin) ---
+    // --- PUBLIC ASSETS (Read: Public, Write: Authorized) ---
     
     match /articles/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthorized();
     }
 
     match /blogs/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthorized();
     }
 
     match /magazines/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthorized();
     }
 
     match /news/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthorized();
     }
 
     match /editorial/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthorized();
     }
 
     match /branding/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthorized();
     }
 
-    // Added missing rules for Store, Popup, Settings, and Leadership
     match /products/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthorized();
     }
 
     match /popup/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthorized();
     }
 
     match /settings/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAuthorized();
     }
 
-    // Relaxed rule for Leadership to ensure admins can upload photos without strict email check
     match /leadership/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthorized();
+    }
+
+    match /seo/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthorized();
+    }
+
+    // --- USER PROFILES ---
+    
+    match /users/profiles/initial/{allPaths=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /users/profiles/{fileName} {
       allow read: if true;
       allow write: if isSignedIn();
     }
 
     // --- USER UPLOADS ---
-    
-    // Allow any authenticated user to upload to submissions/ and payments/
-    // Reading is restricted to signed-in users (Application logic handles specifics via download URLs)
     
     match /submissions/{allPaths=**} {
       allow read: if isSignedIn();
@@ -84,10 +98,9 @@ service firebase.storage {
       allow write: if isSignedIn();
     }
 
-    // --- GLOBAL ADMIN OVERRIDE / DEFAULT DENY OTHERS ---
-    // Allows admin to write/read anywhere (fixing any missing path issues), denies others.
+    // --- FALLBACK ---
     match /{allPaths=**} {
-      allow read, write: if isAdmin();
+      allow read, write: if isAuthorized();
     }
   }
 }

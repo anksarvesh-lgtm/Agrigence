@@ -1,5 +1,8 @@
 
-export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'EDITOR' | 'USER';
+
+export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'EDITOR' | 'USER' | 'EDITORIAL_MEMBER';
+
+export type EditorialRole = 'Reviewer' | 'Section Editor' | 'Editorial Board Member' | 'Advisory Member';
 
 export interface UserPermissions {
   canDownloadArticles: boolean;
@@ -11,7 +14,11 @@ export interface User {
   name: string;
   email: string;
   role: Role;
-  phone?: string;
+  editorialRole?: EditorialRole; // Sub-role for Editorial Members
+  phone?: string; // Legacy field
+  mobileNumber?: string; // E.164 Format
+  country?: string; // ISO Code
+  currency?: string; // Derived Currency Code
   occupation?: string;
   subscriptionTier?: string;
   subscriptionExpiry?: string;
@@ -21,6 +28,7 @@ export interface User {
   blogUsage: number;
   permissions: UserPermissions;
   avatar?: string;
+  profilePhotoUrl?: string;
   status?: 'ACTIVE' | 'BLOCKED';
   lastLogin?: string;
   joinedDate?: string;
@@ -43,12 +51,81 @@ export interface HomepageSection {
   itemsToShow: number;
 }
 
+export interface SchemaTemplates {
+  organization: boolean;
+  website: boolean;
+  scholarlyArticle: boolean;
+  blogPosting: boolean;
+  breadcrumb: boolean;
+  person: boolean;
+}
+
 export interface SEOSettings {
+  // Global
   metaTitle: string;
   metaDescription: string;
-  ogImage: string;
-  googleAnalyticsId: string;
+  publisherName?: string;
+  canonicalBaseUrl?: string;
+  language?: string;
+  region?: string;
+  forceHttps?: boolean;
+  defaultRobots?: string;
   robotsTxt: string;
+
+  // Blog SEO
+  blogTitleTemplate?: string;
+  autoMetaDesc?: boolean;
+  enableBlogSchema?: boolean;
+  autoInternalLinking?: boolean;
+  showReadingTime?: boolean;
+  enforceAltText?: boolean;
+  cleanSlugs?: boolean;
+  blogFallbackImage?: string;
+  showDatesSchema?: boolean;
+
+  // Social
+  ogTitleTemplate?: string;
+  ogDescriptionTemplate?: string;
+  ogImage: string;
+  twitterCardType?: 'summary' | 'summary_large_image';
+
+  // Structured Data
+  schemaTemplates?: SchemaTemplates;
+  customJsonLd?: string;
+
+  // Sitemap
+  sitemapEnabled?: boolean;
+  includeArticles?: boolean;
+  includeBlogs?: boolean;
+  includePages?: boolean;
+
+  // URL Rules
+  forceLowercase?: boolean;
+  removeParams?: boolean;
+  canonicalEnforcement?: boolean;
+
+  // Indexation
+  maxSnippet?: number;
+  maxImagePreview?: 'none' | 'standard' | 'large';
+  noindexPaths?: string;
+
+  // Content Automation
+  autoTitleFromHeading?: boolean;
+  autoKeywordSuggestion?: boolean;
+
+  // Technical
+  lazyLoadMedia?: boolean;
+  dnsPrefetch?: boolean;
+  preconnectAssets?: boolean;
+
+  // Verification
+  googleConsoleId?: string;
+  bingWebmasterId?: string;
+  googleAnalyticsId: string;
+  tagManagerId?: string;
+  
+  // Diagnostics
+  enableAlerts?: boolean;
 }
 
 export interface Category {
@@ -100,6 +177,13 @@ export interface PopupSettings {
   buttonLink?: string;
 }
 
+export interface GatewayConfig {
+  provider_name: 'razorpay';
+  key_id: string;
+  key_secret: string; // Only set on update, not returned fully on read for security
+  is_live: boolean;
+}
+
 export interface SiteSettings {
   logoUrl: string;
   issn?: string;
@@ -122,6 +206,7 @@ export interface SiteSettings {
   navigation: NavigationItem[];
   homepageLayout: HomepageSection[];
   seo: SEOSettings;
+  paymentGateway?: GatewayConfig;
 }
 
 export type DownloadAccessLevel = 'FREE' | 'SUBSCRIBERS_ONLY';
@@ -133,6 +218,41 @@ export interface Reference {
   isValid: boolean;
   type: 'JOURNAL' | 'BOOK' | 'WEB' | 'UNKNOWN';
 }
+
+export interface ReviewAssignment {
+  id: string;
+  articleId: string;
+  reviewerId: string;
+  reviewerName: string;
+  status: 'PENDING' | 'UNDER_REVIEW' | 'REVIEWED';
+  assignedAt: string;
+  assignedBy: string;
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export interface ReviewMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  senderRole: Role;
+  message: string;
+  timestamp: string;
+  type: 'SUGGESTION' | 'CLARIFICATION' | 'REVISION_REQUEST' | 'REPLY';
+}
+
+// Granular Workflow Status
+export type ReviewStatus = 
+  | 'submitted' 
+  | 'under_admin_check' 
+  | 'assigned_for_review' 
+  | 'under_review' 
+  | 'review_completed' 
+  | 'admin_verified' 
+  | 'final_decision' 
+  | 'published' 
+  | 'rejected' 
+  | 'revision_requested';
 
 export interface Article {
   id: string;
@@ -147,6 +267,7 @@ export interface Article {
   featuredImage?: string;
   submissionDate: string;
   status: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | 'PENDING' | 'REJECTED' | 'APPROVED';
+  review_status?: ReviewStatus; // New Granular Status
   views?: number;
   fileUrl?: string;
   downloadAccess: DownloadAccessLevel;
@@ -170,6 +291,10 @@ export interface Article {
   formattedContent?: string; // AI normalized version
   references?: Reference[];
   keywords?: string[];
+
+  // Review Workflow
+  reviewAssignments?: ReviewAssignment[];
+  reviewThreads?: ReviewMessage[];
 }
 
 export interface Magazine {
@@ -272,13 +397,17 @@ export interface PaymentRecord {
   planId: string;
   planName: string;
   amount: number;
-  method: 'QR' | 'RAZORPAY';
+  method: 'QR' | 'RAZORPAY' | 'INTERNATIONAL';
   status: 'PENDING' | 'COMPLETED' | 'FAILED';
   date: string;
   upiTxnId?: string;
   screenshotUrl?: string;
   razorpayOrderId?: string;
   razorpayPaymentId?: string;
+  sessionId?: string;
+  displayCurrency?: string;
+  displayAmount?: number;
+  gatewayFee?: number;
 }
 
 export interface Coupon {
@@ -313,12 +442,21 @@ export interface Feedback {
 }
 
 // Enterprise Publishing Types
+export interface ForensicSegment {
+  text: string;
+  reason: string;
+}
+
 export interface PlagiarismReport {
-  originality_score: number;
+  originality_score: number; // 100 - plagiarism_score
+  plagiarism_score: number;
+  ai_generated_score: number;
   risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
-  flagged_sections: string[];
+  flagged_sections: ForensicSegment[]; // Updated for forensic detail
   confidence: number;
   generatedAt: string;
+  summary: string;
+  audit_status?: 'PENDING' | 'COMPLETED' | 'FAILED';
 }
 
 export interface OAIRecord {

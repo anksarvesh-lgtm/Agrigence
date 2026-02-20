@@ -10,6 +10,7 @@ import {
 import Logo from './Logo';
 import { SiteSettings } from '../types';
 import { motion } from 'framer-motion';
+import { useConfirm } from './ContextualConfirm';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -20,6 +21,7 @@ const Header = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -120,8 +122,14 @@ const Header = () => {
     }
   };
 
-  const handleLogout = () => {
-    if (confirm("Are you sure you want to sign out?")) {
+  const handleLogout = async (e: React.MouseEvent) => {
+    const isConfirmed = await confirm({ 
+        message: "Are you sure you want to sign out?", 
+        type: 'danger',
+        trigger: e.currentTarget
+    });
+    
+    if (isConfirmed) {
       logout();
       navigate('/login');
       setIsMenuOpen(false);
@@ -137,7 +145,7 @@ const Header = () => {
     { label: 'News', path: '/news' },
     { label: 'Blogs', path: '/blogs' },
     { label: 'Store', path: '/products' },
-    { label: 'Guidelines', path: '/guidelines' },
+    { label: 'Author Guidelines', path: '/author-guidelines' },
     { label: 'Editorial Board', path: '/editorial-board' },
     { label: 'About', path: '/about-contact' },
   ];
@@ -146,10 +154,10 @@ const Header = () => {
 
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 bg-white ${
         isScrolled 
-          ? 'bg-white/95 backdrop-blur-md border-b border-agri-border shadow-sm py-2' 
-          : 'bg-white border-b border-transparent py-4'
+          ? 'bg-white/95 backdrop-blur-md border-b border-agri-border shadow-sm' 
+          : 'border-b border-transparent'
       }`}
     >
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -188,7 +196,7 @@ const Header = () => {
          </motion.div>
       </div>
 
-      <div className="container mx-auto px-6 relative z-10">
+      <div className={`container mx-auto px-6 relative z-10 ${isScrolled ? 'py-2' : 'py-4'}`}>
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-3 group">
             {settings?.logoUrl ? (
@@ -196,11 +204,21 @@ const Header = () => {
             ) : (
                <Logo className={isScrolled ? "h-8" : "h-10"} variant="dark" />
             )}
-            <div className="flex flex-col">
-              <span className={`font-serif font-bold tracking-tight transition-all duration-300 ${isScrolled ? 'text-xl' : 'text-2xl'} text-agri-primary leading-tight`}>
+            
+            {/* Masthead Branding Block */}
+            <div className="flex flex-col items-start justify-center">
+              {/* 1. Title */}
+              <span className={`font-serif font-bold tracking-tight transition-all duration-300 ${isScrolled ? 'text-xl' : 'text-2xl'} text-agri-primary leading-none`}>
                 Agrigence
               </span>
-              <span className={`text-[10px] text-agri-primary/80 font-serif italic -mt-0.5 whitespace-nowrap transition-all duration-300 ${isScrolled ? 'hidden' : 'block'}`}>
+              
+              {/* 2. ISSN - Correctly placed between title and tagline */}
+              <span className="text-[11px] md:text-xs text-[#222222] tracking-[0.22em] font-medium mt-1">
+                ISSN: {settings?.issn || 'XXXX-XXXX'}
+              </span>
+
+              {/* 3. Tagline - Preserved below ISSN */}
+              <span className={`text-[10px] text-agri-primary/80 font-serif italic mt-0.5 whitespace-nowrap transition-all duration-300 ${isScrolled ? 'hidden' : 'block'}`}>
                 Where Agri-Intelligence Meets Agricultural Generation
               </span>
             </div>
@@ -208,17 +226,22 @@ const Header = () => {
 
           <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
             {activeMenuItems.map((item) => {
-               const isActive = location.pathname === item.path;
+               // Fix legacy label/path issues locally to prevent flickering from API updates
+               const targetPath = (item.path === '/board' || item.label === 'Board') ? '/editorial-board' : item.path;
+               const displayLabel = (item.label === 'Board') ? 'Editorial Board' : item.label;
+               
+               const isActive = location.pathname === targetPath;
+               
                if (item.isExternal) {
                    return (
                      <a 
                        key={item.id} 
-                       href={item.path}
+                       href={targetPath} 
                        target="_blank"
                        rel="noopener noreferrer"
                        className="text-sm font-medium transition-all hover:text-agri-secondary relative group text-stone-500"
                      >
-                       {item.label}
+                       {displayLabel}
                        <span className="absolute -bottom-1 left-0 h-0.5 bg-agri-secondary transition-all duration-300 w-0 group-hover:w-full"></span>
                      </a>
                    );
@@ -226,12 +249,12 @@ const Header = () => {
                return (
                 <Link 
                   key={item.id} 
-                  to={item.path} 
+                  to={targetPath} 
                   className={`text-sm font-medium transition-all hover:text-agri-secondary relative group ${
                     isActive ? 'text-agri-primary font-bold' : 'text-stone-500'
                   }`}
                 >
-                  {item.label}
+                  {displayLabel}
                   <span className={`absolute -bottom-1 left-0 h-0.5 bg-agri-secondary transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
                 </Link>
               );
@@ -292,12 +315,14 @@ const Header = () => {
       </div>
       
       {isMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-agri-border p-6 space-y-4 shadow-xl">
-           {activeMenuItems.map(item => (
-             item.isExternal 
-               ? <a key={item.id} href={item.path} target="_blank" className="block text-sm font-bold text-agri-primary">{item.label}</a>
-               : <Link key={item.id} to={item.path} onClick={() => setIsMenuOpen(false)} className="block text-sm font-bold text-agri-primary">{item.label}</Link>
-           ))}
+        <div className="lg:hidden bg-white border-t border-agri-border p-6 space-y-4 shadow-xl relative z-20">
+           {activeMenuItems.map(item => {
+             const targetPath = (item.path === '/board' || item.label === 'Board') ? '/editorial-board' : item.path;
+             const displayLabel = (item.label === 'Board') ? 'Editorial Board' : item.label;
+             return item.isExternal 
+               ? <a key={item.id} href={targetPath} target="_blank" className="block text-sm font-bold text-agri-primary">{displayLabel}</a>
+               : <Link key={item.id} to={targetPath} onClick={() => setIsMenuOpen(false)} className="block text-sm font-bold text-agri-primary">{displayLabel}</Link>
+           })}
            <div className="pt-4 border-t border-stone-100">
              {user ? (
                <>
@@ -439,7 +464,7 @@ const Footer = () => {
                   <a 
                     key={i} 
                     href={social.link || '#'} 
-                    target="_blank"
+                    target="_blank" 
                     rel="noopener noreferrer"
                     className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-agri-secondary hover:text-white transition-all"
                   >
@@ -455,7 +480,7 @@ const Footer = () => {
               <li><Link to="/journals" className="hover:text-agri-secondary transition-colors">Journal Archive</Link></li>
               <li><Link to="/blogs" className="hover:text-agri-secondary transition-colors">Blogs</Link></li>
               <li><Link to="/editorial-board" className="hover:text-agri-secondary transition-colors">Editorial Board</Link></li>
-              <li><Link to="/guidelines" className="hover:text-agri-secondary transition-colors">Author Guidelines</Link></li>
+              <li><Link to="/author-guidelines" className="hover:text-agri-secondary transition-colors">Author Guidelines</Link></li>
               <li><Link to="/products" className="hover:text-agri-secondary transition-colors">Book Store</Link></li>
             </ul>
           </div>

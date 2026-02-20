@@ -2,18 +2,41 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { Trash2, RotateCcw, AlertTriangle, User, FileText, Database } from 'lucide-react';
+import { useConfirm } from '../../components/ContextualConfirm';
 
 const TrashManager: React.FC = () => {
   const [items, setItems] = useState<any[]>([]);
+  const { confirm } = useConfirm();
 
   useEffect(() => {
-    setItems(mockBackend.getTrash());
+    const load = async () => {
+        setItems(await mockBackend.getTrash());
+    };
+    load();
   }, []);
 
-  const handlePermanentDelete = async (id: string) => {
-    if(confirm('This will be permanently erased. Proceed?')) {
+  const handleRestore = async (id: string, e: React.MouseEvent) => {
+      const isConfirmed = await confirm({
+          message: 'Restore this item? It will reappear in the dashboard.',
+          trigger: e.currentTarget
+      });
+
+      if(isConfirmed) {
+          await mockBackend.restoreFromTrash(id);
+          setItems(await mockBackend.getTrash());
+      }
+  };
+
+  const handlePermanentDelete = async (id: string, e: React.MouseEvent) => {
+    const isConfirmed = await confirm({
+        message: 'This will be permanently erased. Proceed?',
+        type: 'danger',
+        trigger: e.currentTarget
+    });
+
+    if(isConfirmed) {
         await mockBackend.permanentDelete(id);
-        setItems(mockBackend.getTrash());
+        setItems(await mockBackend.getTrash());
     }
   };
 
@@ -45,10 +68,10 @@ const TrashManager: React.FC = () => {
                 </div>
              </div>
              <div className="flex gap-3">
-                <button className="px-6 py-2 rounded-lg bg-green-500/20 text-green-400 border border-green-500/20 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-green-500 hover:text-white transition-all">
+                <button onClick={(e) => handleRestore(item.id, e)} className="px-6 py-2 rounded-lg bg-green-500/20 text-green-400 border border-green-500/20 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-green-500 hover:text-white transition-all">
                    <RotateCcw size={14} /> Restore
                 </button>
-                <button onClick={() => handlePermanentDelete(item.id)} className="px-6 py-2 rounded-lg bg-red-500/20 text-red-400 border border-red-500/20 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-red-500 hover:text-white transition-all">
+                <button onClick={(e) => handlePermanentDelete(item.id, e)} className="px-6 py-2 rounded-lg bg-red-500/20 text-red-400 border border-red-500/20 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-red-500 hover:text-white transition-all">
                    <Trash2 size={14} /> Erase
                 </button>
              </div>

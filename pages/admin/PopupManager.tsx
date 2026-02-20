@@ -43,15 +43,15 @@ const PopupManager: React.FC = () => {
 
   return (
     <div className="space-y-8 max-w-4xl">
-      <div className="flex justify-between items-center bg-agri-secondary/10 p-6 rounded-2xl border border-agri-secondary/20">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-white">Announcement Popup</h1>
-          <p className="text-white/40 text-xs mt-1 uppercase tracking-widest font-bold">Manage system-wide alerts</p>
+          <h1 className="text-2xl font-bold text-black">Announcement Popup</h1>
+          <p className="text-stone-500 text-xs mt-1 uppercase tracking-widest font-bold">Manage system-wide alerts</p>
         </div>
         <button 
           onClick={handleSave} 
           disabled={isSaving}
-          className="bg-agri-secondary text-agri-primary px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 disabled:opacity-50"
+          className="bg-agri-secondary text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 disabled:opacity-50"
         >
            <Save size={18} /> {isSaving ? 'SYNCING...' : 'SAVE POPUP'}
         </button>
@@ -59,15 +59,15 @@ const PopupManager: React.FC = () => {
 
       <div className="grid md:grid-cols-2 gap-8">
         {/* Controls */}
-        <div className="bg-white/5 border border-white/5 rounded-3xl p-8 space-y-8">
-           <div className="flex items-center justify-between p-6 bg-black/20 rounded-2xl border border-white/5">
+        <div className="bg-white border border-stone-200 rounded-3xl p-8 space-y-8 shadow-sm">
+           <div className="flex items-center justify-between p-6 bg-stone-50 rounded-2xl border border-stone-200">
               <div className="flex items-center gap-4">
-                 <div className={`p-3 rounded-xl ${popup.isEnabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                 <div className={`p-3 rounded-xl ${popup.isEnabled ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                     <Power size={20} />
                  </div>
                  <div>
-                    <p className="text-xs font-bold text-white uppercase tracking-widest">Popup Status</p>
-                    <p className={`text-sm font-black ${popup.isEnabled ? 'text-green-400' : 'text-red-400'}`}>{popup.isEnabled ? 'LIVE' : 'DISABLED'}</p>
+                    <p className="text-xs font-bold text-stone-500 uppercase tracking-widest">Popup Status</p>
+                    <p className={`text-sm font-black ${popup.isEnabled ? 'text-green-600' : 'text-red-600'}`}>{popup.isEnabled ? 'LIVE' : 'DISABLED'}</p>
                  </div>
               </div>
               <button 
@@ -79,18 +79,18 @@ const PopupManager: React.FC = () => {
            </div>
 
            <div>
-              <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block tracking-widest">Popup Title</label>
+              <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Popup Title</label>
               <input 
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-agri-secondary" 
+                className="w-full bg-white border border-stone-300 rounded-xl p-4 text-black outline-none focus:border-agri-secondary focus:ring-1 focus:ring-agri-secondary" 
                 value={popup.title} 
                 onChange={e => setPopup({...popup, title: e.target.value})}
               />
            </div>
 
            <div>
-              <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block tracking-widest">Announcement Text</label>
+              <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Announcement Text</label>
               <textarea 
-                className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-agri-secondary h-32 leading-relaxed" 
+                className="w-full bg-white border border-stone-300 rounded-xl p-4 text-black outline-none focus:border-agri-secondary focus:ring-1 focus:ring-agri-secondary h-32 leading-relaxed" 
                 value={popup.description} 
                 onChange={e => setPopup({...popup, description: e.target.value})}
               />
@@ -98,14 +98,14 @@ const PopupManager: React.FC = () => {
 
            <div className="grid grid-cols-2 gap-4">
               <div>
-                 <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block tracking-widest">Button Text</label>
-                 <input className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-white outline-none focus:border-agri-secondary text-xs" value={popup.buttonText} onChange={e => setPopup({...popup, buttonText: e.target.value})} />
+                 <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Button Text</label>
+                 <input className="w-full bg-white border border-stone-300 rounded-xl p-4 text-black outline-none focus:border-agri-secondary focus:ring-1 focus:ring-agri-secondary text-xs" value={popup.buttonText} onChange={e => setPopup({...popup, buttonText: e.target.value})} />
               </div>
               <div>
-                 <label className="text-[10px] uppercase font-bold text-white/40 mb-2 block tracking-widest">Redirect Path</label>
+                 <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Redirect Path</label>
                  <div className="relative">
-                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={14} />
-                    <input className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-4 text-white outline-none focus:border-agri-secondary text-xs" value={popup.buttonLink} onChange={e => setPopup({...popup, buttonLink: e.target.value})} />
+                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={14} />
+                    <input className="w-full bg-white border border-stone-300 rounded-xl pl-10 pr-4 py-4 text-black outline-none focus:border-agri-secondary focus:ring-1 focus:ring-agri-secondary text-xs" value={popup.buttonLink} onChange={e => setPopup({...popup, buttonLink: e.target.value})} />
                  </div>
               </div>
            </div>
@@ -113,13 +113,13 @@ const PopupManager: React.FC = () => {
 
         {/* Preview & Image */}
         <div className="space-y-8">
-            <div className="bg-white/5 border border-white/5 rounded-3xl p-8">
+            <div className="bg-white border border-stone-200 rounded-3xl p-8 shadow-sm">
                <h3 className="text-xs font-bold text-agri-secondary uppercase tracking-widest mb-6 flex items-center gap-2">
                   <ImageIcon size={16} /> Cover Image
                </h3>
-               <div className="aspect-video rounded-2xl bg-black/40 border border-white/10 overflow-hidden mb-6 relative group">
+               <div className="aspect-video rounded-2xl bg-stone-100 border border-stone-200 overflow-hidden mb-6 relative group">
                   {isUploading && (
-                     <div className="absolute inset-0 z-20 bg-black/60 flex items-center justify-center text-agri-secondary">
+                     <div className="absolute inset-0 z-20 bg-white/80 flex items-center justify-center text-agri-secondary">
                         <Loader2 size={32} className="animate-spin" />
                      </div>
                   )}
@@ -137,17 +137,17 @@ const PopupManager: React.FC = () => {
                />
                <label 
                 htmlFor="popup-img"
-                className={`w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl py-4 flex items-center justify-center gap-3 text-xs font-bold transition-all cursor-pointer ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+                className={`w-full bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-xl py-4 flex items-center justify-center gap-3 text-xs font-bold transition-all cursor-pointer text-stone-600 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
                >
                   {isUploading ? 'UPLOADING...' : 'SELECT NEW IMAGE'}
                </label>
             </div>
 
-            <div className="bg-agri-secondary/5 border border-agri-secondary/10 rounded-3xl p-8">
-               <h3 className="text-xs font-bold text-agri-secondary uppercase tracking-widest mb-4 flex items-center gap-2">
+            <div className="bg-stone-50 border border-stone-200 rounded-3xl p-8">
+               <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest mb-4 flex items-center gap-2">
                   <Eye size={16} /> Live Preview
                </h3>
-               <div className="border border-white/5 rounded-2xl overflow-hidden shadow-2xl scale-90 origin-top">
+               <div className="border border-stone-200 rounded-2xl overflow-hidden shadow-2xl scale-90 origin-top bg-white">
                   <div className="h-24 bg-cover bg-center" style={{backgroundImage: `url(${popup.imageUrl})`}}></div>
                   <div className="p-6 bg-white text-black text-center">
                      <p className="font-bold text-sm mb-1">{popup.title}</p>

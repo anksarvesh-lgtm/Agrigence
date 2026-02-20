@@ -1,17 +1,31 @@
-
+// @ts-nocheck
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../App';
 import { SubscriptionPlan, SiteSettings, Coupon } from '../types';
 import { 
   Check, Star, ShieldCheck, QrCode, X, 
   UploadCloud, MessageCircle, FileText, 
-  PenTool, ChevronRight, Zap, Smartphone, CheckCircle, Tag, CreditCard, Lock
+  PenTool, ChevronRight, Zap, Smartphone, CheckCircle, Tag, CreditCard, Lock, Globe
 } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { applyCoupon, CouponResult } from '../extensions/coupons/engine';
 import { sendNotification } from '../extensions/notifications/service';
+
+const COUNTRIES = [
+  { code: 'IN', name: 'India', currency: 'INR' },
+  { code: 'US', name: 'United States', currency: 'USD' },
+  { code: 'GB', name: 'United Kingdom', currency: 'GBP' },
+  { code: 'AE', name: 'United Arab Emirates', currency: 'AED' },
+  { code: 'CA', name: 'Canada', currency: 'CAD' },
+  { code: 'AU', name: 'Australia', currency: 'AUD' },
+  { code: 'EU', name: 'Europe', currency: 'EUR' },
+  { code: 'BD', name: 'Bangladesh', currency: 'BDT' },
+  { code: 'PK', name: 'Pakistan', currency: 'PKR' },
+  { code: 'LK', name: 'Sri Lanka', currency: 'LKR' },
+  { code: 'NG', name: 'Nigeria', currency: 'NGN' },
+];
 
 const Subscription: React.FC = () => {
   const { user, login } = useAuth();
@@ -30,6 +44,9 @@ const Subscription: React.FC = () => {
   const [showCouponList, setShowCouponList] = useState(false);
   const [activeCoupons, setActiveCoupons] = useState<Coupon[]>([]);
 
+  // Country & Currency State
+  const [billingCountry, setBillingCountry] = useState(user?.country || 'IN');
+
   // UPI Form State
   const [upiForm, setUpiForm] = useState({
     txnId: '',
@@ -39,6 +56,11 @@ const Subscription: React.FC = () => {
   // Toggle between Payment Modes
   const [paymentMode, setPaymentMode] = useState<'ONLINE' | 'MANUAL'>('ONLINE');
 
+  // Derived Settings
+  const selectedCountryObj = COUNTRIES.find(c => c.code === billingCountry) || COUNTRIES[0];
+  const isIndianUser = billingCountry === 'IN';
+  const targetCurrency = selectedCountryObj.currency;
+
   useEffect(() => {
     const load = async () => {
       const p = await mockBackend.getPlans();
@@ -47,15 +69,12 @@ const Subscription: React.FC = () => {
     load();
     setSettings(mockBackend.getSettings());
 
-    // Subscribe to coupons via Firestore
     const unsubCoupons = mockBackend.subscribeToCoupons((data) => {
         const now = new Date();
         const valid = data.filter(c => {
             if (!c.isActive) return false;
-            // Check Expiry if exists
             if (c.expiryDate) {
                 const expiry = new Date(c.expiryDate);
-                // Reset time part to ensure whole day validity if needed, or exact compare
                 if (expiry < now) return false;
             }
             return true;
@@ -65,6 +84,22 @@ const Subscription: React.FC = () => {
 
     return () => unsubCoupons();
   }, []);
+
+  // Update billing country if user profile loads late
+  useEffect(() => {
+      if (user?.country) {
+          setBillingCountry(user.country);
+      }
+  }, [user]);
+
+  // Auto-switch payment mode when country changes
+  useEffect(() => {
+      if (billingCountry === 'IN') {
+          setPaymentMode('ONLINE');
+      } else {
+          setPaymentMode('MANUAL');
+      }
+  }, [billingCountry]);
 
   const handlePlanSelect = (plan: SubscriptionPlan) => {
     if (!user) {
@@ -78,15 +113,20 @@ const Subscription: React.FC = () => {
     setCouponCode('');
     setCouponResult(null);
     setShowCouponList(false);
-    setPaymentMode('ONLINE');
+    
+    // Initialize with user's country or default
+    setBillingCountry(user.country || 'IN');
     setStep('DETAILS');
+  };
+
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setBillingCountry(e.target.value);
   };
 
   const handleApplyCoupon = (codeToApply?: string) => {
     const code = codeToApply || couponCode;
     if (!selectedPlan || !code) return;
     
-    // Pass real active coupons list to engine
     const result = applyCoupon(code, selectedPlan.price, activeCoupons);
     setCouponResult(result);
     if (result.valid) {
@@ -100,106 +140,33 @@ const Subscription: React.FC = () => {
     setCouponResult(null);
   };
 
-  // Determine current payable amount
-  const payableAmount = selectedPlan 
+  // --- COST CALCULATION ---
+  const subTotal = selectedPlan 
     ? (couponResult?.valid ? couponResult.finalAmount : selectedPlan.price) 
     : 0;
+  
+  // Calculate 2% Gateway Charge
+  const gatewayCharges = Math.ceil(subTotal * 0.02);
+  
+  // Final Amount to Charge in INR
+  const payableAmount = subTotal + gatewayCharges;
+
+  // Display Amount for International Users
+  // Use the derived targetCurrency to calculate display price
+  const displayPrice = (selectedPlan && targetCurrency !== 'INR') 
+    ? mockBackend.getDisplayPrice(selectedPlan.price, targetCurrency) 
+    : null;
 
   const handleRazorpayCheckout = async () => {
     if (!selectedPlan || !user) return;
     setIsProcessing(true);
 
-    if (!window.Razorpay) {
-        setIsProcessing(false);
-        alert("Razorpay SDK failed to load. Please check your internet connection.");
-        return;
-    }
-
     try {
-        // 1. Create Order via Backend
-        // This securely calls the backend to generate an Order ID
-        const order = await mockBackend.createRazorpayOrder(payableAmount);
-
-        // 2. Configure Options
-        // Using the public Key ID only. Secret key remains on backend.
-        const RAZORPAY_KEY_ID = "rzp_test_SH7708LkAHAtFh"; 
-
-        const options = {
-            key: RAZORPAY_KEY_ID, 
-            amount: order.amount, // Amount in paise
-            currency: order.currency,
-            name: "Agrigence Journal",
-            description: `Subscription: ${selectedPlan.name}`,
-            image: settings?.logoUrl || "https://cdn-icons-png.flaticon.com/512/1164/1164620.png",
-            order_id: order.id, // Order ID generated by backend
-            handler: async function (response: any) {
-                // 3. Verify Payment Signature (Backend Call)
-                try {
-                    // Send payment details to backend for cryptographic verification
-                    await mockBackend.verifyRazorpayPayment(response);
-
-                    // If verification passes, fulfill the order
-                    await mockBackend.purchasePlan(user.id, selectedPlan.id, {
-                        method: 'RAZORPAY',
-                        razorpayOrderId: response.razorpay_order_id,
-                        razorpayPaymentId: response.razorpay_payment_id,
-                        razorpaySignature: response.razorpay_signature,
-                        amount: payableAmount
-                    });
-                    
-                    // Notification
-                    sendNotification('PAYMENT_SUCCESS', {
-                        name: user.name,
-                        email: user.email,
-                        amount: payableAmount,
-                        plan: selectedPlan.name,
-                        txnId: response.razorpay_payment_id
-                    });
-
-                    // Force refresh user to reflect plan instantly
-                    login({
-                        ...user, 
-                        subscriptionTier: selectedPlan.name,
-                        articleLimit: selectedPlan.articleLimit,
-                        blogLimit: selectedPlan.blogLimit,
-                    });
-
-                    setIsProcessing(false);
-                    setStep('SUCCESS');
-                } catch (e) {
-                    console.error(e);
-                    alert("Payment verification failed. Please contact support.");
-                    setIsProcessing(false);
-                }
-            },
-            prefill: {
-                name: user.name,
-                email: user.email,
-                contact: user.phone || ""
-            },
-            theme: {
-                color: settings?.primaryColor || "#3D2B1F"
-            },
-            modal: {
-                ondismiss: function() {
-                    setIsProcessing(false);
-                }
-            }
-        };
-
-        // 3. Open Gateway
-        const rzp = new window.Razorpay(options);
-        rzp.on('payment.failed', function (response: any){
-            console.error(response.error);
-            alert(`Payment Failed: ${response.error.description}`);
-            setIsProcessing(false);
-        });
-        rzp.open();
-
-    } catch (err) {
-        console.error("Razorpay Init Error", err);
+        await mockBackend.startPaymentSession(user.id, selectedPlan.id);
+    } catch (err: any) {
+        console.error("Secure Payment Error", err);
         setIsProcessing(false);
-        alert("Could not initialize payment gateway. Please try again.");
+        alert(`Payment initialization failed: ${err.message}. Please try manual QR.`);
     }
   };
 
@@ -208,23 +175,28 @@ const Subscription: React.FC = () => {
     if (!selectedPlan || !user) return;
     if (!upiForm.txnId) return alert("Please enter Transaction ID");
     
+    // Manual validation for screenshot
+    if (!upiForm.screenshot) return alert("Please upload payment screenshot");
+    
     setIsProcessing(true);
 
     try {
-      // Convert screenshot file to Base64 string if present
       let screenshotUrl: string | undefined = undefined;
       if (upiForm.screenshot) {
         screenshotUrl = await mockBackend.uploadFile(upiForm.screenshot, 'payments');
       }
 
       await mockBackend.purchasePlan(user.id, selectedPlan.id, {
-        method: 'QR',
+        method: isIndianUser ? 'QR' : 'INTERNATIONAL', 
         txnId: upiForm.txnId,
-        screenshot: screenshotUrl,
-        amount: payableAmount
+        screenshotUrl: screenshotUrl, // Correct property name matching types.ts
+        amount: payableAmount,
+        gatewayFee: gatewayCharges,
+        displayCurrency: displayPrice?.currency || targetCurrency || 'INR', 
+        displayAmount: displayPrice?.amount || payableAmount,
+        billingCountry: billingCountry
       });
       
-      // --- NOTIFICATION HOOK ---
       sendNotification('PAYMENT_SUCCESS', {
         name: user.name,
         email: user.email,
@@ -232,7 +204,6 @@ const Subscription: React.FC = () => {
         plan: selectedPlan.name,
         txnId: upiForm.txnId
       });
-      // -------------------------
 
       setIsProcessing(false);
       setStep('SUCCESS');
@@ -245,7 +216,10 @@ const Subscription: React.FC = () => {
 
   const getWhatsAppVerificationLink = () => {
     if (!selectedPlan) return '#';
-    const text = `Payment Completed - Sharing Details\n\nPlan: ${selectedPlan.name}\nAmount Paid: ₹${payableAmount}\nTransaction ID: ${upiForm.txnId || 'Online Payment'}\n\nPlease verify my subscription.`;
+    const text = isIndianUser 
+        ? `Payment Completed - Sharing Details\n\nPlan: ${selectedPlan.name}\nAmount Paid: ₹${payableAmount}\nTransaction ID: ${upiForm.txnId || 'Online Payment'}\n\nPlease verify my subscription.`
+        : `International Payment Request\n\nUser ID: ${user?.id}\nPlan: ${selectedPlan.name}\nCountry: ${billingCountry}\n\nI want to pay via Bank Transfer/Paypal. Please share details.`;
+    
     const number = settings?.whatsappNumber?.replace('+', '') || '919452571317'; 
     return `https://wa.me/${number}?text=${encodeURIComponent(text)}`;
   };
@@ -254,47 +228,61 @@ const Subscription: React.FC = () => {
   const blogPlans = plans.filter(p => p.type === 'BLOG_ACCESS');
   const comboPlan = plans.find(p => p.type === 'COMBO_ACCESS');
 
-  const PlanCard: React.FC<{ plan: SubscriptionPlan }> = ({ plan }) => (
-    <motion.div 
-      whileHover={{ y: -5 }}
-      className="bg-white/40 backdrop-blur-xl border border-white/20 p-8 rounded-[2.5rem] shadow-premium flex flex-col group relative overflow-hidden"
-    >
-      <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-         {plan.type === 'ARTICLE_ACCESS' ? <FileText size={80} /> : <PenTool size={80} />}
-      </div>
-      
-      <div className="mb-6">
-        <h3 className="text-xl font-serif font-bold text-agri-primary group-hover:text-agri-secondary transition-colors">{plan.name}</h3>
-        <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest mt-1">Validity: {plan.validityLabel}</p>
-      </div>
-      
-      <div className="mb-8">
-        <span className="text-4xl font-black text-agri-primary">₹{plan.price}</span>
-        <span className="text-stone-400 text-xs font-bold uppercase tracking-tight ml-2">Total Tax Inc.</span>
-      </div>
+  const PlanCard: React.FC<{ plan: SubscriptionPlan }> = ({ plan }) => {
+    const localPrice = user ? mockBackend.getDisplayPrice(plan.price, user.currency) : null;
+    const showLocal = user && user.country !== 'IN' && localPrice;
 
-      <div className="space-y-4 mb-10 flex-1">
-        {plan.features.map((feature, i) => (
-          <div key={i} className="flex items-start gap-3 text-sm text-stone-600 font-medium">
-            <Check size={16} className="text-green-500 shrink-0 mt-0.5" />
-            <span>{feature}</span>
-          </div>
-        ))}
-      </div>
+    return (
+        <motion.div 
+        whileHover={{ y: -5 }}
+        className="bg-white/40 backdrop-blur-xl border border-white/20 p-8 rounded-[2.5rem] shadow-premium flex flex-col group relative overflow-hidden"
+        >
+        <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+            {plan.type === 'ARTICLE_ACCESS' ? <FileText size={80} /> : <PenTool size={80} />}
+        </div>
+        
+        <div className="mb-6">
+            <h3 className="text-xl font-serif font-bold text-agri-primary group-hover:text-agri-secondary transition-colors">{plan.name}</h3>
+            <p className="text-stone-400 text-[10px] font-black uppercase tracking-widest mt-1">Validity: {plan.validityLabel}</p>
+        </div>
+        
+        <div className="mb-8">
+            {showLocal ? (
+               <span className="text-4xl font-black text-agri-primary">{localPrice.symbol}{localPrice.amount.toLocaleString()}</span>
+            ) : (
+               <span className="text-4xl font-black text-agri-primary">₹{plan.price}</span>
+            )}
+            
+            <span className="text-stone-400 text-xs font-bold uppercase tracking-tight ml-2">Total Tax Inc.</span>
+            
+            {!showLocal && user && user.country !== 'IN' && (
+                <div className="mt-2 text-agri-secondary text-[10px] font-bold uppercase tracking-widest">
+                    Login to view local price
+                </div>
+            )}
+        </div>
 
-      <button 
-        onClick={() => handlePlanSelect(plan)}
-        className="w-full bg-agri-primary text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-agri-secondary transition-all shadow-xl shadow-agri-primary/10 flex items-center justify-center gap-2"
-      >
-        Select Plan <ChevronRight size={14} />
-      </button>
-    </motion.div>
-  );
+        <div className="space-y-4 mb-10 flex-1">
+            {plan.features.map((feature, i) => (
+            <div key={i} className="flex items-start gap-3 text-sm text-stone-600 font-medium">
+                <Check size={16} className="text-green-500 shrink-0 mt-0.5" />
+                <span>{feature}</span>
+            </div>
+            ))}
+        </div>
+
+        <button 
+            onClick={() => handlePlanSelect(plan)}
+            className="w-full bg-agri-primary text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-agri-secondary transition-all shadow-xl shadow-agri-primary/10 flex items-center justify-center gap-2"
+        >
+            Select Plan <ChevronRight size={14} />
+        </button>
+        </motion.div>
+    );
+  };
 
   return (
     <div className="min-h-screen pb-24 bg-agri-bg">
-      
-      {/* Hero Section */}
       <div className="h-[40vh] relative overflow-hidden flex items-center justify-center bg-agri-primary">
          <div className="absolute inset-0">
             <img src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80" className="w-full h-full object-cover opacity-40" alt="Wheat Field" />
@@ -306,7 +294,6 @@ const Subscription: React.FC = () => {
          </div>
       </div>
 
-      {/* Notice Bar */}
       <div className="bg-white border-b border-agri-secondary/20 py-3 text-center sticky top-[80px] z-30 shadow-sm">
          <p className="text-[10px] font-black uppercase tracking-[0.25em] flex items-center justify-center gap-3 text-agri-primary">
            <Zap size={14} className="text-agri-secondary animate-pulse" />
@@ -315,8 +302,6 @@ const Subscription: React.FC = () => {
       </div>
 
       <div className="container mx-auto px-6 py-16">
-        
-        {/* Highlight Section: Combo Plan */}
         {comboPlan && (
           <div className="max-w-4xl mx-auto mb-24 relative group">
              <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10">
@@ -343,7 +328,17 @@ const Subscription: React.FC = () => {
                 </div>
                 <div className="relative z-10 md:w-1/2 p-12 lg:p-16 bg-white/5 backdrop-blur-3xl border-l border-white/10 flex flex-col items-center justify-center text-center">
                    <div className="mb-2 text-white/40 font-black text-[10px] uppercase tracking-widest">Premium Value Bundle</div>
-                   <div className="text-6xl font-black text-white mb-2 tracking-tighter">₹{comboPlan.price}</div>
+                   
+                   {/* Conditional Price Display for Combo */}
+                   {user && user.country !== 'IN' && mockBackend.getDisplayPrice(comboPlan.price, user.currency) ? (
+                        <div className="text-6xl font-black text-white mb-2 tracking-tighter">
+                            {mockBackend.getDisplayPrice(comboPlan.price, user.currency)?.symbol}
+                            {mockBackend.getDisplayPrice(comboPlan.price, user.currency)?.amount.toLocaleString()}
+                        </div>
+                   ) : (
+                        <div className="text-6xl font-black text-white mb-2 tracking-tighter">₹{comboPlan.price}</div>
+                   )}
+
                    <div className="text-agri-secondary font-serif italic text-lg mb-10">{comboPlan.validityLabel} Access</div>
                    <button 
                      onClick={() => handlePlanSelect(comboPlan)}
@@ -356,7 +351,6 @@ const Subscription: React.FC = () => {
           </div>
         )}
 
-        {/* Section A: Article Plans */}
         <div className="mb-24">
            <div className="flex items-center gap-4 mb-12">
               <div className="h-px flex-1 bg-stone-200"></div>
@@ -368,7 +362,6 @@ const Subscription: React.FC = () => {
            </div>
         </div>
 
-        {/* Section B: Blog Plans */}
         <div className="mb-24">
            <div className="flex items-center gap-4 mb-12">
               <div className="h-px flex-1 bg-stone-200"></div>
@@ -380,7 +373,6 @@ const Subscription: React.FC = () => {
            </div>
         </div>
 
-        {/* Footer Support */}
         <div className="bg-white/40 backdrop-blur-md border border-white/20 p-10 rounded-[3rem] text-center max-w-3xl mx-auto shadow-sm">
            <h3 className="text-lg font-bold text-agri-primary mb-4 flex items-center justify-center gap-3">
               <ShieldCheck className="text-agri-secondary" /> Verified Security Protocol
@@ -397,7 +389,6 @@ const Subscription: React.FC = () => {
         </div>
       </div>
 
-      {/* Payment Overlay Modal */}
       <AnimatePresence>
         {selectedPlan && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-agri-primary/80 backdrop-blur-md">
@@ -407,7 +398,6 @@ const Subscription: React.FC = () => {
                exit={{ opacity: 0, scale: 0.95, y: 20 }}
                className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
              >
-                {/* Modal Header */}
                 <div className="bg-agri-primary p-8 text-white flex justify-between items-center relative overflow-hidden shrink-0">
                    <div className="absolute right-0 top-0 p-10 opacity-5">
                       <QrCode size={120} />
@@ -415,7 +405,7 @@ const Subscription: React.FC = () => {
                    <div className="relative z-10">
                       <h2 className="text-2xl font-serif font-bold">{selectedPlan.name}</h2>
                       <p className="text-agri-secondary font-black text-[10px] uppercase tracking-widest mt-1 flex items-center gap-2">
-                        <Smartphone size={12} fill="currentColor"/> Secure Checkout
+                        <Smartphone size={12} fill="currentColor"/> {isIndianUser ? 'Secure Checkout' : 'International Transfer'}
                       </p>
                    </div>
                    <button onClick={() => setSelectedPlan(null)} className="p-3 bg-white/10 rounded-full hover:bg-white/20 transition-all relative z-10">
@@ -423,129 +413,75 @@ const Subscription: React.FC = () => {
                    </button>
                 </div>
 
-                {/* Body */}
                 <div className="p-8 overflow-y-auto custom-scrollbar flex-1">
                    {step === 'DETAILS' ? (
                      <div className="space-y-8">
-                        {/* Price Breakdown Section */}
+                        
+                        {/* Country Selection Dropdown */}
+                        <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200">
+                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 block flex items-center gap-2">
+                                <Globe size={12}/> Select Billing Country
+                            </label>
+                            <select 
+                                value={billingCountry}
+                                onChange={handleCountryChange}
+                                className="w-full bg-white border border-stone-300 rounded-xl p-3 text-sm font-bold text-stone-700 outline-none focus:border-agri-secondary shadow-sm transition-all"
+                            >
+                                {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name} ({c.currency})</option>)}
+                            </select>
+                        </div>
+
                         <div className="bg-stone-50 rounded-[2rem] p-6 border border-stone-100">
-                           {/* Coupon Input */}
                            <div className="mb-6">
-                              <div className="flex gap-2">
-                                <div className="relative flex-1">
-                                  <Tag size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" />
-                                  <input 
-                                    type="text"
-                                    placeholder="Enter Coupon"
-                                    className="w-full bg-white border border-stone-200 rounded-xl py-3 pl-12 pr-4 text-xs font-bold uppercase tracking-wider outline-none focus:border-agri-secondary"
-                                    value={couponCode}
-                                    onChange={e => setCouponCode(e.target.value.toUpperCase())}
-                                    disabled={!!couponResult?.valid}
-                                  />
-                                </div>
-                                {couponResult?.valid ? (
-                                  <button onClick={handleRemoveCoupon} className="bg-red-50 text-red-500 px-4 rounded-xl font-bold text-xs hover:bg-red-100">Remove</button>
-                                ) : (
-                                  <button onClick={() => handleApplyCoupon()} className="bg-stone-800 text-white px-6 rounded-xl font-bold text-xs hover:bg-black transition-colors">Apply</button>
-                                )}
+                              <div className="flex justify-between items-center text-sm font-bold text-stone-500 mb-4">
+                                <span>Base Plan Cost</span>
+                                <span>
+                                    {isIndianUser 
+                                        ? `₹${selectedPlan.price}` 
+                                        : `${displayPrice?.symbol || ''}${displayPrice?.amount.toLocaleString() || ''} ${displayPrice?.currency || targetCurrency}`}
+                                </span>
                               </div>
-                              
-                              {!couponResult?.valid && activeCoupons.length > 0 && (
-                                <button 
-                                  onClick={() => setShowCouponList(!showCouponList)} 
-                                  className="text-[10px] font-bold text-agri-secondary uppercase tracking-widest mt-2 hover:underline ml-1"
-                                >
-                                  {showCouponList ? 'Hide Coupons' : `View ${activeCoupons.length} Available Coupons`}
-                                </button>
-                              )}
-                              
-                              {/* Visible Coupon List */}
-                              <AnimatePresence>
-                                {showCouponList && !couponResult?.valid && activeCoupons.length > 0 && (
-                                  <motion.div 
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden mt-3"
-                                  >
-                                    <div className="grid grid-cols-1 gap-2 bg-white rounded-xl border border-stone-100 p-2">
-                                      {activeCoupons.map((coupon) => (
-                                        <div key={coupon.id} className="flex items-center justify-between p-3 hover:bg-stone-50 rounded-lg border border-transparent hover:border-stone-100 transition-all group">
-                                          <div>
-                                            <div className="flex items-center gap-2">
-                                              <span className="font-mono font-bold text-agri-primary text-xs bg-stone-100 px-2 py-0.5 rounded">{coupon.code}</span>
-                                              <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded">
-                                                {coupon.discountType === 'PERCENT' ? `${coupon.value}% OFF` : `₹${coupon.value} OFF`}
-                                              </span>
-                                            </div>
-                                            <p className="text-[10px] text-stone-400 mt-1">Valid until {coupon.expiryDate ? new Date(coupon.expiryDate).toLocaleDateString() : 'Forever'}</p>
-                                          </div>
-                                          <button 
-                                            onClick={() => handleApplyCoupon(coupon.code)}
-                                            className="text-[10px] font-black uppercase text-agri-secondary hover:bg-agri-secondary hover:text-white px-3 py-1.5 rounded-lg transition-colors"
-                                          >
-                                            Apply
-                                          </button>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                           </div>
-
-                           {/* Messages */}
-                           {couponResult && (
-                             <div className={`text-xs font-bold text-center mb-4 p-2 rounded-lg ${couponResult.valid ? 'text-green-600 bg-green-50' : 'text-red-500 bg-red-50'}`}>
-                                {couponResult.message}
-                             </div>
-                           )}
-
-                           {/* Summary */}
-                           <div className="space-y-2 text-sm">
-                              <div className="flex justify-between text-stone-500">
-                                 <span>Subtotal</span>
-                                 <span>₹{selectedPlan.price}</span>
-                              </div>
-                              {couponResult?.valid && (
-                                <div className="flex justify-between text-green-600 font-bold">
-                                   <span>Coupon Discount</span>
-                                   <span>- ₹{couponResult.discount}</span>
-                                </div>
-                              )}
                               <div className="h-px bg-stone-200 my-2"></div>
                               <div className="flex justify-between items-center">
-                                 <span className="font-serif font-bold text-lg text-agri-primary">Total Payable</span>
-                                 <span className="text-3xl font-black text-agri-primary">₹{payableAmount}</span>
+                                 <span className="font-serif font-bold text-lg text-agri-primary">Total to Pay</span>
+                                 <span className="text-3xl font-black text-agri-primary">
+                                    {isIndianUser 
+                                        ? `₹${selectedPlan.price}` 
+                                        : `${displayPrice?.symbol || ''}${displayPrice?.amount.toLocaleString() || ''}`}
+                                 </span>
                               </div>
+                              {paymentMode === 'MANUAL' && (
+                                <p className="text-[9px] text-stone-400 text-right uppercase font-bold mt-1">Manual Pay includes verification delays</p>
+                              )}
                            </div>
                         </div>
 
-                        {/* Payment Mode Toggles */}
-                        <div className="flex gap-2 p-1 bg-stone-100 rounded-xl">
-                            <button 
-                                onClick={() => setPaymentMode('ONLINE')}
-                                className={`flex-1 py-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${paymentMode === 'ONLINE' ? 'bg-white shadow-sm text-agri-primary' : 'text-stone-400'}`}
-                            >
-                                <CreditCard size={16} /> Instant Pay
-                            </button>
-                            <button 
-                                onClick={() => setPaymentMode('MANUAL')}
-                                className={`flex-1 py-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${paymentMode === 'MANUAL' ? 'bg-white shadow-sm text-agri-primary' : 'text-stone-400'}`}
-                            >
-                                <QrCode size={16} /> Manual QR
-                            </button>
-                        </div>
+                        {/* Payment Toggle - Only for Indian Users */}
+                        {isIndianUser && (
+                            <div className="flex gap-2 p-1 bg-stone-100 rounded-xl">
+                                <button 
+                                    onClick={() => setPaymentMode('ONLINE')}
+                                    className={`flex-1 py-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${paymentMode === 'ONLINE' ? 'bg-white shadow-sm text-agri-primary' : 'text-stone-400'}`}
+                                >
+                                    <CreditCard size={16} /> Instant Pay
+                                </button>
+                                <button 
+                                    onClick={() => setPaymentMode('MANUAL')}
+                                    className={`flex-1 py-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${paymentMode === 'MANUAL' ? 'bg-white shadow-sm text-agri-primary' : 'text-stone-400'}`}
+                                >
+                                    <QrCode size={16} /> Manual QR
+                                </button>
+                            </div>
+                        )}
 
-                        {/* ONLINE PAYMENT FLOW */}
-                        {paymentMode === 'ONLINE' && (
+                        {paymentMode === 'ONLINE' && isIndianUser && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
                                 <div className="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl">
                                     <h4 className="font-bold text-indigo-900 mb-2 flex items-center gap-2">
                                         <Zap size={16} className="fill-indigo-500 text-indigo-500"/> Instant Activation
                                     </h4>
                                     <p className="text-xs text-indigo-700 leading-relaxed mb-6">
-                                        Securely pay via Razorpay using Credit Card, Debit Card, Netbanking, or UPI Apps. Your subscription will be activated automatically upon success.
+                                        You will be redirected to our secure payment gateway. Your subscription will activate automatically upon verification.
                                     </p>
                                     
                                     <button 
@@ -553,14 +489,8 @@ const Subscription: React.FC = () => {
                                         disabled={isProcessing}
                                         className="w-full bg-[#3395ff] text-white py-4 rounded-xl font-bold text-sm shadow-xl shadow-blue-500/20 hover:bg-[#2884e6] transition-all flex items-center justify-center gap-2"
                                     >
-                                        {isProcessing ? 'INITIALIZING GATEWAY...' : `PAY ₹${payableAmount} NOW`}
+                                        {isProcessing ? 'REDIRECTING...' : `PAY ₹${selectedPlan.price} NOW`}
                                     </button>
-                                    
-                                    <div className="flex items-center justify-center gap-4 mt-4 opacity-50 grayscale hover:grayscale-0 transition-all">
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" className="h-6" alt="Mastercard"/>
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" className="h-4" alt="Visa"/>
-                                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/e1/UPI-Logo-vector.svg" className="h-4" alt="UPI"/>
-                                    </div>
                                 </div>
                                 <div className="flex items-center justify-center gap-2 text-[10px] font-bold text-stone-400 uppercase">
                                     <Lock size={12} /> 256-bit Secure Encryption
@@ -568,63 +498,85 @@ const Subscription: React.FC = () => {
                             </div>
                         )}
 
-                        {/* MANUAL QR FLOW */}
                         {paymentMode === 'MANUAL' && (
                             <div className="space-y-6 animate-in fade-in slide-in-from-left-4 duration-300">
-                                <div className="flex flex-col md:flex-row items-center gap-8">
-                                    <div className="bg-white p-3 rounded-2xl shadow-sm border border-stone-100 shrink-0">
-                                        {(() => {
-                                            const upiId = settings?.upiId || 'agrigence@upi';
-                                            const isDynamic = settings?.upiQrUrl?.includes('api.qrserver.com');
-                                            const qrSrc = !isDynamic && settings?.upiQrUrl 
-                                                ? settings.upiQrUrl 
-                                                : `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=${upiId}&pn=Agrigence&am=${payableAmount}&cu=INR`;
-                                            
-                                            return (
-                                                <img 
-                                                src={qrSrc}
-                                                alt="Payment QR" 
-                                                className="w-32 h-32 object-contain"
-                                                />
-                                            );
-                                        })()}
-                                    </div>
-                                    <div className="text-center md:text-left flex-1">
-                                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Scan to Pay ₹{payableAmount}</p>
-                                        <div className="bg-stone-100 border border-stone-200 rounded-xl p-3 flex items-center justify-between font-mono text-xs font-bold text-stone-600 mb-2">
-                                            <span>{settings?.upiId || 'agrigence@upi'}</span>
-                                            <Zap size={12} className="text-agri-secondary"/>
+                                
+                                {isIndianUser ? (
+                                    // INDIAN MANUAL FLOW
+                                    <div className="flex flex-col md:flex-row items-center gap-8">
+                                        <div className="bg-white p-3 rounded-2xl shadow-sm border border-stone-100 shrink-0">
+                                            {(() => {
+                                                const upiId = settings?.upiId || 'agrigence@upi';
+                                                const isDynamic = settings?.upiQrUrl?.includes('api.qrserver.com');
+                                                const manualAmount = payableAmount; 
+                                                const qrSrc = !isDynamic && settings?.upiQrUrl 
+                                                    ? settings.upiQrUrl 
+                                                    : `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=${upiId}&pn=Agrigence&am=${manualAmount}&cu=INR`;
+                                                
+                                                return (
+                                                    <img 
+                                                    src={qrSrc}
+                                                    alt="Payment QR" 
+                                                    className="w-32 h-32 object-contain"
+                                                    />
+                                                );
+                                            })()}
                                         </div>
-                                        <p className="text-[9px] text-stone-400 font-bold uppercase">Manual Verification Required (12-24 Hrs)</p>
+                                        <div className="text-center md:text-left flex-1">
+                                            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2">Scan to Pay ₹{payableAmount}</p>
+                                            <div className="bg-stone-100 border border-stone-200 rounded-xl p-3 flex items-center justify-between font-mono text-xs font-bold text-stone-600 mb-2">
+                                                <span>{settings?.upiId || 'agrigence@upi'}</span>
+                                                <Zap size={12} className="text-agri-secondary"/>
+                                            </div>
+                                            <p className="text-[9px] text-stone-400 font-bold uppercase">Manual Verification Required (12-24 Hrs)</p>
+                                        </div>
                                     </div>
-                                </div>
+                                ) : (
+                                    // INTERNATIONAL MANUAL FLOW
+                                    <div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl">
+                                        <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                                            <Globe size={16} /> International Payment Required
+                                        </h4>
+                                        <p className="text-xs text-blue-700 leading-relaxed mb-6">
+                                            To complete your subscription from <strong>{selectedCountryObj.name}</strong>, please contact our support team. We will guide you through a secure bank transfer or PayPal transaction.
+                                        </p>
+                                        <a 
+                                            href={getWhatsAppVerificationLink()} 
+                                            target="_blank" 
+                                            rel="noreferrer"
+                                            className="w-full bg-[#25D366] text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-[#20bd5a] transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
+                                        >
+                                            <MessageCircle size={16} /> Get Payment Instructions
+                                        </a>
+                                    </div>
+                                )}
 
                                 <form onSubmit={handleUpiSubmit} className="space-y-6">
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 block">Transaction ID (UTR)</label>
+                                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 block">Transaction ID / Ref No</label>
                                             <input 
                                             required
                                             value={upiForm.txnId}
                                             onChange={e => setUpiForm({...upiForm, txnId: e.target.value})}
-                                            placeholder="12-digit Ref No"
+                                            placeholder="Enter Reference Number"
                                             className="w-full bg-stone-50 border border-stone-200 p-4 rounded-xl focus:ring-2 focus:ring-agri-secondary/20 outline-none text-sm font-bold"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 block">Payment Screenshot</label>
+                                            <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 block">Payment Proof</label>
                                             <div className="relative group">
                                                 <input 
                                                 type="file" 
                                                 accept="image/*"
-                                                required
+                                                // IMPORTANT: Removed 'required' attribute to fix browser validation issue with hidden input
                                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                                 onChange={e => setUpiForm({...upiForm, screenshot: e.target.files?.[0] || null})}
                                                 />
                                                 <div className="w-full bg-stone-50 border-2 border-dashed border-stone-200 p-4 rounded-xl text-center group-hover:bg-white transition-all flex items-center justify-center gap-3 h-[54px]">
                                                 <UploadCloud size={16} className="text-agri-secondary" />
                                                 <span className="text-[10px] font-black uppercase text-stone-500 truncate max-w-[100px]">
-                                                    {upiForm.screenshot ? 'Attached' : "Attach Proof"}
+                                                    {upiForm.screenshot ? 'Attached' : "Upload Screenshot"}
                                                 </span>
                                                 </div>
                                             </div>
@@ -632,7 +584,7 @@ const Subscription: React.FC = () => {
                                     </div>
                                     
                                     <button 
-                                        type="submit"
+                                        type="submit" 
                                         disabled={isProcessing}
                                         className="w-full bg-agri-secondary text-agri-primary py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-agri-primary hover:text-white transition-all shadow-xl shadow-agri-secondary/20 flex items-center justify-center gap-3"
                                     >
@@ -653,7 +605,7 @@ const Subscription: React.FC = () => {
                         <p className="text-stone-500 text-sm leading-relaxed mb-8 max-w-md mx-auto">
                            {paymentMode === 'ONLINE' 
                              ? "Your payment was successful and your subscription is now active. You can start submitting articles immediately."
-                             : "Your manual payment details have been received. To speed up verification, please share your confirmation on WhatsApp."}
+                             : "Your payment details have been received. To speed up verification, please share your confirmation on WhatsApp."}
                         </p>
                         
                         {paymentMode === 'MANUAL' && (

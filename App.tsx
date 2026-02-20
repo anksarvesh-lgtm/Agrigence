@@ -8,7 +8,11 @@ import { Mail, LogOut, CheckCircle } from 'lucide-react';
 // Layouts and Pages
 import Layout from './components/Layout';
 import AdminLayout from './layouts/AdminLayout';
+import { ReviewerLayout } from './components/ReviewerLayout'; // New Layout
 import PopupAnnouncement from './components/PopupAnnouncement';
+import Preloader from './components/Preloader';
+import GlobalUploadIndicator from './components/GlobalUploadIndicator';
+import { ConfirmationProvider } from './components/ContextualConfirm';
 
 import Home from './pages/Home';
 import EditorialBoard from './pages/EditorialBoard';
@@ -18,17 +22,16 @@ import NewsView from './pages/NewsView';
 import Journals from './pages/Journals';
 import Blogs from './pages/Blogs';
 import BlogView from './pages/BlogView';
-import Submission from './pages/Submission';
-import Dashboard from './pages/Dashboard';
-import Subscription from './pages/Subscription';
 import AboutContact from './pages/AboutContact';
-import Login from './pages/Login';
 import Products from './pages/Products';
 import Consultation from './pages/Consultation';
+import Login from './pages/Login';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import Dashboard from './pages/Dashboard';
 import ViewDocument from './pages/ViewDocument';
-import Preloader from './components/Preloader';
+import Submission from './pages/Submission';
+import Subscription from './pages/Subscription';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -54,6 +57,7 @@ import NotificationManager from './pages/admin/NotificationManager';
 import TrashManager from './pages/admin/TrashManager';
 import AdminManager from './extensions/submission-tracking/AdminManager';
 import SubmissionAdminPanel from './extensions/submission-admin/SubmissionAdminPanel';
+import ReviewerDashboard from './pages/ReviewerDashboard'; // New Page
 
 // Auth Context
 interface AuthContextType {
@@ -143,68 +147,95 @@ const App: React.FC = () => {
 
   return (
     <AuthProvider>
+      <GlobalUploadIndicator />
       <HashRouter>
-        <PopupAnnouncement />
-        <Routes>
-          {/* Secure Document Viewer Route (No Layout) */}
-          <Route path="/view-document/:id" element={<ViewDocument />} />
+        <ConfirmationProvider>
+          <PopupAnnouncement />
+          <Routes>
+            {/* Secure Document Viewer Route (No Layout) */}
+            <Route path="/view-document/:id" element={<ViewDocument />} />
 
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="editorial-board" element={<EditorialBoard />} />
-            <Route path="guidelines" element={<AuthorGuidelines />} />
-            <Route path="news" element={<News />} />
-            <Route path="news/:id" element={<NewsView />} />
-            <Route path="journals" element={<Journals />} />
-            <Route path="blogs" element={<Blogs />} />
-            <Route path="blog/:id" element={<BlogView />} />
-            <Route path="about-contact" element={<AboutContact />} />
-            <Route path="products" element={<Products />} />
-            <Route path="consultation" element={<Consultation />} />
-            <Route path="login" element={<Login />} />
-            <Route path="terms" element={<Terms />} />
-            <Route path="privacy" element={<Privacy />} />
-            <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="submission" element={<ProtectedRoute><Submission /></ProtectedRoute>} />
-            <Route path="subscription" element={<Subscription />} />
-          </Route>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Home />} />
+              {/* Redirect legacy path to new board route */}
+              <Route path="editorial-board" element={<EditorialBoard />} />
+              <Route path="board" element={<Navigate to="/editorial-board" replace />} />
+              {/* Updated Author Guidelines Route */}
+              <Route path="author-guidelines" element={<AuthorGuidelines />} />
+              <Route path="guidelines" element={<Navigate to="/author-guidelines" replace />} />
+              
+              <Route path="news" element={<News />} />
+              <Route path="news/:id" element={<NewsView />} />
+              <Route path="journals" element={<Journals />} />
+              <Route path="blogs" element={<Blogs />} />
+              <Route path="blog/:id" element={<BlogView />} />
+              <Route path="about-contact" element={<AboutContact />} />
+              <Route path="products" element={<Products />} />
+              <Route path="consultation" element={<Consultation />} />
+              <Route path="login" element={<Login />} />
+              <Route path="terms" element={<Terms />} />
+              <Route path="privacy" element={<Privacy />} />
+              
+              {/* USER DASHBOARD */}
+              <Route path="dashboard" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Dashboard /></ProtectedRoute>} />
+              <Route path="submission" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Submission /></ProtectedRoute>} />
+              <Route path="subscription" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Subscription /></ProtectedRoute>} />
+            </Route>
 
-          <Route 
-            path="/admin" 
-            element={
-              <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
-                <AdminLayout />
-              </ProtectedRoute>
-            }
-          >
-            <Route index element={<Navigate to="dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="submissions" element={<SubmissionAdminPanel />} />
-            <Route path="tracker" element={<AdminManager />} />
-            <Route path="navigation" element={<NavigationManager />} />
-            <Route path="layout" element={<LayoutManager />} />
-            <Route path="inquiries" element={<InquiryManager />} />
-            <Route path="pages" element={<StaticPagesEditor />} />
-            <Route path="users" element={<UserManagement />} />
-            <Route path="plans" element={<SubscriptionPlans />} />
-            <Route path="payments" element={<Payments />} />
-            <Route path="coupons" element={<Coupons />} />
-            <Route path="templates" element={<TemplateManager />} />
-            <Route path="seo" element={<SEOSettings />} />
-            <Route path="articles" element={<ContentManagement />} />
-            <Route path="blogs" element={<ContentManagement />} />
-            <Route path="magazines" element={<ContentManagement />} />
-            <Route path="products" element={<ProductManagement />} />
-            <Route path="board" element={<EditorialBoardManagement />} />
-            <Route path="leadership" element={<LeadershipManagement />} />
-            <Route path="popup" element={<PopupManager />} />
-            <Route path="news" element={<AdminNewsManagement />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="media" element={<MediaLibrary />} />
-            <Route path="broadcast" element={<NotificationManager />} />
-            <Route path="trash" element={<TrashManager />} />
-          </Route>
-        </Routes>
+            {/* REVIEWER DASHBOARD (Strict Isolation) */}
+            <Route 
+              path="/reviewer" 
+              element={
+                <ProtectedRoute allowedRoles={['EDITORIAL_MEMBER', 'SUPER_ADMIN']}>
+                  <ReviewerLayout />
+                </ProtectedRoute>
+              }
+            >
+               <Route index element={<ReviewerDashboard />} />
+               <Route path="history" element={<ReviewerDashboard />} /> 
+            </Route>
+
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<Navigate to="dashboard" replace />} />
+              
+              {/* OPERATIONAL ROUTES (Admins + SuperAdmin) */}
+              <Route path="dashboard" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><AdminDashboard /></ProtectedRoute>} />
+              <Route path="submissions" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><SubmissionAdminPanel /></ProtectedRoute>} />
+              <Route path="payments" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Payments /></ProtectedRoute>} />
+              <Route path="news" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><AdminNewsManagement /></ProtectedRoute>} />
+              <Route path="blogs" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><ContentManagement /></ProtectedRoute>} />
+              <Route path="inquiries" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><InquiryManager /></ProtectedRoute>} />
+              <Route path="broadcast" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><NotificationManager /></ProtectedRoute>} />
+              
+              {/* SUPER ADMIN RESTRICTED ROUTES (System Configuration) */}
+              <Route path="users" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><UserManagement /></ProtectedRoute>} />
+              <Route path="plans" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SubscriptionPlans /></ProtectedRoute>} />
+              <Route path="coupons" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><Coupons /></ProtectedRoute>} />
+              <Route path="templates" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><TemplateManager /></ProtectedRoute>} />
+              <Route path="seo" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><SEOSettings /></ProtectedRoute>} />
+              <Route path="articles" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><ContentManagement /></ProtectedRoute>} />
+              <Route path="magazines" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><ContentManagement /></ProtectedRoute>} />
+              <Route path="products" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><ProductManagement /></ProtectedRoute>} />
+              <Route path="board" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><EditorialBoardManagement /></ProtectedRoute>} />
+              <Route path="leadership" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><LeadershipManagement /></ProtectedRoute>} />
+              <Route path="popup" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><PopupManager /></ProtectedRoute>} />
+              <Route path="settings" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><Settings /></ProtectedRoute>} />
+              <Route path="media" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><MediaLibrary /></ProtectedRoute>} />
+              <Route path="trash" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><TrashManager /></ProtectedRoute>} />
+              <Route path="navigation" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><NavigationManager /></ProtectedRoute>} />
+              <Route path="layout" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><LayoutManager /></ProtectedRoute>} />
+              <Route path="pages" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><StaticPagesEditor /></ProtectedRoute>} />
+              <Route path="tracker" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminManager /></ProtectedRoute>} />
+            </Route>
+          </Routes>
+        </ConfirmationProvider>
       </HashRouter>
     </AuthProvider>
   );

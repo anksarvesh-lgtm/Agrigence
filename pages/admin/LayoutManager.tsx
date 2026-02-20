@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { HomepageSection } from '../../types';
-import { Save, GripVertical, Power, Hash, ChevronUp, ChevronDown } from 'lucide-react';
+import { Save, ChevronUp, ChevronDown } from 'lucide-react';
 
 const LayoutManager: React.FC = () => {
   const [sections, setSections] = useState<HomepageSection[]>([]);
@@ -44,15 +44,15 @@ const LayoutManager: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="flex justify-between items-center bg-agri-secondary/10 p-6 rounded-2xl border border-agri-secondary/20">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
         <div>
-          <h1 className="text-2xl font-bold text-white">Homepage Layout</h1>
-          <p className="text-white/40 text-xs mt-1 uppercase tracking-widest font-bold">Priority ordering & visibility</p>
+          <h1 className="text-2xl font-bold text-black">Homepage Layout</h1>
+          <p className="text-black text-xs mt-1 uppercase tracking-widest font-bold">Priority ordering & visibility</p>
         </div>
         <button 
           onClick={handleSave} 
           disabled={isSaving}
-          className="bg-agri-secondary text-agri-primary px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 disabled:opacity-50"
+          className="bg-stone-200 text-black border border-stone-300 px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-stone-300 transition-all active:scale-95 disabled:opacity-50"
         >
            <Save size={18} /> {isSaving ? 'SYNCING...' : 'SAVE LAYOUT'}
         </button>
@@ -60,24 +60,24 @@ const LayoutManager: React.FC = () => {
 
       <div className="space-y-4">
         {sections.map((section, idx) => (
-          <div key={section.id} className={`bg-white/5 border border-white/5 p-6 rounded-3xl flex items-center justify-between group transition-all ${section.isEnabled ? 'opacity-100' : 'opacity-40'}`}>
+          <div key={section.id} className={`bg-white border border-stone-200 p-6 rounded-3xl flex items-center justify-between group transition-all shadow-sm ${section.isEnabled ? 'opacity-100' : 'opacity-60 bg-stone-50'}`}>
              <div className="flex items-center gap-6">
                 <div className="flex flex-col gap-2">
-                   <button onClick={() => move(idx, 'up')} className="text-white/10 hover:text-white transition-colors"><ChevronUp size={20}/></button>
-                   <button onClick={() => move(idx, 'down')} className="text-white/10 hover:text-white transition-colors"><ChevronDown size={20}/></button>
+                   <button onClick={() => move(idx, 'up')} className="text-black hover:bg-stone-100 rounded p-1 transition-colors"><ChevronUp size={20}/></button>
+                   <button onClick={() => move(idx, 'down')} className="text-black hover:bg-stone-100 rounded p-1 transition-colors"><ChevronDown size={20}/></button>
                 </div>
-                <div className="w-12 h-12 bg-black/40 rounded-2xl flex items-center justify-center font-black text-agri-secondary text-xl">
+                <div className="w-12 h-12 bg-stone-100 rounded-2xl flex items-center justify-center font-black text-black text-xl border border-stone-200">
                    {idx + 1}
                 </div>
                 <div>
-                   <h3 className="text-white font-bold text-lg">{section.label}</h3>
+                   <h3 className="text-black font-bold text-lg">{section.label}</h3>
                    <div className="flex items-center gap-4 mt-1">
-                      <span className="text-[10px] text-white/30 uppercase font-black tracking-widest">Section_ID: {section.id}</span>
-                      <div className="flex items-center gap-2 bg-black/40 px-2 py-1 rounded-lg border border-white/5">
-                         <span className="text-[9px] text-white/30 font-black uppercase">Limit:</span>
+                      <span className="text-[10px] text-black uppercase font-black tracking-widest">Section_ID: {section.id}</span>
+                      <div className="flex items-center gap-2 bg-stone-100 px-2 py-1 rounded-lg border border-stone-200">
+                         <span className="text-[9px] text-black font-black uppercase">Limit:</span>
                          <input 
                            type="number" 
-                           className="bg-transparent text-agri-secondary font-black text-xs w-8 outline-none border-none text-center" 
+                           className="bg-transparent text-black font-black text-xs w-8 outline-none border-none text-center" 
                            value={section.itemsToShow} 
                            onChange={e => updateCount(section.id, parseInt(e.target.value))}
                          />
@@ -88,7 +88,7 @@ const LayoutManager: React.FC = () => {
 
              <button 
                onClick={() => handleToggle(section.id)}
-               className={`px-8 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all ${section.isEnabled ? 'bg-green-500/20 text-green-400 border border-green-500/20' : 'bg-red-500/20 text-red-400 border border-red-500/20'}`}
+               className={`px-8 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition-all border ${section.isEnabled ? 'bg-green-200 text-black border-green-300' : 'bg-red-200 text-black border-red-300'}`}
              >
                 {section.isEnabled ? 'Protocol_ON' : 'Protocol_OFF'}
              </button>

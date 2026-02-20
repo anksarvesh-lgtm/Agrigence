@@ -22,32 +22,32 @@ const InquiryManager: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-white">Contact Inquiries</h1>
-        <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/5">
+        <h1 className="text-2xl font-bold text-black">Contact Inquiries</h1>
+        <div className="bg-white px-4 py-2 rounded-xl border border-stone-200 shadow-sm">
            <span className="text-agri-secondary font-black text-xs uppercase tracking-widest">{inquiries.filter(i => i.status === 'PENDING').length} PENDING_MSGS</span>
         </div>
       </div>
 
       <div className="grid gap-6">
         {inquiries.map(inquiry => (
-          <div key={inquiry.id} className={`bg-white/5 border border-white/5 rounded-[2rem] p-8 transition-all hover:bg-white/10 ${inquiry.status === 'RESOLVED' ? 'opacity-60' : ''}`}>
+          <div key={inquiry.id} className={`bg-white border border-stone-200 rounded-[2rem] p-8 transition-all hover:shadow-lg ${inquiry.status === 'RESOLVED' ? 'opacity-60 grayscale' : ''}`}>
             <div className="flex flex-col md:flex-row justify-between gap-6">
               <div className="space-y-4 flex-1">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-agri-secondary/10 rounded-2xl flex items-center justify-center text-agri-secondary">
+                  <div className="w-12 h-12 bg-agri-secondary/10 rounded-2xl flex items-center justify-center text-agri-secondary border border-agri-secondary/20">
                     <User size={24} />
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-lg">{inquiry.name}</h3>
-                    <p className="text-[10px] text-white/30 uppercase font-black tracking-widest flex items-center gap-2">
+                    <h3 className="text-black font-bold text-lg">{inquiry.name}</h3>
+                    <p className="text-[10px] text-stone-500 uppercase font-black tracking-widest flex items-center gap-2">
                        <Mail size={12} /> {inquiry.email}
                     </p>
                   </div>
                 </div>
-                <div className="bg-black/20 p-6 rounded-2xl border border-white/5">
-                  <p className="text-white/70 text-sm leading-relaxed whitespace-pre-wrap">{inquiry.message}</p>
+                <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
+                  <p className="text-black text-sm leading-relaxed whitespace-pre-wrap">{inquiry.message}</p>
                 </div>
-                <div className="flex items-center gap-4 text-[10px] font-black uppercase text-white/20 tracking-widest">
+                <div className="flex items-center gap-4 text-[10px] font-black uppercase text-stone-400 tracking-widest">
                   <Clock size={12} /> {new Date(inquiry.date).toLocaleString()}
                 </div>
               </div>
@@ -56,18 +56,18 @@ const InquiryManager: React.FC = () => {
                 {inquiry.status === 'PENDING' ? (
                   <button 
                     onClick={() => handleResolve(inquiry.id)}
-                    className="flex-1 md:flex-none bg-green-500/20 text-green-400 border border-green-500/20 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-green-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                    className="flex-1 md:flex-none bg-green-100 text-green-700 border border-green-200 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all flex items-center justify-center gap-2"
                   >
                     <CheckCircle size={14} /> Resolve
                   </button>
                 ) : (
-                  <div className="flex-1 md:flex-none bg-white/5 text-white/40 border border-white/5 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2">
+                  <div className="flex-1 md:flex-none bg-stone-100 text-stone-500 border border-stone-200 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2">
                     <CheckCircle size={14} /> Resolved
                   </div>
                 )}
                 <a 
                   href={`mailto:${inquiry.email}`}
-                  className="flex-1 md:flex-none bg-agri-secondary/10 text-agri-secondary border border-agri-secondary/20 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-agri-secondary hover:text-agri-primary transition-all flex items-center justify-center gap-2"
+                  className="flex-1 md:flex-none bg-white text-agri-secondary border border-agri-secondary/30 px-6 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-agri-secondary hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Reply size={14} /> Reply
                 </a>
@@ -75,7 +75,7 @@ const InquiryManager: React.FC = () => {
             </div>
           </div>
         ))}
-        {inquiries.length === 0 && <div className="text-center py-20 text-white/10 italic">No inquiries received yet.</div>}
+        {inquiries.length === 0 && <div className="text-center py-20 text-stone-400 italic">No inquiries received yet.</div>}
       </div>
     </div>
   );

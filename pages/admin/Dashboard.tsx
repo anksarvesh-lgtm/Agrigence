@@ -18,7 +18,6 @@ const Dashboard: React.FC = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
 
   useEffect(() => {
-    // Real-time subscriptions
     const unsubUsers = mockBackend.subscribeToUsers(setUsers);
     const unsubArticles = mockBackend.subscribeToArticles(setArticles);
     const unsubProducts = mockBackend.subscribeToProducts(setProducts);
@@ -26,7 +25,6 @@ const Dashboard: React.FC = () => {
     const unsubNews = mockBackend.subscribeToNews(setNews);
     const unsubMags = mockBackend.subscribeToMagazines(setMagazines);
     
-    // One-off or local refresh for settings/coupons (could be real-time too if needed)
     mockBackend.getCoupons().then(setCoupons);
     setSettings(mockBackend.getSettings());
 
@@ -53,9 +51,9 @@ const Dashboard: React.FC = () => {
 
   const stats = [
     { label: 'Total Revenue', value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-agri-secondary', bg: 'bg-agri-secondary/10' },
-    { label: 'Platform Users', value: users.length, icon: Users, color: 'text-blue-400', bg: 'bg-blue-400/10' },
-    { label: 'Active Subscriptions', value: activeSubscriptions, icon: CreditCard, color: 'text-purple-400', bg: 'bg-purple-400/10' },
-    { label: 'Pending QR Payments', value: payments.filter(p => p.status === 'PENDING').length, icon: ShieldCheck, color: 'text-yellow-400', bg: 'bg-yellow-400/10' },
+    { label: 'Platform Users', value: users.length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Active Subscriptions', value: activeSubscriptions, icon: CreditCard, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Pending QR Payments', value: payments.filter(p => p.status === 'PENDING').length, icon: ShieldCheck, color: 'text-amber-600', bg: 'bg-amber-50' },
   ];
 
   const contentStats = [
@@ -70,12 +68,12 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-10">
       {/* Welcome Banner */}
-      <div className="bg-agri-secondary/10 border border-agri-secondary/20 rounded-[3rem] p-12 relative overflow-hidden group">
-         <div className="absolute -right-20 -top-20 w-80 h-80 bg-agri-secondary/10 rounded-full blur-3xl group-hover:bg-agri-secondary/20 transition-all"></div>
+      <div className="bg-white border border-gray-200 rounded-[2rem] p-10 relative overflow-hidden group shadow-sm">
+         <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-agri-secondary/5 to-transparent"></div>
          <div className="relative z-10">
-            <h1 className="text-4xl font-serif font-bold text-white mb-3">Administrator Command Center</h1>
-            <p className="text-white/40 text-sm font-bold uppercase tracking-[0.3em] flex items-center gap-3">
-              <Activity size={16} className="text-agri-secondary animate-pulse" /> System v2.0 Live & Healthy
+            <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">Administrator Command Center</h1>
+            <p className="text-gray-500 text-sm font-bold uppercase tracking-[0.3em] flex items-center gap-3">
+              <Activity size={16} className="text-green-500 animate-pulse" /> System v2.0 Live & Healthy
             </p>
          </div>
       </div>
@@ -83,15 +81,15 @@ const Dashboard: React.FC = () => {
       {/* Grid Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         {stats.map((stat, idx) => (
-          <div key={idx} className="bg-white/5 border border-white/5 p-8 rounded-3xl hover:bg-white/10 transition-all group shadow-2xl">
+          <div key={idx} className="bg-white border border-gray-200 p-8 rounded-2xl hover:shadow-md transition-all group shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <div className={`p-4 rounded-2xl ${stat.bg} ${stat.color}`}>
                 <stat.icon size={28} />
               </div>
-              <TrendingUp size={20} className="text-white/10 group-hover:text-agri-secondary transition-colors" />
+              <TrendingUp size={20} className="text-gray-300 group-hover:text-agri-secondary transition-colors" />
             </div>
-            <h3 className="text-4xl font-bold text-white mb-1 tracking-tighter">{stat.value}</h3>
-            <p className="text-[10px] uppercase font-black tracking-widest text-white/30">{stat.label}</p>
+            <h3 className="text-4xl font-bold text-gray-900 mb-1 tracking-tighter">{stat.value}</h3>
+            <p className="text-[10px] uppercase font-black tracking-widest text-gray-500">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -99,59 +97,59 @@ const Dashboard: React.FC = () => {
       {/* Content Stats Bar */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {contentStats.map((cs, i) => (
-          <div key={i} className="bg-black/20 border border-white/5 p-4 rounded-2xl flex flex-col items-center text-center">
-            <cs.icon size={20} className="text-agri-secondary mb-2" />
-            <span className="text-xl font-bold text-white">{cs.count}</span>
-            <span className="text-[9px] uppercase font-black text-white/20 tracking-tighter">{cs.label}</span>
+          <div key={i} className="bg-white border border-gray-200 p-6 rounded-2xl flex flex-col items-center text-center shadow-sm hover:border-agri-secondary/50 transition-all">
+            <cs.icon size={20} className="text-agri-secondary mb-3" />
+            <span className="text-xl font-bold text-gray-900">{cs.count}</span>
+            <span className="text-[9px] uppercase font-black text-gray-400 tracking-wide mt-1">{cs.label}</span>
           </div>
         ))}
       </div>
 
       {/* Status Hub */}
       <div className="grid lg:grid-cols-3 gap-8">
-         <div className="lg:col-span-2 bg-white/5 border border-white/5 rounded-[2.5rem] p-10">
-            <h3 className="text-xs font-black uppercase tracking-[0.4em] text-agri-secondary mb-8 flex items-center gap-3">
-               <Terminal size={18} /> Activity Log & Status
+         <div className="lg:col-span-2 bg-white border border-gray-200 rounded-[2rem] p-10 shadow-sm">
+            <h3 className="text-xs font-black uppercase tracking-[0.4em] text-gray-400 mb-8 flex items-center gap-3">
+               <Terminal size={18} className="text-agri-secondary"/> Activity Log & Status
             </h3>
-            <div className="space-y-6">
-               <div className="flex items-center justify-between p-6 bg-black/20 rounded-2xl border border-white/5">
+            <div className="space-y-4">
+               <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-200">
                   <div className="flex items-center gap-4">
-                     <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl"><Hash size={20}/></div>
+                     <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><Hash size={20}/></div>
                      <div>
-                        <p className="text-xs font-bold text-white uppercase tracking-widest">ISSN Allocation</p>
-                        <p className="text-[10px] text-white/30 font-mono mt-0.5">{settings.issn || 'NO_DATA_LINKED'}</p>
+                        <p className="text-xs font-bold text-gray-900 uppercase tracking-widest">ISSN Allocation</p>
+                        <p className="text-[10px] text-gray-500 font-mono mt-0.5">{settings.issn || 'NO_DATA_LINKED'}</p>
                      </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${settings.issn ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                  <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${settings.issn ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                     {settings.issn ? 'LINKED' : 'REQUIRED'}
                   </span>
                </div>
 
-               <div className="flex items-center justify-between p-6 bg-black/20 rounded-2xl border border-white/5">
+               <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl border border-gray-200">
                   <div className="flex items-center gap-4">
-                     <div className="p-3 bg-pink-500/10 text-pink-400 rounded-xl"><Megaphone size={20}/></div>
+                     <div className="p-3 bg-pink-50 text-pink-600 rounded-xl"><Megaphone size={20}/></div>
                      <div>
-                        <p className="text-xs font-bold text-white uppercase tracking-widest">Global Popup Status</p>
-                        <p className="text-[10px] text-white/30 font-mono mt-0.5">{settings.popup.isEnabled ? 'SESSION_BROADCAST_ACTIVE' : 'IDLE'}</p>
+                        <p className="text-xs font-bold text-gray-900 uppercase tracking-widest">Global Popup Status</p>
+                        <p className="text-[10px] text-gray-500 font-mono mt-0.5">{settings.popup.isEnabled ? 'SESSION_BROADCAST_ACTIVE' : 'IDLE'}</p>
                      </div>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${settings.popup.isEnabled ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                  <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${settings.popup.isEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
                     {settings.popup.isEnabled ? 'ON' : 'OFF'}
                   </span>
                </div>
             </div>
          </div>
 
-         <div className="bg-agri-secondary/10 border border-agri-secondary/20 rounded-[2.5rem] p-10 flex flex-col justify-between">
+         <div className="bg-white border border-gray-200 rounded-[2rem] p-10 flex flex-col justify-between shadow-sm">
             <div>
                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-agri-secondary mb-6">Action Hub</h3>
-               <p className="text-white/60 text-sm leading-relaxed mb-10">All platform controls are live. You can manage <b>{articles.length + news.length}</b> content entries and <b>{products.length}</b> store products.</p>
+               <p className="text-gray-600 text-sm leading-relaxed mb-10">All platform controls are live. You can manage <b>{articles.length + news.length}</b> content entries and <b>{products.length}</b> store products.</p>
             </div>
             <div className="grid gap-3">
-               <button className="w-full bg-agri-secondary text-agri-primary py-4 rounded-2xl font-bold shadow-xl hover:scale-105 transition-all text-xs uppercase tracking-widest">
+               <button className="w-full bg-agri-secondary text-white py-4 rounded-xl font-bold shadow-lg shadow-agri-secondary/20 hover:scale-105 transition-all text-xs uppercase tracking-widest">
                   Quick Publication
                </button>
-               <button className="w-full bg-white/5 border border-white/10 py-4 rounded-2xl font-bold hover:bg-white/10 transition-all text-xs uppercase tracking-widest text-white/60">
+               <button className="w-full bg-white border border-gray-300 py-4 rounded-xl font-bold hover:bg-gray-50 transition-all text-xs uppercase tracking-widest text-gray-600">
                   Site Backup
                </button>
             </div>

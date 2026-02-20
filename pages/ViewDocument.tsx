@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
 import { useAuth } from '../App';
-import { Loader2, AlertCircle, FileText, ArrowLeft, Shield } from 'lucide-react';
+import { Loader2, AlertCircle, FileText, ArrowLeft, Shield, ShieldAlert, ShieldCheck, AlertTriangle, Activity } from 'lucide-react';
 import { Article } from '../types';
 
 const ViewDocument: React.FC = () => {
@@ -13,7 +13,6 @@ const ViewDocument: React.FC = () => {
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [meta, setMeta] = useState<Article | null>(null);
 
   useEffect(() => {
@@ -47,8 +46,6 @@ const ViewDocument: React.FC = () => {
                 isPublicContent = true;
             } else {
                 // Verify if author is an Admin
-                // We use getPublicAdmins which queries specifically for admins to satisfy security rules
-                // instead of fetching all users which would fail for public/regular users
                 const adminUsers = await mockBackend.getPublicAdmins();
                 const authorProfile = adminUsers.find(u => u.id === article.authorId);
                 
@@ -59,45 +56,22 @@ const ViewDocument: React.FC = () => {
         }
 
         // Strict Access Gate
-        // - Allow if Viewer is Admin
-        // - Allow if Viewer is Owner
-        // - Allow if Content is explicitly Public (Admin Uploaded & Published)
         if (!isViewerAdmin && !isViewerOwner && !isPublicContent) {
           setError("Access Denied: Private Submission.");
           setLoading(false);
           return;
         }
-
-        // 3. Secure Fetch (Stream)
-        // We fetch the file using the stored URL (which contains the access token)
-        // converting it to a Blob hides the direct storage URL from the browser address bar
-        if (!article.fileUrl || article.fileUrl === '#') {
-            setError("Document file is missing or corrupted.");
-            setLoading(false);
-            return;
-        }
-
-        const response = await fetch(article.fileUrl);
-        if (!response.ok) throw new Error("Failed to stream document content.");
         
-        const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        setBlobUrl(objectUrl);
         setLoading(false);
 
       } catch (err) {
         console.error(err);
-        setError("Secure Gateway Error: Unable to load document stream.");
+        setError("Secure Gateway Error: Unable to verify document protocols.");
         setLoading(false);
       }
     };
 
     fetchDocument();
-
-    // Cleanup blob URL on unmount
-    return () => {
-        if (blobUrl) URL.revokeObjectURL(blobUrl);
-    };
   }, [id, user]);
 
   if (loading) {
@@ -127,6 +101,9 @@ const ViewDocument: React.FC = () => {
     );
   }
 
+  const hasFile = meta?.fileUrl && meta.fileUrl !== '#';
+  const hasText = !!meta?.content;
+
   return (
     <div className="h-screen flex flex-col bg-stone-900 overflow-hidden">
        {/* Viewer Toolbar */}
@@ -137,31 +114,109 @@ const ViewDocument: React.FC = () => {
              </button>
              <div>
                 <h1 className="font-bold text-sm truncate max-w-[200px] md:max-w-md">{meta?.title}</h1>
-                <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">
+                <p className="text--[10px] text-white/40 uppercase tracking-widest font-mono">
                    {meta?.type} • SECURE_VIEW
                 </p>
              </div>
           </div>
-          <div className="flex items-center gap-3">
-             <a 
-               href={blobUrl!} 
-               download={`${meta?.title || 'document'}.pdf`}
-               className="bg-agri-secondary text-agri-primary px-4 py-2 rounded-lg text-xs font-bold hover:bg-white transition-colors"
-             >
-                Download Copy
-             </a>
+          
+          <div className="flex items-center gap-6">
+             {/* Plagiarism Badge in Viewer Header */}
+             {meta?.plagiarismReport && (
+                <div className="hidden md:flex items-center gap-4 bg-white/5 px-4 py-2 rounded-full border border-white/10">
+                    <div className="flex items-center gap-2">
+                        <ShieldAlert size={14} className={meta.plagiarismReport.plagiarism_score > 20 ? "text-red-400" : "text-green-400"} />
+                        <span className="text-[10px] font-bold uppercase text-white/60">Plagiarism Risk: <span className="text-white">{meta.plagiarismReport.plagiarism_score}%</span></span>
+                    </div>
+                    <div className="w-px h-3 bg-white/10"></div>
+                    <div className="flex items-center gap-2">
+                        <Activity size={14} className={meta.plagiarismReport.ai_generated_score > 40 ? "text-amber-400" : "text-blue-400"} />
+                        <span className="text-[10px] font-bold uppercase text-white/60">AI Probability: <span className="text-white">{meta.plagiarismReport.ai_generated_score}%</span></span>
+                    </div>
+                </div>
+             )}
+
+             {hasFile && (
+                 <a 
+                   href={meta?.fileUrl} 
+                   download={`${meta?.title || 'document'}.pdf`}
+                   className="bg-agri-secondary text-agri-primary px-4 py-2 rounded-lg text-xs font-bold hover:bg-white transition-colors"
+                 >
+                    Download Copy
+                 </a>
+             )}
           </div>
        </div>
 
        {/* Document Stream */}
-       <div className="flex-1 bg-stone-800 relative">
-          {blobUrl && (
-             <iframe 
-               src={blobUrl} 
-               className="w-full h-full border-none" 
-               title="Secure Document Viewer"
-             />
-          )}
+       <div className="flex-1 bg-stone-800 relative overflow-y-auto custom-scrollbar flex">
+          
+          {/* Main Content */}
+          <div className="flex-1 relative">
+            {hasFile ? (
+                <iframe 
+                src={meta?.fileUrl} 
+                className="w-full h-full border-none" 
+                title="Secure Document Viewer"
+                />
+            ) : hasText ? (
+                <div className="max-w-4xl mx-auto bg-white min-h-full p-12 md:p-20 shadow-2xl">
+                    <h1 className="text-3xl font-serif font-bold text-stone-900 mb-8">{meta?.title}</h1>
+                    
+                    {/* Detailed AI Report Block */}
+                    {meta?.plagiarismReport && (
+                        <div className={`mb-8 p-6 rounded-2xl border ${
+                            meta.plagiarismReport.risk_level === 'LOW' ? 'bg-green-50 border-green-100' : 
+                            meta.plagiarismReport.risk_level === 'MEDIUM' ? 'bg-amber-50 border-amber-100' : 'bg-red-50 border-red-100'
+                        }`}>
+                            <h4 className="text-sm font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <Shield size={16} /> Automated Integrity Report
+                            </h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                <div className="bg-white/50 p-3 rounded-lg text-center">
+                                    <span className="text-[10px] font-bold text-stone-400 uppercase">Plagiarism Score</span>
+                                    <p className="text-xl font-black mt-1">{meta.plagiarismReport.plagiarism_score}%</p>
+                                </div>
+                                <div className="bg-white/50 p-3 rounded-lg text-center">
+                                    <span className="text-[10px] font-bold text-stone-400 uppercase">AI Probability</span>
+                                    <p className="text-xl font-black mt-1">{meta.plagiarismReport.ai_generated_score}%</p>
+                                </div>
+                                <div className="bg-white/50 p-3 rounded-lg text-center">
+                                    <span className="text-[10px] font-bold text-stone-400 uppercase">Risk Level</span>
+                                    <p className="text-xl font-black mt-1">{meta.plagiarismReport.risk_level}</p>
+                                </div>
+                                <div className="bg-white/50 p-3 rounded-lg text-center">
+                                    <span className="text-[10px] font-bold text-stone-400 uppercase">Analyzed Date</span>
+                                    <p className="text-xs font-bold mt-2">{new Date(meta.plagiarismReport.generatedAt).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                            {meta.plagiarismReport.flagged_sections.length > 0 && (
+                                <div className="bg-white/50 p-4 rounded-xl">
+                                    <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Flagged Segments</p>
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        {meta.plagiarismReport.flagged_sections.map((sec, i) => (
+                                            <li key={i} className="text-xs text-stone-600 italic">"{sec.substring(0, 100)}..."</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div 
+                    className="prose prose-stone prose-lg max-w-none font-serif text-stone-700 leading-relaxed whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{ __html: meta?.content || '' }}
+                    />
+                </div>
+            ) : (
+                <div className="flex items-center justify-center h-full text-white/20">
+                    <div className="text-center">
+                        <FileText size={48} className="mx-auto mb-4"/>
+                        <p>No content stream available.</p>
+                    </div>
+                </div>
+            )}
+          </div>
        </div>
     </div>
   );

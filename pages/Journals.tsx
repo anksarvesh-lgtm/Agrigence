@@ -108,7 +108,7 @@ const Journals: React.FC = () => {
         <section>
           <h2 className="text-2xl font-bold text-[#0F392B] mb-8 flex items-center gap-3">
              <span className="w-8 h-1 bg-agri-gold rounded-full"></span>
-             Recent Articles
+             Recent Blogs
           </h2>
           <div className="space-y-4">
             {articles.map((article, idx) => (

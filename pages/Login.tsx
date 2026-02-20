@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
-import { CheckCircle2, User, Lock, Mail, Users, LogIn } from 'lucide-react';
+import { CheckCircle2, User, Lock, Mail, Users, LogIn, Globe, Smartphone, Camera, Loader2 } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,8 +12,14 @@ const Login: React.FC = () => {
   const [name, setName] = useState('');
   const [profession, setProfession] = useState('Student');
   const [customProfession, setCustomProfession] = useState('');
+  // New Fields
+  const [country, setCountry] = useState('IN');
+  const [mobile, setMobile] = useState('');
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -27,8 +33,53 @@ const Login: React.FC = () => {
     "Other"
   ];
 
+  // Common Country List for Dropdown
+  const countries = [
+    { code: 'IN', name: 'India', dial: '+91' },
+    { code: 'US', name: 'United States', dial: '+1' },
+    { code: 'GB', name: 'United Kingdom', dial: '+44' },
+    { code: 'AE', name: 'UAE', dial: '+971' },
+    { code: 'CA', name: 'Canada', dial: '+1' },
+    { code: 'AU', name: 'Australia', dial: '+61' },
+    { code: 'EU', name: 'Europe (Generic)', dial: '' }
+  ];
+
   const validatePassword = (pass: string) => {
     return pass.length >= 6;
+  };
+
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+          // Increased limit to 5MB, backend handles compression
+          if (file.size > 5 * 1024 * 1024) {
+              setError("Image too large. Max 5MB allowed.");
+              return;
+          }
+          if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+              setError("Invalid format. JPG, PNG, WEBP only.");
+              return;
+          }
+          setError('');
+          setProfilePhoto(file);
+      }
+  };
+
+  const handleRoleRedirect = (role: string) => {
+    switch (role) {
+        case 'SUPER_ADMIN':
+        case 'ADMIN':
+            navigate('/admin/dashboard');
+            break;
+        case 'EDITORIAL_MEMBER':
+            navigate('/reviewer');
+            break;
+        case 'USER':
+        case 'EDITOR': // Legacy role support
+        default:
+            navigate('/dashboard');
+            break;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,7 +91,7 @@ const Login: React.FC = () => {
       if (isLogin) {
         const user = await mockBackend.login(email, password);
         if (user) {
-          navigate('/dashboard');
+          handleRoleRedirect(user.role);
         }
       } else {
         // Register
@@ -51,20 +102,38 @@ const Login: React.FC = () => {
         }
 
         const finalProfession = profession === 'Other' ? customProfession : profession;
+        const selectedCountry = countries.find(c => c.code === country);
+        const fullMobile = selectedCountry ? `${selectedCountry.dial} ${mobile}` : mobile;
+
+        let photoUrl = '';
+        
+        if (profilePhoto) {
+            setIsPhotoUploading(true);
+            try {
+                photoUrl = await mockBackend.uploadFile(profilePhoto, 'users/profiles/initial'); 
+            } catch (err) {
+                console.error("Photo Upload Failed", err);
+            } finally {
+                setIsPhotoUploading(false);
+            }
+        }
 
         // Register the user
-        await mockBackend.register({
+        const newUser = await mockBackend.register({
           name,
           email,
           occupation: finalProfession,
           role: 'USER',
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=3D2B1F&color=fff`,
+          profilePhotoUrl: photoUrl,
+          country: country,
+          mobileNumber: fullMobile,
           // @ts-ignore
           password: password 
         });
         
         setIsLoading(false);
-        navigate('/dashboard');
+        handleRoleRedirect(newUser.role);
         return;
       }
     } catch (e: any) {
@@ -129,9 +198,9 @@ const Login: React.FC = () => {
         </div>
 
         {/* Right Side: Form */}
-        <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+        <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center max-h-screen overflow-y-auto custom-scrollbar">
           <div className="max-w-md mx-auto w-full">
-            <div className="text-center mb-10">
+            <div className="text-center mb-8">
               <div className="inline-block p-3 rounded-2xl bg-agri-primary/5 text-agri-primary mb-4 md:hidden">
                  <User size={32} />
               </div>
@@ -163,6 +232,37 @@ const Login: React.FC = () => {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Country</label>
+                        <div className="relative">
+                           <Globe size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" />
+                           <select 
+                            className="w-full pl-12 pr-2 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-xs font-bold appearance-none"
+                            value={country}
+                            onChange={e => setCountry(e.target.value)}
+                            required
+                          >
+                            {countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Mobile No.</label>
+                        <div className="relative">
+                           <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" />
+                           <input 
+                            type="tel" 
+                            placeholder="9876543210" 
+                            className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm font-medium"
+                            required
+                            value={mobile}
+                            onChange={e => setMobile(e.target.value.replace(/\D/g, ''))} // Digits only
+                          />
+                        </div>
+                      </div>
+                  </div>
+
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Profession</label>
                     <div className="relative">
@@ -186,6 +286,16 @@ const Login: React.FC = () => {
                         onChange={e => setCustomProfession(e.target.value)}
                       />
                     )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Profile Photo (Optional)</label>
+                    <div className={`relative border-2 border-dashed rounded-2xl p-3 text-center cursor-pointer transition-all ${profilePhoto ? 'border-agri-secondary bg-agri-secondary/5' : 'border-stone-200 hover:border-agri-secondary/30'}`}>
+                        <input type="file" accept="image/*" onChange={handlePhotoSelect} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                        <div className="flex items-center justify-center gap-3 text-stone-400">
+                            {profilePhoto ? <span className="text-agri-secondary font-bold text-xs truncate">{profilePhoto.name}</span> : <><Camera size={18} /> <span className="text-xs font-bold">Upload Portrait (Max 5MB)</span></>}
+                        </div>
+                    </div>
                   </div>
                 </>
               )}
@@ -223,9 +333,11 @@ const Login: React.FC = () => {
                 )}
               </div>
               
-              <button type="submit" disabled={isLoading} className="w-full bg-agri-primary text-white font-bold py-4 rounded-2xl hover:bg-agri-secondary transition-all shadow-xl shadow-agri-primary/10 mt-6 flex items-center justify-center gap-2 disabled:opacity-70">
-                {isLoading ? 'Processing...' : (isLogin ? 'Access Account' : 'Initialize Profile')}
-                {!isLogin && !isLoading && <CheckCircle2 size={18} />}
+              <button type="submit" disabled={isLoading || isPhotoUploading} className="w-full bg-agri-primary text-white font-bold py-4 rounded-2xl hover:bg-agri-secondary transition-all shadow-xl shadow-agri-primary/10 mt-6 flex items-center justify-center gap-2 disabled:opacity-70">
+                {isLoading || isPhotoUploading ? (
+                    <>Processing <Loader2 size={18} className="animate-spin"/></>
+                ) : (isLogin ? 'Access Account' : 'Initialize Profile')}
+                {!isLogin && !isLoading && !isPhotoUploading && <CheckCircle2 size={18} />}
               </button>
             </form>
 
