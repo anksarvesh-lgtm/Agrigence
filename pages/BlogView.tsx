@@ -5,6 +5,8 @@ import { mockBackend } from '../services/mockBackend';
 import { Article } from '../types';
 import { Loader2, ArrowLeft, Calendar, Clock, Share2, FileText } from 'lucide-react';
 
+import BookViewer from '../components/BookViewer';
+
 const BlogView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -81,12 +83,7 @@ const BlogView: React.FC = () => {
            - 'prose' handles the HTML tags (b, i, h2, ul)
            - Jodit Editor handles the rest
         */}
-        <div 
-          className="prose prose-stone prose-lg max-w-none font-serif text-stone-700 leading-relaxed"
-          style={{ wordWrap: 'break-word' }} 
-          dangerouslySetInnerHTML={{ __html: article.content || (article.fileUrl ? '<p>This blog post was submitted as a document. Please download it below to read the full content.</p>' : '<p>No content available.</p>') }}
-        >
-        </div>
+        <BookViewer content={article.content || (article.fileUrl ? '<p>This blog post was submitted as a document. Please download it below to read the full content.</p>' : '<p>No content available.</p>')} />
 
         {article.fileUrl && (
           <div className="mt-12 p-8 bg-stone-50 rounded-[2rem] border border-stone-200 flex flex-col md:flex-row items-center justify-between gap-6">

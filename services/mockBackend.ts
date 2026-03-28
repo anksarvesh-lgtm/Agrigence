@@ -1,5 +1,5 @@
 
-import { Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, ReviewStatus, Tool, ToolCategory, ToolSection, Review, ActivityLog, Recommendation, UserFieldData, WebsiteVisitor, AgriPost, AgriComment, AgriConnection, AgriConversation, AgriMessage, AgriTopic, AgriNotification, AgriFeedStats, ToolHistory, Keyword, KeywordCluster, KeywordPerformance, TrendingKeyword, CookieSettings, CookiePreferences, CookieCategory, CookieScript } from '../types';
+import { Video, VideoSource, Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, ReviewStatus, Tool, ToolCategory, ToolSection, Review, ActivityLog, Recommendation, UserFieldData, WebsiteVisitor, AgriPost, AgriComment, AgriConnection, AgriConversation, AgriMessage, AgriTopic, AgriNotification, AgriFeedStats, ToolHistory, Keyword, KeywordCluster, KeywordPerformance, TrendingKeyword, CookieSettings, CookiePreferences, CookieCategory, CookieScript } from '../types';
 import { db, auth, storage } from '../src/firebase';
 import { 
   createUserWithEmailAndPassword, 
@@ -199,7 +199,7 @@ class FirebaseBackendService {
     
     // Check seed data on load if admin
     onAuthStateChanged(auth, (user) => {
-        if (user && (user.email === 'agrigence@gmail.com' || user.email === 'admin@agrigence.com')) {
+        if (user && (user.email === 'agrigence@gmail.com' || user.email === 'admin@agrigence.com' || user.email === 'anksarvesh@gmail.com')) {
             this.checkAndSeedData();
         }
     });
@@ -275,7 +275,50 @@ class FirebaseBackendService {
   }
 
   async checkAndSeedData() {
+    console.log("Checking and seeding data for admin:", auth.currentUser?.email);
     try {
+        const settings = await getDoc(doc(this.db, 'site_identity', 'global'));
+        if (!settings.exists()) {
+            console.log("Seeding site settings...");
+            await setDoc(doc(this.db, 'site_identity', 'global'), DEFAULT_SETTINGS);
+        }
+
+        const articles = await this.getArticles();
+        if (articles.length === 0) {
+            console.log("Seeding articles...");
+            const defaultArticles: Article[] = [
+                {
+                    id: '1',
+                    title: 'The Future of Sustainable Agriculture',
+                    excerpt: 'Exploring new methods to ensure food security while protecting our planet.',
+                    content: '<p>Sustainable agriculture is more than just a buzzword...</p>',
+                    authorId: 'admin',
+                    authorName: 'Agrigence Team',
+                    category: 'Sustainability',
+                    submissionDate: new Date().toISOString(),
+                    status: 'PUBLISHED',
+                    type: 'BLOG',
+                    featuredImage: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=800'
+                },
+                {
+                    id: '2',
+                    title: 'AI in Precision Farming',
+                    excerpt: 'How artificial intelligence is revolutionizing the way we farm.',
+                    content: '<p>Precision farming uses AI to optimize crop yields...</p>',
+                    authorId: 'admin',
+                    authorName: 'Agrigence Team',
+                    category: 'Technology',
+                    submissionDate: new Date().toISOString(),
+                    status: 'PUBLISHED',
+                    type: 'BLOG',
+                    featuredImage: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800'
+                }
+            ];
+            for (const a of defaultArticles) {
+                await setDoc(doc(this.db, 'articles', a.id), a);
+            }
+        }
+
         const plans = await this.getPlans();
         if (plans.length === 0) {
             const defaultPlans: SubscriptionPlan[] = [
@@ -358,30 +401,88 @@ class FirebaseBackendService {
             await addDoc(collection(this.db, 'keyword_performance'), { ...perf, keywordId: `kw_${Math.random().toString(36).substring(2, 9)}` });
           }
         }
+
+        const videos = await this.getVideos();
+        if (videos.length === 0) {
+          const defaultVideos: Video[] = [
+            {
+              id: '1',
+              youtubeId: 'dQw4w9WgXcQ',
+              title: 'Sustainable Farming Techniques for 2026',
+              description: 'Learn about the latest in sustainable agriculture and how to implement it on your farm.',
+              thumbnail: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=800',
+              channelTitle: 'AgriTech Official',
+              publishedAt: new Date().toISOString(),
+              duration: '12:45',
+              viewCount: '1.2K',
+              category: 'Farming',
+              status: 'PUBLISHED'
+            },
+            {
+              id: '2',
+              youtubeId: 'dQw4w9WgXcQ',
+              title: 'The Future of AgTech: AI and Robotics',
+              description: 'Exploring how artificial intelligence and robotics are transforming the agricultural landscape.',
+              thumbnail: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800',
+              channelTitle: 'Future Farming',
+              publishedAt: new Date().toISOString(),
+              duration: '15:20',
+              viewCount: '3.5K',
+              category: 'Technology',
+              status: 'PUBLISHED'
+            }
+          ];
+          for (const v of defaultVideos) {
+            await setDoc(doc(this.db, 'videos', v.id), v);
+          }
+        }
+
+        const sources = await this.getVideoSources();
+        if (sources.length === 0) {
+          const defaultSources: VideoSource[] = [
+            {
+              id: '1',
+              type: 'CHANNEL',
+              url: 'UC_x5XG1OV2P6uZZ5FSM9Ttw',
+              name: 'Agrigence TV',
+              isEnabled: true,
+              autoSync: true,
+              lastSync: new Date().toISOString()
+            }
+          ];
+          for (const s of defaultSources) {
+            await setDoc(doc(this.db, 'video_sources', s.id), s);
+          }
+        }
     } catch (e) {
         console.error("Seeding failed (likely offline):", e instanceof Error ? e.message : e);
     }
   }
 
   private async getCollectionData<T>(collectionName: string, orderByField?: string, silent: boolean = false): Promise<T[]> {
+    console.log(`Fetching collection: ${collectionName}`);
     try {
         const colRef = collection(this.db, collectionName);
         const q = orderByField ? query(colRef, orderBy(orderByField, 'desc')) : query(colRef);
         const snapshot = await getDocs(q);
+        console.log(`Fetched ${snapshot.docs.length} documents from ${collectionName}`);
         // Corrected mapping: Spread data first, then overwrite id with doc.id to ensure we use the Document ID
         return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as unknown as T[];
     } catch (e) {
+        console.error(`Error fetching collection ${collectionName}:`, e);
         if (!silent) {
-            console.error(`Error fetching collection ${collectionName}:`, e instanceof Error ? e.message : e);
+            // ...
         }
         return [];
     }
   }
 
   private subscribeToCollection<T>(collectionName: string, cb: (data: T[]) => void, orderByField?: string): () => void {
+    console.log(`Subscribing to collection: ${collectionName}`);
     const colRef = collection(this.db, collectionName);
     const q = orderByField ? query(colRef, orderBy(orderByField, 'desc')) : query(colRef);
     return onSnapshot(q, (snapshot) => {
+      console.log(`Received ${snapshot.docs.length} documents from ${collectionName} snapshot`);
       // Corrected mapping: Spread data first, then overwrite id with doc.id
       const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as unknown as T[];
       cb(data);
@@ -591,6 +692,18 @@ class FirebaseBackendService {
       userType: data.userType || 'INDIVIDUAL'
     });
   }
+
+  async getVideos() { return this.getCollectionData<Video>('videos', 'publishedAt'); }
+  subscribeToVideos(cb: (v: Video[]) => void) { return this.subscribeToCollection('videos', cb, 'publishedAt'); }
+  async addVideo(video: Partial<Video>) { await addDoc(collection(this.db, 'videos'), { ...video, publishedAt: video.publishedAt || new Date().toISOString() }); }
+  async updateVideo(id: string, data: Partial<Video>) { await updateDoc(doc(this.db, 'videos', id), data); }
+  async deleteVideo(id: string) { await deleteDoc(doc(this.db, 'videos', id)); }
+
+  async getVideoSources() { return this.getCollectionData<VideoSource>('video_sources', 'name'); }
+  subscribeToVideoSources(cb: (s: VideoSource[]) => void) { return this.subscribeToCollection('video_sources', cb, 'name'); }
+  async addVideoSource(source: Partial<VideoSource>) { await addDoc(collection(this.db, 'video_sources'), { ...source, isEnabled: true, autoSync: true }); }
+  async updateVideoSource(id: string, data: Partial<VideoSource>) { await updateDoc(doc(this.db, 'video_sources', id), data); }
+  async deleteVideoSource(id: string) { await deleteDoc(doc(this.db, 'video_sources', id)); }
 
   async deleteUser(id: string) { await deleteDoc(doc(this.db, 'users', id)); }
   

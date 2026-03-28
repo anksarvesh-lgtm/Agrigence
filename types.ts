@@ -465,6 +465,8 @@ export interface NewsItem {
   relevantLink?: string;
   isBreaking?: boolean;
   publishDate?: string;
+  tags?: string[];
+  highlights?: string[];
 }
 
 export interface EditorialMember {

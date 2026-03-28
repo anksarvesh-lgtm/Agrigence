@@ -149,6 +149,16 @@ const AdminNewsManagement: React.FC = () => {
                  </div>
 
                  <div>
+                    <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Tags (Comma separated)</label>
+                    <input className="w-full bg-white border border-stone-300 rounded-xl p-4 text-black outline-none focus:border-agri-secondary focus:ring-1 focus:ring-agri-secondary text-sm" placeholder="Agriculture, Research, Technology" value={editingNews.tags?.join(', ') || ''} onChange={e => setEditingNews({...editingNews, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)})} />
+                 </div>
+
+                 <div>
+                    <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Highlights (One per line)</label>
+                    <textarea className="w-full bg-white border border-stone-300 rounded-xl p-4 text-black outline-none focus:border-agri-secondary h-24 text-sm" placeholder="Key point 1&#10;Key point 2" value={editingNews.highlights?.join('\n') || ''} onChange={e => setEditingNews({...editingNews, highlights: e.target.value.split('\n').map(h => h.trim()).filter(Boolean)})}></textarea>
+                 </div>
+
+                 <div>
                     <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Full Detailed Content</label>
                     <textarea className="w-full bg-white border border-stone-300 rounded-xl p-4 text-black outline-none focus:border-agri-secondary h-40 text-xs" placeholder="Full details of the announcement..." value={editingNews.content || ''} onChange={e => setEditingNews({...editingNews, content: e.target.value})}></textarea>
                  </div>

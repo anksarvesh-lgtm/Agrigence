@@ -23,6 +23,7 @@
     "lucide-react": "^0.344.0",
     "ml-matrix": "^6.12.1",
     "ml-pca": "^4.1.1",
+    "motion": "^12.38.0",
     "razorpay": "^2.9.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

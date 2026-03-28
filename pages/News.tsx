@@ -69,7 +69,25 @@ const News: React.FC = () => {
                 </div>
                 
                 <h2 className="text-2xl font-serif font-bold text-[#0F392B] mb-4 group-hover:text-agri-secondary transition-colors leading-tight">{item.title}</h2>
-                <p className="text-stone-600 leading-relaxed mb-6 line-clamp-3 flex-1">{item.description}</p>
+                <p className="text-stone-600 leading-relaxed mb-4 line-clamp-3 flex-1">{item.description}</p>
+                
+                {item.highlights && item.highlights.length > 0 && (
+                  <ul className="list-disc list-inside text-sm text-stone-500 mb-6 ml-2 space-y-1">
+                    {item.highlights.slice(0, 3).map((highlight, hIdx) => (
+                      <li key={hIdx} className="line-clamp-1">{highlight}</li>
+                    ))}
+                  </ul>
+                )}
+
+                {item.tags && item.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {item.tags.map((tag, tIdx) => (
+                      <span key={tIdx} className="bg-stone-100 text-stone-500 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 
                 <div className="flex justify-between items-center pt-6 border-t border-stone-100 mt-auto">
                    {item.relevantLink ? (

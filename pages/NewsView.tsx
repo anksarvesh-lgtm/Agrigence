@@ -87,9 +87,30 @@ const NewsView: React.FC = () => {
             </div>
         )}
 
+        {newsItem.highlights && newsItem.highlights.length > 0 && (
+          <div className="bg-stone-50 border border-stone-200 rounded-2xl p-8 mb-12">
+            <h3 className="text-sm font-bold text-stone-500 uppercase tracking-widest mb-4">Key Highlights</h3>
+            <ul className="list-disc list-inside space-y-2 text-stone-700 font-serif text-lg">
+              {newsItem.highlights.map((highlight, idx) => (
+                <li key={idx} className="leading-relaxed">{highlight}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div className="prose prose-stone prose-lg max-w-none mb-12">
            {formatContent(newsItem.content || "Full details are available in the attached resources or contact our press office.")}
         </div>
+
+        {newsItem.tags && newsItem.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-12">
+            {newsItem.tags.map((tag, idx) => (
+              <span key={idx} className="bg-stone-100 text-stone-600 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest border border-stone-200">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {newsItem.relevantLink && (
             <div className="bg-[#0F392B]/5 border border-[#0F392B]/10 rounded-2xl p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-6">

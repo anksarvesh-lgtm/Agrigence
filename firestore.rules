@@ -207,6 +207,60 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // --- CONTENT REPOSITORY ---
+    match /articles/{articleId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSuperAdmin() || (
+        isAdmin() && 
+        (request.resource.data.status != 'PUBLISHED' || resource.data.status == 'PUBLISHED')
+      ) || (
+        isEditorialMember() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewAssignments', 'reviewThreads', 'status', 'review_status'])
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    match /magazines/{magId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /news/{newsId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /products/{prodId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /editorial_board/{memberId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /subscription_plans/{planId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /static_pages/{pageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /coupons/{couponId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /site_identity/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // --- USER MANAGEMENT ---
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
@@ -405,6 +459,20 @@ service cloud.firestore {
     match /keyword_performance/{perfId} {
       allow read: if true;
       allow write: if isSuperAdmin();
+    }
+
+    // --- VIDEO CONTENT ---
+    match /videos/{videoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /video_sources/{sourceId} {
+      allow read, write: if isAdmin();
+    }
+
+    // --- USER DATA ---
+    match /bookmarks/{bookmarkId} {
+      allow read, write: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid);
     }
 
     // --- DEFAULT DENY ---

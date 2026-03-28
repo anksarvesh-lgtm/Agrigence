@@ -3,21 +3,23 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../App';
 import { mockBackend } from '../../services/mockBackend';
-import { Magazine, Article } from '../../types';
-import { FileText, BookOpen, Plus, X, Upload, Save, FileCheck, Image as ImageIcon, Trash2, Globe, Star, Calendar, Bookmark, File, Loader2, Bold, Italic, Underline, Heading1, Heading2, List, Eye, Edit3, AlertTriangle, ShieldCheck, Activity } from 'lucide-react';
+import { Magazine, Article, Video, VideoSource } from '../../types';
+import { FileText, BookOpen, Plus, X, Upload, Save, FileCheck, Image as ImageIcon, Trash2, Globe, Star, Calendar, Bookmark, File, Loader2, Bold, Italic, Underline, Heading1, Heading2, List, Eye, Edit3, AlertTriangle, ShieldCheck, Activity, Youtube, Settings, RefreshCw, Play, ExternalLink } from 'lucide-react';
+import { videoService } from '../../services/videoService';
 import { useConfirm } from '../../components/ContextualConfirm';
 import JoditEditor from 'jodit-react';
 
 const ContentManagement: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState<'articles' | 'magazines' | 'blogs'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'magazines' | 'blogs' | 'videos'>('articles');
 
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   useEffect(() => {
     if (location.pathname.includes('magazines')) setActiveTab('magazines');
     else if (location.pathname.includes('blogs')) setActiveTab('blogs');
+    else if (location.pathname.includes('videos')) setActiveTab('videos');
     else setActiveTab('articles');
   }, [location.pathname]);
   
@@ -28,6 +30,7 @@ const ContentManagement: React.FC = () => {
         <div className="flex flex-wrap bg-white rounded-xl p-1 border border-admin-border shadow-sm">
             <button onClick={() => setActiveTab('articles')} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'articles' ? 'bg-agri-secondary text-white' : 'text-admin-secondary hover:bg-admin-hover'}`}>Articles</button>
             <button onClick={() => setActiveTab('blogs')} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'blogs' ? 'bg-agri-secondary text-white' : 'text-admin-secondary hover:bg-admin-hover'}`}>Blogs</button>
+            <button onClick={() => setActiveTab('videos')} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'videos' ? 'bg-agri-secondary text-white' : 'text-admin-secondary hover:bg-admin-hover'}`}>Videos</button>
             {isSuperAdmin && (
                 <button onClick={() => setActiveTab('magazines')} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'magazines' ? 'bg-agri-secondary text-white' : 'text-admin-secondary hover:bg-admin-hover'}`}>Magazines</button>
             )}
@@ -35,7 +38,13 @@ const ContentManagement: React.FC = () => {
       </div>
 
       <div className="bg-admin-card border border-admin-border rounded-3xl min-h-[60vh] p-8 shadow-admin">
-        {activeTab === 'magazines' && isSuperAdmin ? <MagazineManager /> : <ArticleManager type={activeTab} isSuperAdmin={isSuperAdmin} />}
+        {activeTab === 'magazines' && isSuperAdmin ? (
+          <MagazineManager />
+        ) : activeTab === 'videos' ? (
+          <VideoManager />
+        ) : (
+          <ArticleManager type={activeTab} isSuperAdmin={isSuperAdmin} />
+        )}
       </div>
     </div>
   );
@@ -554,6 +563,268 @@ const MagazineManager = () => {
                          </button>
                       </div>
                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const VideoManager = () => {
+    const [sources, setSources] = useState<VideoSource[]>([]);
+    const [videos, setVideos] = useState<Video[]>([]);
+    const [subTab, setSubTab] = useState<'videos' | 'sources'>('videos');
+    const [isSourceModalOpen, setIsSourceModalOpen] = useState(false);
+    const [editingSource, setEditingSource] = useState<Partial<VideoSource>>({});
+    const [isSyncing, setIsSyncing] = useState(false);
+    const { confirm } = useConfirm();
+
+    useEffect(() => {
+        const unsubSources = mockBackend.subscribeToVideoSources(setSources);
+        const unsubVideos = mockBackend.subscribeToVideos(setVideos);
+        return () => {
+            unsubSources();
+            unsubVideos();
+        };
+    }, []);
+
+    const handleSaveSource = async () => {
+        if (!editingSource.name || !editingSource.url) return alert("Name and ID/URL are required");
+        if (editingSource.id) {
+            await mockBackend.updateVideoSource(editingSource.id, editingSource);
+        } else {
+            await mockBackend.addVideoSource(editingSource);
+        }
+        setIsSourceModalOpen(false);
+        setEditingSource({});
+    };
+
+    const handleDeleteSource = async (id: string, e: React.MouseEvent) => {
+        const isConfirmed = await confirm({
+            message: "Delete this video source?",
+            type: 'danger',
+            trigger: e.currentTarget
+        });
+        if (isConfirmed) {
+            await mockBackend.deleteVideoSource(id);
+        }
+    };
+
+    const handleSyncSource = async (source: VideoSource) => {
+        setIsSyncing(true);
+        try {
+            const fetchedVideos = await videoService.fetchVideosFromSource(source);
+            // In a real app, we'd batch update Firestore. Here we'll just add them.
+            for (const v of fetchedVideos) {
+                // Check if video already exists (simple check by title for mock)
+                const exists = videos.some(existing => existing.title === v.title);
+                if (!exists) {
+                    await mockBackend.addVideo({
+                        ...v,
+                        youtubeId: v.id,
+                        status: 'PUBLISHED'
+                    });
+                }
+            }
+            await mockBackend.updateVideoSource(source.id, { lastSync: new Date().toISOString() });
+            alert(`Synced ${fetchedVideos.length} videos from ${source.name}`);
+        } catch (error) {
+            console.error('Sync failed:', error);
+            alert('Sync failed. Check console for details.');
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const handleDeleteVideo = async (id: string, e: React.MouseEvent) => {
+        const isConfirmed = await confirm({
+            message: "Delete this video?",
+            type: 'danger',
+            trigger: e.currentTarget
+        });
+        if (isConfirmed) {
+            await mockBackend.deleteVideo(id);
+        }
+    };
+
+    return (
+        <div className="space-y-8">
+            <div className="flex justify-between items-center">
+                <div className="flex bg-admin-bg p-1 rounded-xl border border-admin-border">
+                    <button 
+                        onClick={() => setSubTab('videos')} 
+                        className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${subTab === 'videos' ? 'bg-white text-agri-secondary shadow-sm' : 'text-admin-muted hover:text-admin-text'}`}
+                    >
+                        Video Library
+                    </button>
+                    <button 
+                        onClick={() => setSubTab('sources')} 
+                        className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${subTab === 'sources' ? 'bg-white text-agri-secondary shadow-sm' : 'text-admin-muted hover:text-admin-text'}`}
+                    >
+                        YouTube Sources
+                    </button>
+                </div>
+                
+                {subTab === 'sources' && (
+                    <button 
+                        onClick={() => { setEditingSource({ type: 'CHANNEL', isEnabled: true, autoSync: true }); setIsSourceModalOpen(true); }} 
+                        className="bg-agri-secondary text-white px-8 py-3 rounded-xl flex items-center gap-2 text-xs font-bold shadow-md hover:bg-agri-primary"
+                    >
+                        <Plus size={16} /> Add Source
+                    </button>
+                )}
+            </div>
+
+            {subTab === 'sources' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {sources.map(source => (
+                        <div key={source.id} className="bg-white p-6 rounded-3xl border border-admin-border hover:border-agri-secondary transition-all shadow-sm flex justify-between items-center">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center">
+                                    <Youtube size={24} />
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-admin-text">{source.name}</h4>
+                                    <p className="text-[10px] text-admin-muted uppercase font-black tracking-widest mt-1">
+                                        {source.type} • ID: {source.url}
+                                    </p>
+                                    {source.lastSync && (
+                                        <p className="text-[8px] text-admin-muted mt-1">Last Sync: {new Date(source.lastSync).toLocaleString()}</p>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => handleSyncSource(source)} 
+                                    disabled={isSyncing}
+                                    className="p-3 bg-admin-hover rounded-xl text-admin-secondary hover:text-blue-500 disabled:opacity-50"
+                                    title="Sync Videos"
+                                >
+                                    <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
+                                </button>
+                                <button 
+                                    onClick={() => { setEditingSource(source); setIsSourceModalOpen(true); }} 
+                                    className="p-3 bg-admin-hover rounded-xl text-admin-secondary hover:text-agri-primary"
+                                >
+                                    <Settings size={18} />
+                                </button>
+                                <button 
+                                    onClick={(e) => handleDeleteSource(source.id, e)} 
+                                    className="p-3 bg-admin-hover rounded-xl text-admin-secondary hover:text-red-500"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    {sources.length === 0 && (
+                        <div className="col-span-full py-20 text-center bg-admin-bg rounded-[3rem] border border-dashed border-admin-border">
+                            <Youtube size={48} className="mx-auto text-admin-muted mb-4 opacity-20" />
+                            <p className="text-admin-muted font-bold uppercase tracking-widest text-xs">No YouTube sources configured</p>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {videos.map(video => (
+                        <div key={video.id} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-admin-border hover:border-agri-secondary transition-all group shadow-sm">
+                            <div className="flex items-center gap-4">
+                                <div className="w-24 aspect-video bg-admin-bg rounded-xl overflow-hidden border border-admin-border relative">
+                                    <img src={video.thumbnail} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Play size={20} className="text-white fill-white" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 className="text-admin-text font-bold text-sm line-clamp-1">{video.title}</h4>
+                                    <div className="flex items-center gap-3 mt-1">
+                                        <span className="text-[10px] text-admin-muted uppercase font-black tracking-widest">{video.category || 'General'}</span>
+                                        <span className="text-admin-border">•</span>
+                                        <span className="text-[10px] text-admin-muted uppercase font-black tracking-widest">{new Date(video.publishedAt).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <a 
+                                    href={`https://youtube.com/watch?v=${video.youtubeId}`} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="p-3 bg-admin-hover rounded-xl text-admin-secondary hover:text-agri-primary"
+                                >
+                                    <ExternalLink size={18} />
+                                </a>
+                                <button 
+                                    onClick={(e) => handleDeleteVideo(video.id, e)} 
+                                    className="p-3 bg-admin-hover rounded-xl text-admin-secondary hover:text-red-500"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    {videos.length === 0 && (
+                        <div className="py-20 text-center bg-admin-bg rounded-[3rem] border border-dashed border-admin-border">
+                            <Play size={48} className="mx-auto text-admin-muted mb-4 opacity-20" />
+                            <p className="text-admin-muted font-bold uppercase tracking-widest text-xs">No videos in library. Sync from a source to populate.</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {isSourceModalOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-md rounded-[2.5rem] border border-admin-border shadow-2xl overflow-hidden flex flex-col">
+                        <div className="p-6 border-b border-admin-border flex justify-between items-center bg-admin-header">
+                            <h3 className="text-xl font-bold text-admin-text">YouTube Source</h3>
+                            <button onClick={() => setIsSourceModalOpen(false)} className="p-2 hover:bg-white rounded-full transition-colors"><X size={20} /></button>
+                        </div>
+                        <div className="p-8 space-y-6">
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-admin-secondary mb-2 block tracking-widest">Source Name</label>
+                                <input 
+                                    className="w-full bg-admin-bg border border-admin-border rounded-xl p-4 text-admin-text outline-none focus:border-agri-secondary" 
+                                    placeholder="e.g. Official Channel"
+                                    value={editingSource.name || ''} 
+                                    onChange={e => setEditingSource({...editingSource, name: e.target.value})} 
+                                />
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-admin-secondary mb-2 block tracking-widest">Source Type</label>
+                                <select 
+                                    className="w-full bg-admin-bg border border-admin-border rounded-xl p-4 text-admin-text outline-none focus:border-agri-secondary"
+                                    value={editingSource.type}
+                                    onChange={e => setEditingSource({...editingSource, type: e.target.value as any})}
+                                >
+                                    <option value="CHANNEL">YouTube Channel ID</option>
+                                    <option value="PLAYLIST">YouTube Playlist ID</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-[10px] uppercase font-bold text-admin-secondary mb-2 block tracking-widest">ID / URL</label>
+                                <input 
+                                    className="w-full bg-admin-bg border border-admin-border rounded-xl p-4 text-admin-text outline-none focus:border-agri-secondary" 
+                                    placeholder="e.g. UC_x5XG1OV2P6uZZ5FSM9Ttw"
+                                    value={editingSource.url || ''} 
+                                    onChange={e => setEditingSource({...editingSource, url: e.target.value})} 
+                                />
+                                <p className="text-[8px] text-admin-muted mt-2 uppercase font-bold">Enter the Channel ID or Playlist ID from YouTube</p>
+                            </div>
+                            <div className="flex items-center justify-between p-4 bg-admin-bg rounded-xl border border-admin-border">
+                                <span className="text-[10px] font-bold text-admin-secondary uppercase tracking-widest">Auto Sync</span>
+                                <button 
+                                    onClick={() => setEditingSource({...editingSource, autoSync: !editingSource.autoSync})}
+                                    className={`px-4 py-1 rounded-lg text-[8px] font-black tracking-widest ${editingSource.autoSync ? 'bg-agri-secondary text-white' : 'bg-white text-admin-muted border border-admin-border'}`}
+                                >
+                                    {editingSource.autoSync ? 'ENABLED' : 'DISABLED'}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t border-admin-border bg-admin-header flex justify-end gap-4">
+                            <button onClick={() => setIsSourceModalOpen(false)} className="px-6 py-2 text-admin-secondary font-bold text-xs uppercase tracking-widest">Cancel</button>
+                            <button onClick={handleSaveSource} className="bg-agri-secondary text-white px-10 py-2 rounded-xl font-bold text-xs shadow-lg hover:bg-agri-primary transition-colors">
+                                SAVE SOURCE
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
