@@ -1,9 +1,7 @@
 
-import { Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, GatewayConfig, ReviewStatus } from '../types';
-import { initializeApp } from "firebase/app";
-import { GoogleGenAI, Type } from "@google/genai";
+import { Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, ReviewStatus, Tool, ToolCategory, ToolSection, Review, ActivityLog, Recommendation, UserFieldData, WebsiteVisitor, AgriPost, AgriComment, AgriConnection, AgriConversation, AgriMessage, AgriTopic, AgriNotification, AgriFeedStats, ToolHistory, Keyword, KeywordCluster, KeywordPerformance, TrendingKeyword, CookieSettings, CookiePreferences, CookieCategory, CookieScript } from '../types';
+import { db, auth, storage } from '../src/firebase';
 import { 
-  getAuth, 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut, 
@@ -15,8 +13,6 @@ import {
   User as FirebaseUser
 } from "firebase/auth";
 import {
-  getFirestore,
-  initializeFirestore,
   collection,
   doc,
   getDoc,
@@ -34,12 +30,9 @@ import {
   serverTimestamp,
   increment,
   writeBatch,
-  persistentLocalCache,
-  persistentMultipleTabManager,
   arrayUnion
 } from "firebase/firestore";
 import {
-  getStorage,
   ref,
   uploadBytes,
   getDownloadURL,
@@ -48,34 +41,39 @@ import {
   uploadBytesResumable
 } from "firebase/storage";
 
-// --- CONFIGURATION ---
-const firebaseConfig = {
-  apiKey: "AIzaSyAtJrLiAnhN5A4umArJKtqhnWmoXXf27K8",
-  authDomain: "gen-lang-client-0276037966.firebaseapp.com",
-  projectId: "gen-lang-client-0276037966",
-  storageBucket: "gen-lang-client-0276037966.firebasestorage.app",
-  messagingSenderId: "455779719985",
-  appId: "1:455779719985:web:07fc0a4b6a3234cfdeae10",
-  measurementId: "G-ZRQEY0LBJC"
-};
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
 
 // --- SIMULATED SERVER ENVIRONMENT ---
 const SERVER_ENV = {
-  // Use production URL for dynamic payments
-  BACKEND_URL: 'https://agrigence-455779719985.us-west1.run.app'
+  // Use relative path for local development to avoid CORS/Fetch errors
+  BACKEND_URL: ''
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-
-// Initialize Firestore with settings to prevent timeouts
-const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
-  experimentalForceLongPolling: true, // Forces long polling to avoid WebSocket timeouts
-});
-
-const storage = getStorage(app);
 
 export const onAuthStateChanged = (authObj: any, cb: (user: FirebaseUser | null) => void) => {
   return firebaseOnAuthStateChanged(authObj, cb);
@@ -83,7 +81,7 @@ export const onAuthStateChanged = (authObj: any, cb: (user: FirebaseUser | null)
 
 // Default settings fallback
 const DEFAULT_SETTINGS: SiteSettings = {
-  logoUrl: '', 
+  logoUrl: 'https://www.agrigence.in/logo.png', 
   issn: '2345-6789',
   footerSocials: {
     twitter: 'https://x.com/agrigence',
@@ -97,7 +95,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   whatsappNumber: '+919452571317',
   contactEmail: 'agrigence@gmail.com',
   homeFeaturedLimit: 3,
-  missionText: 'Our mission is to build a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation.',
+  missionText: 'Where Agri-Intelligence Meets Agricultural Generation. Our mission is to build a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation.',
   primaryColor: '#3D2B1F',
   secondaryColor: '#C29263',
   popup: {
@@ -113,6 +111,9 @@ const DEFAULT_SETTINGS: SiteSettings = {
     { id: '3', label: 'News', path: '/news', isExternal: false, order: 2, isEnabled: true },
     { id: '4', label: 'Blogs', path: '/blogs', isExternal: false, order: 3, isEnabled: true },
     { id: '5', label: 'Store', path: '/products', isExternal: false, order: 4, isEnabled: true },
+    { id: 'sub-nav', label: 'Subscription', path: '/subscription', isExternal: false, order: 4.1, isEnabled: true },
+    { id: 'agri-feed-nav', label: 'AgriFeed', path: '/agri-feed', isExternal: false, order: 4.2, isEnabled: true },
+    { id: 'tools-nav', label: 'Tools', path: '/tools', isExternal: false, order: 4.5, isEnabled: true },
     { id: '6', label: 'Editorial Board', path: '/editorial-board', isExternal: false, order: 5, isEnabled: true },
     { id: '7', label: 'Author Guidelines', path: '/author-guidelines', isExternal: false, order: 6, isEnabled: true },
     { id: '8', label: 'About', path: '/about-contact', isExternal: false, order: 7, isEnabled: true },
@@ -126,15 +127,15 @@ const DEFAULT_SETTINGS: SiteSettings = {
     { id: 'mission', label: 'Our Mission', order: 6, isEnabled: true, itemsToShow: 1 },
   ],
   seo: {
-    metaTitle: 'Agrigence - Digital Agriculture Magazine',
-    metaDescription: 'Building a trusted digital ecosystem for agricultural knowledge and research publishing.',
+    metaTitle: 'Agrigence - Where Agri-Intelligence Meets Agricultural Generation',
+    metaDescription: 'Where Agri-Intelligence Meets Agricultural Generation. Building a trusted digital ecosystem for agricultural knowledge and research publishing.',
     ogImage: '',
     googleAnalyticsId: '',
     robotsTxt: 'User-agent: *\nAllow: /',
     
     // Default New Fields to avoid crashes
     publisherName: 'Agrigence Publications',
-    canonicalBaseUrl: 'https://agrigence.com',
+    canonicalBaseUrl: 'https://www.agrigence.in',
     language: 'en',
     region: 'Global',
     forceHttps: true,
@@ -204,6 +205,25 @@ class FirebaseBackendService {
     });
   }
 
+  private cleanObject<T>(obj: T): T {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.cleanObject(item)) as any;
+    }
+
+    const newObj: any = {};
+    Object.keys(obj as any).forEach(key => {
+      const val = (obj as any)[key];
+      if (val !== undefined) {
+        newObj[key] = this.cleanObject(val);
+      }
+    });
+    return newObj as T;
+  }
+
   // --- UPLOAD LISTENER ---
   setUploadListener(listener: UploadListener) {
     this.uploadListener = listener;
@@ -254,24 +274,96 @@ class FirebaseBackendService {
     });
   }
 
-  private async checkAndSeedData() {
+  async checkAndSeedData() {
     try {
         const plans = await this.getPlans();
         if (plans.length === 0) {
             const defaultPlans: SubscriptionPlan[] = [
-                { id: 'free', name: 'Free Tier', type: 'ARTICLE_ACCESS', price: 0, durationMonths: 12, description: 'Basic access', features: ['Read Only'], isActive: true, validityLabel: '1 Year', articleLimit: 0, blogLimit: 0 },
-                { id: 'premium', name: 'Premium Researcher', type: 'COMBO_ACCESS', price: 999, durationMonths: 12, description: 'Full access', features: ['Submit Articles', 'Read All'], isActive: true, validityLabel: '1 Year', articleLimit: 5, blogLimit: 'UNLIMITED' }
+                { id: 'free', name: 'Free Tier', type: 'ARTICLE_ACCESS', price: 0, durationMonths: 12, description: 'Basic access', features: ['Read Only'], isActive: true, validityLabel: '1 Year', articleLimit: 0, blogLimit: 0, is_research_enabled: false },
+                { id: 'premium', name: 'Premium Researcher', type: 'COMBO_ACCESS', price: 999, durationMonths: 12, description: 'Full access', features: ['Submit Articles', 'Read All'], isActive: true, validityLabel: '1 Year', articleLimit: 5, blogLimit: 'UNLIMITED', is_research_enabled: true }
             ];
             for (const p of defaultPlans) {
                 await setDoc(doc(this.db, 'subscription_plans', p.id), p);
             }
         }
+
+        const topics = await this.getAgriTopics();
+        if (topics.length === 0) {
+          const defaultTopics = [
+            { name: '#SoilHealth', postCount: 120 },
+            { name: '#PrecisionFarming', postCount: 85 },
+            { name: '#AgriAI', postCount: 64 },
+            { name: '#OrganicFarming', postCount: 92 },
+            { name: '#WaterManagement', postCount: 77 }
+          ];
+          for (const t of defaultTopics) {
+            await addDoc(collection(this.db, 'agri_topics'), t);
+          }
+        }
+
+        const keywords = await this.getKeywords();
+        if (keywords.length === 0) {
+          const defaultKeywords: Omit<Keyword, 'id'>[] = [
+            { term: 'agriculture in India', category: 'HIGH_VOLUME', priority: 'HIGH', searchVolume: 110000, difficulty: 75, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'farming techniques', category: 'HIGH_VOLUME', priority: 'HIGH', searchVolume: 49500, difficulty: 60, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'organic farming', category: 'HIGH_VOLUME', priority: 'HIGH', searchVolume: 90500, difficulty: 68, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'wheat farming in India', category: 'CROP_SPECIFIC', subCategory: 'Wheat', priority: 'HIGH', searchVolume: 22000, difficulty: 45, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'wheat seed rate', category: 'CROP_SPECIFIC', subCategory: 'Wheat', priority: 'MEDIUM', searchVolume: 8100, difficulty: 30, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'paddy cultivation methods', category: 'CROP_SPECIFIC', subCategory: 'Rice', priority: 'HIGH', searchVolume: 18000, difficulty: 40, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'sugarcane farming guide', category: 'CROP_SPECIFIC', subCategory: 'Sugarcane', priority: 'MEDIUM', searchVolume: 12000, difficulty: 35, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'tomato farming', category: 'CROP_SPECIFIC', subCategory: 'Vegetables', priority: 'HIGH', searchVolume: 40000, difficulty: 55, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'why crop yield is low', category: 'PROBLEM_BASED', priority: 'HIGH', searchVolume: 15000, difficulty: 42, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'pest control in crops', category: 'PROBLEM_BASED', priority: 'HIGH', searchVolume: 27000, difficulty: 50, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'farming in Uttar Pradesh', category: 'LOCATION_BASED', priority: 'MEDIUM', searchVolume: 9900, difficulty: 38, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'PM Kisan Yojana', category: 'GOVERNMENT_SCHEME', priority: 'HIGH', searchVolume: 1500000, difficulty: 85, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+            { term: 'how to increase wheat yield naturally', category: 'LONG_TAIL', priority: 'LOW', searchVolume: 2400, difficulty: 20, aiOptimized: false, synonyms: [], relatedQueries: [], mappedArticles: [], autoInsert: true },
+          ];
+          for (const kw of defaultKeywords) {
+            await this.addKeyword(kw);
+          }
+        }
+        
+        const clusters = await this.getKeywordClusters();
+        if (clusters.length === 0) {
+          const defaultClusters: Omit<KeywordCluster, 'id'>[] = [
+            { mainTopic: 'Wheat Farming', subtopics: ['wheat seed rate', 'wheat fertilizer schedule', 'how to increase wheat yield naturally', 'wheat diseases'] },
+            { mainTopic: 'Organic Farming', subtopics: ['step by step organic farming', 'organic pest control', 'soil fertility improvement'] }
+          ];
+          for (const cl of defaultClusters) {
+            await this.addKeywordCluster(cl);
+          }
+        }
+
+        const trending = await this.getTrendingKeywords();
+        if (trending.length === 0) {
+          const defaultTrending: Omit<TrendingKeyword, 'id'>[] = [
+            { term: 'climate resilient crops', searchVolume: 12500, growthPercentage: 145, category: 'Modern Farming' },
+            { term: 'drone spraying in agriculture', searchVolume: 8400, growthPercentage: 210, category: 'AgriTech' },
+            { term: 'nano urea benefits', searchVolume: 18000, growthPercentage: 85, category: 'Fertilizers' }
+          ];
+          for (const tr of defaultTrending) {
+             await addDoc(collection(this.db, 'trending_keywords'), tr);
+          }
+        }
+
+        const performance = await this.getKeywordPerformance();
+        if (performance.length === 0) {
+          const defaultPerformance: Omit<KeywordPerformance, 'keywordId'>[] = [
+            { term: 'agriculture in India', ranking: 3, searchVolume: 110000, ctr: 8.5, traffic: 9350, trend: 'UP' },
+            { term: 'wheat farming in India', ranking: 1, searchVolume: 22000, ctr: 24.2, traffic: 5324, trend: 'STABLE' },
+            { term: 'PM Kisan Yojana', ranking: 12, searchVolume: 1500000, ctr: 1.2, traffic: 18000, trend: 'UP' },
+            { term: 'organic farming', ranking: 5, searchVolume: 90500, ctr: 5.1, traffic: 4615, trend: 'DOWN' }
+          ];
+          for (const perf of defaultPerformance) {
+            await addDoc(collection(this.db, 'keyword_performance'), { ...perf, keywordId: `kw_${Math.random().toString(36).substring(2, 9)}` });
+          }
+        }
     } catch (e) {
-        console.error("Seeding failed (likely offline):", e);
+        console.error("Seeding failed (likely offline):", e instanceof Error ? e.message : e);
     }
   }
 
-  private async getCollectionData<T>(collectionName: string, orderByField?: string): Promise<T[]> {
+  private async getCollectionData<T>(collectionName: string, orderByField?: string, silent: boolean = false): Promise<T[]> {
     try {
         const colRef = collection(this.db, collectionName);
         const q = orderByField ? query(colRef, orderBy(orderByField, 'desc')) : query(colRef);
@@ -279,7 +371,9 @@ class FirebaseBackendService {
         // Corrected mapping: Spread data first, then overwrite id with doc.id to ensure we use the Document ID
         return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as unknown as T[];
     } catch (e) {
-        console.error(`Error fetching collection ${collectionName}:`, e);
+        if (!silent) {
+            console.error(`Error fetching collection ${collectionName}:`, e instanceof Error ? e.message : e);
+        }
         return [];
     }
   }
@@ -358,7 +452,11 @@ class FirebaseBackendService {
         country: data.country,
         mobileNumber: data.mobileNumber,
         profilePhotoUrl: data.profilePhotoUrl,
-        currency: currency
+        currency: currency,
+        userType: data.userType || 'INDIVIDUAL',
+        adminArticleLimitAdjustment: 0,
+        adminBlogLimitAdjustment: 0,
+        adminEnabledTools: [],
     };
     
     await setDoc(doc(this.db, 'users', newUser.id), newUser);
@@ -471,7 +569,29 @@ class FirebaseBackendService {
 
   async getUsers() { return this.getCollectionData<User>('users', 'joinedDate'); }
   subscribeToUsers(cb: (u: User[]) => void) { return this.subscribeToCollection('users', cb, 'joinedDate'); }
-  async updateUser(user: User) { await updateDoc(doc(this.db, 'users', user.id), { ...user }); }
+  async updateUser(userId: string, data: Partial<User>) { 
+      await setDoc(doc(this.db, 'users', userId), data, { merge: true }); 
+  }
+  
+  async updateUserLimitAdjustment(userId: string, data: { 
+    articleAdjustment: number, 
+    blogAdjustment: number, 
+    notes: string,
+    adminEnabledTools?: string[],
+    adminExpiryOverride?: string | null,
+    userType?: 'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION'
+  }) {
+    const userRef = doc(this.db, 'users', userId);
+    await updateDoc(userRef, {
+      adminArticleLimitAdjustment: data.articleAdjustment,
+      adminBlogLimitAdjustment: data.blogAdjustment,
+      limitAdjustmentNotes: data.notes,
+      adminEnabledTools: data.adminEnabledTools || [],
+      adminExpiryOverride: data.adminExpiryOverride || null,
+      userType: data.userType || 'INDIVIDUAL'
+    });
+  }
+
   async deleteUser(id: string) { await deleteDoc(doc(this.db, 'users', id)); }
   
   async getPublicAdmins() {
@@ -496,14 +616,20 @@ class FirebaseBackendService {
 
   // --- CONTENT ---
   async getArticles(search?: string) {
-    let articles = await this.getCollectionData<Article>('articles', 'submissionDate');
+    let articles = await this.getCollectionData<Article>('articles');
+    articles = articles.sort((a, b) => new Date(b.submissionDate || 0).getTime() - new Date(a.submissionDate || 0).getTime());
     if (search) {
         const lower = search.toLowerCase();
         articles = articles.filter(a => a.title.toLowerCase().includes(lower) || a.authorName.toLowerCase().includes(lower));
     }
     return articles;
   }
-  subscribeToArticles(cb: (a: Article[]) => void) { return this.subscribeToCollection('articles', cb, 'submissionDate'); }
+  subscribeToArticles(cb: (a: Article[]) => void) { 
+      return this.subscribeToCollection<Article>('articles', (data) => {
+          const sorted = data.sort((a, b) => new Date(b.submissionDate || 0).getTime() - new Date(a.submissionDate || 0).getTime());
+          cb(sorted);
+      }); 
+  }
   
   async getUserArticles(userId: string) {
     try {
@@ -514,33 +640,41 @@ class FirebaseBackendService {
   }
 
   async submitArticle(data: Partial<Article>) {
-    // --- UPDATED SUBMISSION FLOW ---
-    // Use the backend API to trigger auto-audit via Gemini.
-    // Explicitly set review_status to 'submitted'
     try {
         const payload = {
             ...data,
             review_status: 'submitted' as ReviewStatus,
-            status: 'PENDING'
+            status: 'Pending' as Article['status'],
+            source: 'user',
+            submissionDate: data.submissionDate || new Date().toISOString(),
+            views: 0,
+            plagiarismReport: {
+                audit_status: 'PENDING',
+                generatedAt: new Date().toISOString(),
+                summary: 'Queued for forensic analysis...'
+            }
         };
 
-        const backendUrl = SERVER_ENV.BACKEND_URL.replace(/\/$/, '');
-        const response = await fetch(`${backendUrl}/api/submissions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            throw new Error(err.error || "Server submission failed");
-        }
-
-        const resData = await response.json();
-        return { id: resData.id, ...payload };
+        const docRef = await addDoc(collection(this.db, 'articles'), payload);
+        return { id: docRef.id, ...payload };
     } catch (e) {
-        console.error("Submission API Error:", e);
-        throw e;
+        console.error("Submission API Error:", e instanceof Error ? e.message : e);
+        throw new Error("Server submission failed");
+    }
+  }
+
+  async getAdminSubmissions() {
+    try {
+        const q = query(
+            collection(this.db, 'articles'),
+            where('source', '==', 'user')
+        );
+        const snapshot = await getDocs(q);
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Article[];
+        return data.sort((a, b) => new Date(b.submissionDate || 0).getTime() - new Date(a.submissionDate || 0).getTime());
+    } catch (e) {
+        console.error("Admin Submissions Fetch Error:", e instanceof Error ? e.message : e);
+        throw new Error("Failed to fetch admin submissions");
     }
   }
 
@@ -586,7 +720,7 @@ class FirebaseBackendService {
     await updateDoc(articleRef, {
         reviewAssignments: arrayUnion(assignment),
         review_status: 'assigned_for_review', // Granular Update
-        status: 'PENDING' 
+        status: 'Pending' 
     });
   }
 
@@ -609,7 +743,7 @@ class FirebaseBackendService {
       });
   }
 
-  async updateReviewStatus(articleId: string, reviewerId: string, status: 'PENDING' | 'UNDER_REVIEW' | 'REVIEWED') {
+  async updateReviewStatus(articleId: string, reviewerId: string, status: 'PENDING' | 'UNDER_REVIEW' | 'REVIEWED' | 'ACCEPTED' | 'REJECTED') {
       const articleRef = doc(this.db, 'articles', articleId);
       const snap = await getDoc(articleRef);
       if(!snap.exists()) return;
@@ -625,7 +759,7 @@ class FirebaseBackendService {
               if (status === 'UNDER_REVIEW' && !a.startedAt) {
                   update.startedAt = now;
               }
-              if (status === 'REVIEWED' && !a.completedAt) {
+              if ((status === 'REVIEWED' || status === 'ACCEPTED' || status === 'REJECTED') && !a.completedAt) {
                   update.completedAt = now;
               }
               return { ...a, ...update };
@@ -637,11 +771,9 @@ class FirebaseBackendService {
       let newReviewStatus: ReviewStatus | undefined;
       
       if (status === 'UNDER_REVIEW') {
-          // If any reviewer starts, status moves to under_review
           newReviewStatus = 'under_review';
-      } else if (status === 'REVIEWED') {
-          // Check if ALL reviewers are done
-          const allReviewed = updatedAssignments.every(a => a.status === 'REVIEWED');
+      } else if (status === 'REVIEWED' || status === 'ACCEPTED' || status === 'REJECTED') {
+          const allReviewed = updatedAssignments.every(a => ['REVIEWED', 'ACCEPTED', 'REJECTED'].includes(a.status));
           if (allReviewed) {
               newReviewStatus = 'review_completed';
           }
@@ -649,10 +781,7 @@ class FirebaseBackendService {
 
       const updatePayload: any = { reviewAssignments: updatedAssignments };
       
-      // Only update global status if it moves strictly forward in the flow
-      // or if it's the first time entering under_review
       if (newReviewStatus) {
-          // Prevent regression if multiple reviewers are working
           if (newReviewStatus === 'under_review' && data.review_status !== 'review_completed') {
              updatePayload.review_status = 'under_review';
           }
@@ -661,7 +790,105 @@ class FirebaseBackendService {
           }
       }
 
+      // Explicitly handle the new workflow states requested
+      if (status === 'UNDER_REVIEW') updatePayload.review_status = 'InReview';
+      if (status === 'REVIEWED') updatePayload.review_status = 'Submitted';
+
       await updateDoc(articleRef, updatePayload);
+  }
+
+  async saveReviewDraft(review: Partial<Review>) {
+    if (!review.manuscriptId || !review.reviewerId) throw new Error("Missing manuscriptId or reviewerId");
+    
+    const reviewsRef = collection(this.db, 'reviews');
+    const q = query(reviewsRef, where('manuscriptId', '==', review.manuscriptId));
+    const snap = await getDocs(q);
+    const existingDoc = snap.docs.find(d => d.data().reviewerId === review.reviewerId);
+    
+    const now = new Date().toISOString();
+    const reviewData = {
+      ...review,
+      lastSavedAt: now,
+      status: 'draft' as const
+    };
+
+    let reviewId = '';
+    if (!existingDoc) {
+      const docRef = await addDoc(reviewsRef, reviewData);
+      reviewId = docRef.id;
+    } else {
+      reviewId = existingDoc.id;
+      const existingReview = existingDoc.data() as Review;
+      if (existingReview.status === 'submitted') throw new Error("Cannot edit a submitted review");
+      await updateDoc(doc(this.db, 'reviews', reviewId), reviewData);
+    }
+
+    // Update article status to DraftSaved
+    const articleRef = doc(this.db, 'articles', review.manuscriptId);
+    await updateDoc(articleRef, { review_status: 'DraftSaved' });
+
+    await this.logActivity({
+      actionType: 'draft_saved',
+      actorId: review.reviewerId,
+      manuscriptId: review.manuscriptId,
+      details: `Saved draft for review ${reviewId}`
+    });
+
+    return reviewId;
+  }
+
+  async getReview(manuscriptId: string, reviewerId: string) {
+    const reviewsRef = collection(this.db, 'reviews');
+    const q = query(reviewsRef, where('manuscriptId', '==', manuscriptId));
+    const snap = await getDocs(q);
+    const existingDoc = snap.docs.find(d => d.data().reviewerId === reviewerId);
+    if (!existingDoc) return null;
+    return { ...existingDoc.data(), id: existingDoc.id } as Review;
+  }
+
+  async submitReview(reviewId: string) {
+    const reviewRef = doc(this.db, 'reviews', reviewId);
+    const snap = await getDoc(reviewRef);
+    if (!snap.exists()) throw new Error("Review not found");
+    
+    const review = snap.data() as Review;
+    if (review.status === 'submitted') throw new Error("Review already submitted");
+    if (!review.recommendation) throw new Error("Recommendation is required for submission");
+
+    const now = new Date().toISOString();
+    await updateDoc(reviewRef, {
+      status: 'submitted',
+      submittedAt: now,
+      lastSavedAt: now
+    });
+
+    // Update workflow status
+    await this.updateReviewStatus(review.manuscriptId, review.reviewerId, 'REVIEWED');
+
+    // Move to EditorQueue if all reviews are done
+    const articleRef = doc(this.db, 'articles', review.manuscriptId);
+    const artSnap = await getDoc(articleRef);
+    if (artSnap.exists()) {
+        const artData = artSnap.data() as Article;
+        if (artData.review_status === 'review_completed') {
+            await updateDoc(articleRef, { review_status: 'EditorQueue' });
+        }
+    }
+
+    await this.logActivity({
+      actionType: 'review_submitted',
+      actorId: review.reviewerId,
+      manuscriptId: review.manuscriptId,
+      details: `Submitted review ${reviewId} with recommendation ${review.recommendation}`
+    });
+  }
+
+  async logActivity(log: Partial<ActivityLog>) {
+    const logsRef = collection(this.db, 'activity_logs');
+    await addDoc(logsRef, {
+      ...log,
+      timestamp: new Date().toISOString()
+    });
   }
 
   // --- CONTENT (Continued) ---
@@ -703,8 +930,13 @@ class FirebaseBackendService {
   }
 
   async getMembers() { return this.getCollectionData<EditorialMember>('editorial_board', 'order'); }
-  async addMember(m: Partial<EditorialMember>) { await addDoc(collection(this.db, 'editorial_board'), m); }
-  async updateMember(m: EditorialMember) { await updateDoc(doc(this.db, 'editorial_board', m.id), { ...m }); }
+  async addMember(m: Partial<EditorialMember>) { 
+      await addDoc(collection(this.db, 'editorial_board'), this.cleanObject(m)); 
+  }
+  async updateMember(m: EditorialMember) { 
+      const { id } = m;
+      await updateDoc(doc(this.db, 'editorial_board', id), this.cleanObject(m) as any); 
+  }
   
   async deleteMember(id: string) { 
       const data = (await getDoc(doc(this.db, 'editorial_board', id))).data();
@@ -715,16 +947,29 @@ class FirebaseBackendService {
   async getLeadership() { return this.getCollectionData<LeadershipMember>('leadership', 'order'); }
   async updateLeadership(leaders: LeadershipMember[]) {
       const batch = writeBatch(this.db);
+      const currentLeaders = await this.getLeadership();
+      const currentIds = currentLeaders.map(l => l.id);
+      const newIds = leaders.map(l => l.id);
+      const toDelete = currentIds.filter(id => !newIds.includes(id));
+      
+      toDelete.forEach(id => {
+          batch.delete(doc(this.db, 'leadership', id));
+      });
+
       leaders.forEach(l => {
-          const ref = l.id.startsWith('l') && l.id.length < 20 ? doc(collection(this.db, 'leadership')) : doc(this.db, 'leadership', l.id);
-          batch.set(ref, l);
+          const ref = doc(this.db, 'leadership', l.id);
+          batch.set(ref, this.cleanObject(l));
       });
       await batch.commit();
   }
 
   async getPlans() { return this.getCollectionData<SubscriptionPlan>('subscription_plans'); }
-  async addPlan(p: Partial<SubscriptionPlan>) { await addDoc(collection(this.db, 'subscription_plans'), p); }
-  async updatePlan(p: SubscriptionPlan) { await updateDoc(doc(this.db, 'subscription_plans', p.id), { ...p }); }
+  async addPlan(p: Partial<SubscriptionPlan>) { 
+      await addDoc(collection(this.db, 'subscription_plans'), this.cleanObject(p)); 
+  }
+  async updatePlan(p: SubscriptionPlan) { 
+      await updateDoc(doc(this.db, 'subscription_plans', p.id), this.cleanObject(p) as any); 
+  }
   async deletePlan(id: string) { await deleteDoc(doc(this.db, 'subscription_plans', id)); }
 
   async getPayments() { return this.getCollectionData<PaymentRecord>('payments', 'date'); }
@@ -749,6 +994,43 @@ class FirebaseBackendService {
       }, (error) => {
           console.warn("User payments subscription error:", error);
       });
+  }
+
+  async processOnlinePayment(userId: string, planId: string, paymentId: string, amount: number) {
+      const planSnap = await getDoc(doc(this.db, 'subscription_plans', planId));
+      if (!planSnap.exists()) throw new Error("Plan not found");
+      const plan = planSnap.data() as SubscriptionPlan;
+
+      const userRef = doc(this.db, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) throw new Error("User not found");
+
+      const now = new Date();
+      const expiry = new Date();
+      expiry.setMonth(expiry.getMonth() + plan.durationMonths);
+
+      await updateDoc(userRef, {
+          subscriptionTier: plan.name,
+          subscriptionExpiry: expiry.toISOString(),
+          status: 'ACTIVE',
+          articleLimit: plan.articleLimit,
+          blogLimit: plan.blogLimit
+      });
+
+      const record: PaymentRecord = {
+          id: `pay_${Date.now()}`,
+          userId,
+          userName: userSnap.data().name,
+          planId,
+          planName: plan.name,
+          amount,
+          method: 'INTERNATIONAL', // Or ONLINE
+          status: 'COMPLETED',
+          date: new Date().toISOString(),
+          upiTxnId: paymentId
+      };
+
+      await addDoc(collection(this.db, 'payments'), record);
   }
 
   async verifyPayment(id: string) {
@@ -893,7 +1175,7 @@ class FirebaseBackendService {
                 this.notifyUpload(progress, 'UPLOADING', file.name);
             },
             (error) => {
-                console.error(error);
+                console.error(error instanceof Error ? error.message : error);
                 this.notifyUpload(0, 'ERROR', file.name);
                 reject(error);
             },
@@ -919,61 +1201,9 @@ class FirebaseBackendService {
       await addDoc(collection(this.db, 'mail'), { to, message: { subject, html } });
   }
 
-  // --- PAYMENT GATEWAY (SECURE) ---
-  
-  async startPaymentSession(userId: string, planId: string) {
-      try {
-        const backendUrl = SERVER_ENV.BACKEND_URL.replace(/\/$/, '');
-        // Updated to use the correct create-order endpoint requested
-        const url = `${backendUrl}/api/payment/create-order`;
-        console.log(`[Payment] Initializing session via ${url}`);
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ planId, userId })
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.json().catch(() => ({ error: 'Unknown error' }));
-            throw new Error(`Session creation failed: ${errorText.error || response.statusText}`);
-        }
-        
-        return await response.json();
-
-      } catch (e) {
-        console.error("Payment Session Error:", e);
-        throw e;
-      }
-  }
-
-  async saveGatewayConfig(config: GatewayConfig) {
-    try {
-        const backendUrl = SERVER_ENV.BACKEND_URL.replace(/\/$/, '');
-        const url = `${backendUrl}/api/admin/config/razorpay`;
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(config)
-        });
-
-        if (!response.ok) {
-            const errorText = await response.json().catch(() => ({}));
-            throw new Error(errorText.error || 'Failed to save config');
-        }
-        return true;
-    } catch (e) {
-        console.error("Config Save Error:", e);
-        throw e;
-    }
-  }
-
-  async createRazorpayOrder(amount: number) { return { id: '', amount: 0, currency: '', key: '' }; }
-  async verifyRazorpayPayment(response: any) { return true; }
 
   async purchasePlan(userId: string, planId: string, details: any) {
-      if (details.method !== 'RAZORPAY') {
           const user = await this.getUser(userId);
           const plan = (await this.getPlans()).find(p => p.id === planId);
           if (!user || !plan) throw new Error("Invalid User or Plan");
@@ -986,13 +1216,198 @@ class FirebaseBackendService {
               planName: plan.name,
               amount: details.amount,
               method: details.method,
-              status: 'PENDING',
+              status: details.status || 'PENDING',
               date: new Date().toISOString(),
               ...details
           };
 
-          await addDoc(collection(this.db, 'payments'), record);
+          const docRef = await addDoc(collection(this.db, 'payments'), record);
+          
+          // If status is COMPLETED, update user subscription
+          if (details.status === 'COMPLETED') {
+              const expiry = new Date();
+              expiry.setMonth(expiry.getMonth() + plan.durationMonths);
+              await updateDoc(doc(this.db, 'users', userId), {
+                  subscriptionTier: plan.name,
+                  subscriptionExpiry: expiry.toISOString(),
+                  articleUsage: 0,
+                  blogUsage: 0
+              });
+          }
+
+          return docRef.id;
+  }
+
+  async adminGrantPlan(userId: string, planId: string) {
+      await this.purchasePlan(userId, planId, {
+          method: 'ONLINE',
+          amount: 0,
+          status: 'COMPLETED',
+          notes: 'Gifted by Admin'
+      });
+  }
+
+  async getToolSections() {
+    const defaultSections: ToolSection[] = [
+      { id: 'farm-planning', name: 'Farm Planning' },
+      { id: 'crop-mgmt', name: 'Crop Management' },
+      { id: 'performance', name: 'Performance & Economics' },
+      { id: 'experimental-design', name: 'Experimental Design' },
+      { id: 'statistics', name: 'Statistical Analysis' },
+      { id: 'environment', name: 'Environment & Adaptation' },
+      { id: 'data-science', name: 'Data Science & Modeling' },
+      { id: 'knowledge', name: 'Knowledge & Reporting' },
+      { id: 'kpi', name: 'KPI & Decision Dashboard' }
+    ];
+    try {
+      const sections = await this.getCollectionData<ToolSection>('tool_sections', undefined, true);
+      if (sections.length === 0) {
+        for (const s of defaultSections) {
+          await setDoc(doc(this.db, 'tool_sections', s.id), s).catch(() => {});
+        }
+        return defaultSections;
       }
+      return sections;
+    } catch (e) {
+      return defaultSections;
+    }
+  }
+
+  async getToolCategories(sectionId: string) {
+    // In this new flat domain structure, categories map 1:1 to sections for simplicity, 
+    // or we can group them if needed. For now, we'll return a single "General" category 
+    // for each section to keep the UI consistent, or specific sub-categories if applicable.
+    
+    const defaultCategories: Record<string, ToolCategory[]> = {
+      'agri_intelligence': [
+        { id: 'planning-tools', name: 'Planning Tools', sectionId: 'agri_intelligence' },
+        { id: 'mgmt-tools', name: 'Management Tools', sectionId: 'agri_intelligence' },
+        { id: 'perf-tools', name: 'Performance Tools', sectionId: 'agri_intelligence' }
+      ],
+      'research': [
+        { id: 'design-tools', name: 'Design Tools', sectionId: 'research' },
+        { id: 'analysis-tools', name: 'Analysis Tools', sectionId: 'research' },
+        { id: 'pub-tools', name: 'Publication Tools', sectionId: 'research' }
+      ],
+      'soil': [
+        { id: 'soil-health', name: 'Soil Health', sectionId: 'soil' },
+        { id: 'fertility', name: 'Fertility', sectionId: 'soil' }
+      ],
+      'statistics': [
+        { id: 'stats-basic', name: 'Basic Statistics', sectionId: 'statistics' },
+        { id: 'stats-advanced', name: 'Advanced Statistics', sectionId: 'statistics' }
+      ],
+      'finance': [
+        { id: 'finance-planning', name: 'Financial Planning', sectionId: 'finance' },
+        { id: 'finance-analysis', name: 'Financial Analysis', sectionId: 'finance' }
+      ],
+      'general': [
+        { id: 'general-utils', name: 'General Utilities', sectionId: 'general' }
+      ]
+    };
+
+    const toAdd = defaultCategories[sectionId] || [];
+
+    try {
+      const q = query(collection(this.db, 'tool_categories'), where('sectionId', '==', sectionId));
+      const snap = await getDocs(q);
+      const categories = snap.docs.map(d => ({ ...d.data(), id: d.id })) as ToolCategory[];
+      
+      if (categories.length === 0) {
+        for (const c of toAdd) {
+          await setDoc(doc(this.db, 'tool_categories', c.id), c).catch(() => {});
+        }
+        return toAdd;
+      }
+      return categories;
+    } catch (e) {
+      return toAdd;
+    }
+  }
+
+  async getTools(categoryId: string) {
+    const defaultTools: Record<string, Tool[]> = {
+      'planning-tools': [
+        { id: 'seed-rate', name: 'Seed Rate Calculator', description: 'Scientific calculation for precise seed requirements.', categoryId: 'planning-tools', route: '/tools/seed-rate' },
+        { id: 'water-req', name: 'Water Requirement', description: 'FAO-56 Penman-Monteith engine for irrigation scheduling.', categoryId: 'planning-tools', route: '/tools/water-req' },
+        { id: 'spray-calculator', name: 'Spray Calculator', description: 'Precision pesticide mixing engine.', categoryId: 'planning-tools', route: '/tools/spray-calculator' }
+      ],
+      'mgmt-tools': [
+        { id: 'climate-analyzer', name: 'Climate Analyzer', description: 'Agro-meteorological indices calculator.', categoryId: 'mgmt-tools', route: '/tools/climate-analyzer' },
+        { id: 'yield-estimator', name: 'Yield Estimator', description: 'Scientific yield estimation tool.', categoryId: 'mgmt-tools', route: '/tools/yield-estimator' }
+      ],
+      'perf-tools': [
+        { id: 'kpi-dashboard', name: 'KPI Dashboard', description: 'Key performance indicators for agriculture.', categoryId: 'perf-tools', route: '/tools/kpi-dashboard' }
+      ],
+      'design-tools': [
+        { id: 'experiment-builder', name: 'Experiment Builder', description: 'Design statistically valid field trials.', categoryId: 'design-tools', route: '/tools/experiment-builder' },
+        { id: 'plot-dose', name: 'Plot Dose Calculator', description: 'Convert field recommendation into exact plot dose.', categoryId: 'design-tools', route: '/tools/plot-dose' },
+        { id: 'factorial-generator', name: 'Factorial Generator', description: 'Treatment combination builder.', categoryId: 'design-tools', route: '/tools/factorial-generator' }
+      ],
+      'analysis-tools': [
+        { id: 'research-lab', name: 'Research Data Lab', description: 'Advanced experimental design & ANOVA engine.', categoryId: 'analysis-tools', route: '/dashboard/research-lab' },
+        { id: 'advanced-stats-suite', name: 'Advanced Research Data & Statistical Analysis Suite', description: 'Customizable research data entry and advanced statistical analysis system.', categoryId: 'analysis-tools', route: '/dashboard/advanced-research' }
+      ],
+      'pub-tools': [
+        { id: 'auto-graph', name: 'Graph Generator', description: 'Research visualization engine.', categoryId: 'pub-tools', route: '/tools/auto-graph' },
+        { id: 'writing-assistant', name: 'Writing Assistant', description: 'Scientific writing support.', categoryId: 'pub-tools', route: '/tools/writing-assistant' },
+        { id: 'review-organizer', name: 'Review Organizer', description: 'Literature management tool.', categoryId: 'pub-tools', route: '/tools/review-organizer' }
+      ],
+      'soil-health': [
+        { id: 'nutrient-req', name: 'Nutrient Requirement', description: 'Precision STCR-based nutrient recommendation.', categoryId: 'soil-health', route: '/tools/nutrient-req' }
+      ],
+      'fertility': [
+        { id: 'inm-planner', name: 'INM Planner', description: 'Cost-minimized nutrient planning with organic constraints.', categoryId: 'fertility', route: '/tools/inm-planner' }
+      ],
+      'stats-basic': [
+        { id: 'statistical-analysis', name: 'Statistical Analysis', description: 'Comprehensive descriptive, correlation, and regression analysis.', categoryId: 'stats-basic', route: '/tools/statistical-analysis' }
+      ],
+      'stats-advanced': [
+        { id: 'anova', name: 'ANOVA Tools', description: 'Analysis of Variance for research data.', categoryId: 'stats-advanced', route: '/tools/anova' }
+      ],
+      'finance-planning': [
+      ],
+      'finance-analysis': [
+        { id: 'economics', name: 'Farm Economics', description: 'Comprehensive profitability analysis.', categoryId: 'finance-analysis', route: '/tools/economics' }
+      ],
+      'general-utils': [
+        { id: 'land-converter', name: 'Land Converter', description: 'Convert vernacular land units to standard metric units.', categoryId: 'general-utils', route: '/tools/land-converter' }
+      ]
+    };
+
+    const toAdd = defaultTools[categoryId] || [];
+
+    try {
+      const q = query(collection(this.db, 'tools'), where('categoryId', '==', categoryId));
+      const snap = await getDocs(q);
+      const tools = snap.docs.map(d => ({ ...d.data(), id: d.id })) as Tool[];
+
+      if (tools.length === 0) {
+        for (const t of toAdd) {
+          await setDoc(doc(this.db, 'tools', t.id), t).catch(() => {});
+        }
+        return toAdd;
+      }
+      return tools;
+    } catch (e) {
+      return toAdd;
+    }
+  }
+
+  async getAllTools(): Promise<Tool[]> {
+    try {
+      const tools = await this.getCollectionData<Tool>('tools');
+      if (tools.length === 0) {
+        // If empty, we need to trigger the seeding by calling getTools for each category
+        // or just return the flattened defaultTools. 
+        // For simplicity in admin, we'll just return what's in DB.
+        // If DB is empty, the first visit to Tools page usually seeds it.
+        return tools;
+      }
+      return tools;
+    } catch (e) {
+      return [];
+    }
   }
 
   // --- AI FEATURES ---
@@ -1008,6 +1423,911 @@ class FirebaseBackendService {
         generatedAt: new Date().toISOString(),
         summary: "Audit will run on server"
     };
+  }
+
+  // --- USER FIELD DATA & ANALYSIS ---
+  async saveUserFieldData(data: Partial<UserFieldData>): Promise<string> {
+    const colRef = collection(this.db, 'user_field_data');
+    
+    // Check for plan access (simulated)
+    // In a real app, this would be a server-side check
+    if (!data.is_temporary) {
+      // This is a simplified check for the mock
+    }
+
+    if (data.id) {
+      await setDoc(doc(this.db, 'user_field_data', data.id), {
+        ...data,
+        updated_at: serverTimestamp()
+      }, { merge: true });
+      return data.id;
+    } else {
+      const docRef = await addDoc(colRef, {
+        ...data,
+        created_at: serverTimestamp()
+      });
+      return docRef.id;
+    }
+  }
+
+  async saveTempToolSession(toolName: string, result: any, sessionId: string): Promise<string> {
+    const colRef = collection(this.db, 'temp_tool_sessions');
+    const docRef = await addDoc(colRef, {
+      tool_name: toolName,
+      result,
+      session_id: sessionId,
+      created_at: serverTimestamp()
+    });
+    return docRef.id;
+  }
+
+  async cleanupTemporaryData(): Promise<void> {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    
+    // Cleanup user_field_data
+    const q1 = query(
+      collection(this.db, 'user_field_data'),
+      where('is_temporary', '==', true)
+    );
+    const snap1 = await getDocs(q1);
+    const batch = writeBatch(this.db);
+    snap1.docs.forEach(d => {
+      const data = d.data();
+      const createdAt = data.created_at?.toDate?.() || new Date(data.created_at);
+      if (createdAt < twoHoursAgo) {
+        batch.delete(d.ref);
+      }
+    });
+    
+    // Cleanup temp_tool_sessions
+    const q2 = query(
+      collection(this.db, 'temp_tool_sessions'),
+      where('created_at', '<', twoHoursAgo)
+    );
+    const snap2 = await getDocs(q2);
+    snap2.docs.forEach(d => batch.delete(d.ref));
+    
+    await batch.commit();
+  }
+
+  async getUserFieldData(userId: string): Promise<UserFieldData[]> {
+    const q = query(
+      collection(this.db, 'user_field_data'),
+      where('user_id', '==', userId)
+    );
+    const snap = await getDocs(q);
+    const data = snap.docs.map(d => ({
+      ...d.data(),
+      id: d.id,
+      created_at: d.data().created_at?.toDate?.()?.toISOString() || new Date().toISOString()
+    })) as UserFieldData[];
+    data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return data;
+  }
+
+  async deleteUserFieldData(id: string): Promise<void> {
+    await deleteDoc(doc(this.db, 'user_field_data', id));
+  }
+
+  // --- WEBSITE VISITOR TRACKING ---
+  async logVisitor(visitor: Partial<WebsiteVisitor>): Promise<void> {
+    try {
+      if (!visitor.session_id) return;
+      
+      const docRef = doc(this.db, 'website_visitors', visitor.session_id);
+      const docSnap = await getDoc(docRef);
+      
+      if (!docSnap.exists()) {
+        await setDoc(docRef, {
+          ...visitor,
+          created_at: new Date().toISOString()
+        });
+      } else {
+        const existingData = docSnap.data() as WebsiteVisitor;
+        
+        // Calculate duration
+        const firstVisit = new Date(existingData.first_visit).getTime();
+        const lastVisit = new Date(visitor.last_visit || new Date().toISOString()).getTime();
+        const duration = Math.floor((lastVisit - firstVisit) / 1000);
+        
+        await updateDoc(docRef, {
+          last_visit: visitor.last_visit,
+          visit_duration: duration,
+          pages_visited: visitor.pages_visited,
+          page_views: visitor.page_views
+        });
+      }
+    } catch (e: any) {
+      if (
+        e?.code !== 'permission-denied' && 
+        e?.message !== 'Missing or insufficient permissions.' &&
+        !e?.message?.includes('offline') &&
+        !e?.message?.includes('Backend didn\'t respond')
+      ) {
+        console.error("Error logging visitor:", e);
+      }
+    }
+  }
+
+  async getVisitors(): Promise<WebsiteVisitor[]> {
+    return this.getCollectionData<WebsiteVisitor>('website_visitors', 'last_visit', true);
+  }
+
+  async cleanupOldVisitors(): Promise<void> {
+    try {
+      const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+      const q = query(
+        collection(this.db, 'website_visitors'),
+        where('last_visit', '<', oneYearAgo)
+      );
+      const snap = await getDocs(q);
+      const batch = writeBatch(this.db);
+      snap.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    } catch (e: any) {
+      if (e?.code !== 'permission-denied' && e?.message !== 'Missing or insufficient permissions.') {
+        console.error("Error cleaning up visitors:", e);
+      }
+    }
+  }
+
+  // --- AGRIFEED METHODS ---
+
+  async getAgriPosts(): Promise<AgriPost[]> {
+    return this.getCollectionData<AgriPost>('agri_posts', 'timestamp');
+  }
+
+  async searchAgriPosts(query: string): Promise<AgriPost[]> {
+    const posts = await this.getAgriPosts();
+    const q = query.toLowerCase();
+    return posts.filter(p => 
+      p.content.toLowerCase().includes(q) || 
+      p.authorName.toLowerCase().includes(q) ||
+      (p.authorField && p.authorField.toLowerCase().includes(q))
+    );
+  }
+
+  async addAgriPost(post: Partial<AgriPost>) {
+    // Content Moderation: Greeting detection
+    const greetings = ['hello', 'hi', 'good morning', 'good afternoon', 'good evening', 'hey'];
+    const content = post.content?.toLowerCase().trim() || '';
+    const isGreetingOnly = greetings.some(g => content === g);
+    
+    if (isGreetingOnly) {
+      console.warn("Greeting-only post detected");
+    }
+
+    // Image validation is handled in the UI before calling this, 
+    // but we can add a placeholder check here if needed.
+
+    const postId = `post_${Date.now()}`;
+    const newPost = {
+      ...post,
+      id: postId,
+      timestamp: new Date().toISOString(),
+      likes: [],
+      reposts: [],
+      upvotes: [],
+      sharesCount: 0,
+      replies: [],
+      type: post.type || 'POST',
+      authorVerified: post.authorVerified || false
+    };
+    await setDoc(doc(this.db, 'agri_posts', postId), this.cleanObject(newPost));
+  }
+
+  async upvoteAgriPost(postId: string, userId: string) {
+    const postRef = doc(this.db, 'agri_posts', postId);
+    const postSnap = await getDoc(postRef);
+    if (postSnap.exists()) {
+      const post = postSnap.data() as AgriPost;
+      const upvotes = post.upvotes || [];
+      if (upvotes.includes(userId)) {
+        await updateDoc(postRef, { upvotes: upvotes.filter(id => id !== userId) });
+      } else {
+        await updateDoc(postRef, { upvotes: [...upvotes, userId] });
+      }
+    }
+  }
+
+  async deleteAgriPost(postId: string, userId: string, userRole?: string) {
+    const postRef = doc(this.db, 'agri_posts', postId);
+    const postSnap = await getDoc(postRef);
+    
+    if (postSnap.exists()) {
+      const post = postSnap.data() as AgriPost;
+      const isAuthor = post.authorId === userId;
+      const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userId === 'admin';
+      
+      if (isAuthor || isAdmin) {
+        await deleteDoc(postRef);
+      } else {
+        throw new Error("Unauthorized: You do not have permission to delete this post.");
+      }
+    } else {
+      // Fallback: try to find by the 'id' field in case document ID is different
+      const q = query(collection(this.db, 'agri_posts'), where('id', '==', postId));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const docRef = querySnapshot.docs[0].ref;
+        const post = querySnapshot.docs[0].data() as AgriPost;
+        const isAuthor = post.authorId === userId;
+        const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userId === 'admin';
+        
+        if (isAuthor || isAdmin) {
+          await deleteDoc(docRef);
+        } else {
+          throw new Error("Unauthorized: You do not have permission to delete this post.");
+        }
+      } else {
+        throw new Error("Post not found.");
+      }
+    }
+  }
+
+  async likeAgriPost(postId: string, userId: string) {
+    const postRef = doc(this.db, 'agri_posts', postId);
+    const postSnap = await getDoc(postRef);
+    if (postSnap.exists()) {
+      const post = postSnap.data() as AgriPost;
+      const likes = post.likes || [];
+      if (likes.includes(userId)) {
+        await updateDoc(postRef, { likes: likes.filter(id => id !== userId) });
+      } else {
+        await updateDoc(postRef, { likes: [...likes, userId] });
+        // Notify author
+        if (post.authorId !== userId) {
+          await this.addAgriNotification({
+            userId: post.authorId,
+            type: 'LIKE',
+            actorId: userId,
+            actorName: 'Someone', // Should fetch real name
+            postId: postId
+          });
+        }
+      }
+    }
+  }
+
+  async updateAgriPost(postId: string, content: string, userId: string, userRole?: string) {
+    const postRef = doc(this.db, 'agri_posts', postId);
+    const postSnap = await getDoc(postRef);
+    
+    if (postSnap.exists()) {
+      const post = postSnap.data() as AgriPost;
+      const isAuthor = post.authorId === userId;
+      const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userId === 'admin';
+      
+      if (isAuthor || isAdmin) {
+        await updateDoc(postRef, { content, updatedAt: new Date().toISOString() });
+      } else {
+        throw new Error("Unauthorized: You do not have permission to edit this post.");
+      }
+    } else {
+      throw new Error("Post not found.");
+    }
+  }
+
+  async addAgriComment(postId: string, comment: Partial<AgriComment>) {
+    const postRef = doc(this.db, 'agri_posts', postId);
+    const postSnap = await getDoc(postRef);
+    if (postSnap.exists()) {
+      const post = postSnap.data() as AgriPost;
+      const newComment = this.cleanObject({
+        ...comment,
+        id: `comment_${Date.now()}`,
+        postId,
+        timestamp: new Date().toISOString(),
+        likes: []
+      });
+      await updateDoc(postRef, { replies: [...(post.replies || []), newComment] });
+      
+      // Notify author
+      if (post.authorId !== comment.authorId) {
+        await this.addAgriNotification({
+          userId: post.authorId,
+          type: 'REPLY',
+          actorId: comment.authorId!,
+          actorName: comment.authorName || 'Someone',
+          postId: postId
+        });
+      }
+    }
+  }
+
+  async repostAgriPost(postId: string, userId: string) {
+    const postRef = doc(this.db, 'agri_posts', postId);
+    const postSnap = await getDoc(postRef);
+    if (postSnap.exists()) {
+      const post = postSnap.data() as AgriPost;
+      const reposts = post.reposts || [];
+      if (reposts.includes(userId)) {
+        await updateDoc(postRef, { reposts: reposts.filter(id => id !== userId) });
+      } else {
+        await updateDoc(postRef, { reposts: [...reposts, userId] });
+      }
+    }
+  }
+
+  async shareAgriPost(postId: string) {
+    const postRef = doc(this.db, 'agri_posts', postId);
+    const postSnap = await getDoc(postRef);
+    if (postSnap.exists()) {
+      const post = postSnap.data() as AgriPost;
+      await updateDoc(postRef, { sharesCount: (post.sharesCount || 0) + 1 });
+    }
+  }
+
+  async getAgriConnections(userId: string): Promise<AgriConnection[]> {
+    const q = query(
+      collection(this.db, 'agri_connections'),
+      where('senderId', '==', userId)
+    );
+    const q2 = query(
+      collection(this.db, 'agri_connections'),
+      where('receiverId', '==', userId)
+    );
+    const [snap1, snap2] = await Promise.all([getDocs(q), getDocs(q2)]);
+    const connections = [
+      ...snap1.docs.map(d => ({ ...d.data(), id: d.id })),
+      ...snap2.docs.map(d => ({ ...d.data(), id: d.id }))
+    ] as AgriConnection[];
+    return connections;
+  }
+
+  async subscribeToConnections(userId: string, callback: (connections: AgriConnection[]) => void): Promise<() => void> {
+    const q1 = query(collection(this.db, 'agri_connections'), where('senderId', '==', userId));
+    const q2 = query(collection(this.db, 'agri_connections'), where('receiverId', '==', userId));
+
+    let connections1: AgriConnection[] = [];
+    let connections2: AgriConnection[] = [];
+
+    const update = () => {
+      callback([...connections1, ...connections2]);
+    };
+
+    const unsub1 = onSnapshot(q1, (snap) => {
+      connections1 = snap.docs.map(d => ({ ...d.data(), id: d.id })) as AgriConnection[];
+      update();
+    });
+
+    const unsub2 = onSnapshot(q2, (snap) => {
+      connections2 = snap.docs.map(d => ({ ...d.data(), id: d.id })) as AgriConnection[];
+      update();
+    });
+
+    return () => {
+      unsub1();
+      unsub2();
+    };
+  }
+
+  async sendConnectionRequest(senderId: string, receiverId: string) {
+    const newConnection = {
+      senderId,
+      receiverId,
+      status: 'PENDING',
+      createdAt: new Date().toISOString()
+    };
+    await addDoc(collection(this.db, 'agri_connections'), newConnection);
+    
+    await this.addAgriNotification({
+      userId: receiverId,
+      type: 'CONNECTION_REQUEST',
+      actorId: senderId,
+      actorName: 'Someone'
+    });
+  }
+
+  async updateConnectionStatus(connectionId: string, status: 'ACCEPTED' | 'REJECTED' | 'BLOCKED') {
+    const connRef = doc(this.db, 'agri_connections', connectionId);
+    await updateDoc(connRef, { status });
+    
+    if (status === 'ACCEPTED') {
+      const snap = await getDoc(connRef);
+      if (snap.exists()) {
+        const conn = snap.data() as AgriConnection;
+        await this.addAgriNotification({
+          userId: conn.senderId,
+          type: 'CONNECTION_ACCEPTED',
+          actorId: conn.receiverId,
+          actorName: 'Someone'
+        });
+      }
+    }
+  }
+
+  async createAgriConversation(participants: string[]): Promise<string> {
+    const q = query(
+      collection(this.db, 'agri_conversations'),
+      where('participants', 'array-contains-any', participants)
+    );
+    const snap = await getDocs(q);
+    
+    // Check if conversation already exists
+    const existing = snap.docs.find(d => {
+      const p = d.data().participants;
+      return p.length === participants.length && participants.every(id => p.includes(id));
+    });
+
+    if (existing) return existing.id;
+
+    const convRef = await addDoc(collection(this.db, 'agri_conversations'), {
+      participants,
+      lastMessage: '',
+      lastTimestamp: new Date().toISOString(),
+      unreadCount: participants.reduce((acc, id) => ({ ...acc, [id]: 0 }), {})
+    });
+    
+    return convRef.id;
+  }
+
+  async sendAgriMessage(conversationId: string, senderId: string, receiverId: string, text: string, attachments?: { url: string; type: string; name: string; }[]): Promise<string> {
+    const messageData: any = {
+      conversationId,
+      senderId,
+      receiverId,
+      text: text || '',
+      timestamp: new Date().toISOString(),
+      readStatus: false,
+    };
+    if (attachments && attachments.length > 0) {
+      messageData.attachments = attachments;
+    }
+
+    const messageRef = await addDoc(collection(this.db, 'agri_messages'), this.cleanObject(messageData));
+    
+    // Update conversation last message
+    const convRef = doc(this.db, 'agri_conversations', conversationId);
+    await updateDoc(convRef, {
+      lastMessage: text || 'Attachment',
+      lastTimestamp: new Date().toISOString()
+    });
+    
+    return messageRef.id;
+  }
+
+  async markAgriMessageRead(messageId: string): Promise<void> {
+    const msgRef = doc(this.db, 'agri_messages', messageId);
+    await updateDoc(msgRef, { readStatus: true });
+  }
+
+  async getAgriConversations(userId: string): Promise<AgriConversation[]> {
+    const q = query(
+      collection(this.db, 'agri_conversations'),
+      where('participants', 'array-contains', userId)
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ ...d.data(), id: d.id })) as AgriConversation[];
+  }
+
+  async getAgriMessages(conversationId: string): Promise<AgriMessage[]> {
+    const q = query(
+      collection(this.db, 'agri_messages'),
+      where('conversationId', '==', conversationId)
+    );
+    const snap = await getDocs(q);
+    const messages = snap.docs.map(d => ({ ...d.data(), id: d.id })) as AgriMessage[];
+    // Sort client-side to avoid composite index requirement
+    return messages.sort((a, b) => {
+      const timeA = new Date(a.timestamp).getTime();
+      const timeB = new Date(b.timestamp).getTime();
+      return timeA - timeB;
+    });
+  }
+
+  async getAgriTopics(): Promise<AgriTopic[]> {
+    const posts = await this.getAgriPosts();
+    const topicsMap: Record<string, AgriTopic> = {};
+
+    posts.forEach(post => {
+      const tags = post.content.match(/#\w+/g) || [];
+      tags.forEach(tag => {
+        if (!topicsMap[tag]) {
+          topicsMap[tag] = { id: tag, name: tag, postCount: 0, likesCount: 0, commentsCount: 0, sharesCount: 0, score: 0 };
+        }
+        topicsMap[tag].postCount++;
+        topicsMap[tag].likesCount! += post.likes?.length || 0;
+        topicsMap[tag].commentsCount! += post.replies?.length || 0;
+        topicsMap[tag].sharesCount! += post.sharesCount || 0;
+      });
+    });
+
+    const topics = Object.values(topicsMap).map(topic => {
+      // Scoring formula: (posts * 10) + (likes * 2) + (comments * 5) + (shares * 8)
+      topic.score = (topic.postCount * 10) + (topic.likesCount! * 2) + (topic.commentsCount! * 5) + (topic.sharesCount! * 8);
+      return topic;
+    });
+
+    return topics.sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 10);
+  }
+
+  async verifyUser(userId: string, isVerified: boolean) {
+    const userRef = doc(this.db, 'users', userId);
+    await updateDoc(userRef, { isVerified });
+  }
+
+  async getAgriNotifications(userId: string): Promise<AgriNotification[]> {
+    const q = query(
+      collection(this.db, 'agri_notifications'),
+      where('userId', '==', userId)
+    );
+    const snapshot = await getDocs(q);
+    const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AgriNotification));
+    // Sort client-side to avoid composite index requirement
+    return notifications.sort((a, b) => {
+      const timeA = typeof a.timestamp === 'number' ? a.timestamp : new Date(a.timestamp).getTime();
+      const timeB = typeof b.timestamp === 'number' ? b.timestamp : new Date(b.timestamp).getTime();
+      return timeB - timeA; // Descending
+    });
+  }
+
+  async addAgriNotification(notification: Partial<AgriNotification>): Promise<void> {
+    await addDoc(collection(this.db, 'agri_notifications'), {
+      ...notification,
+      timestamp: Date.now(),
+      read: false
+    });
+  }
+
+  async markNotificationRead(notificationId: string): Promise<void> {
+    const docRef = doc(this.db, 'agri_notifications', notificationId);
+    await updateDoc(docRef, { read: true });
+  }
+
+  async banUser(userId: string): Promise<void> {
+    const docRef = doc(this.db, 'users', userId);
+    await updateDoc(docRef, { status: 'BLOCKED' });
+  }
+
+  async getAgriStats(): Promise<AgriFeedStats> {
+    const users = await this.getUsers();
+    const posts = await this.getAgriPosts();
+    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    const postsThisWeek = posts.filter(p => {
+      try {
+        if (!p.timestamp) return false;
+        const date = new Date(p.timestamp);
+        return !isNaN(date.getTime()) && date.getTime() > oneWeekAgo;
+      } catch (e) {
+        return false;
+      }
+    }).length;
+
+    return {
+      totalResearchers: users.length,
+      activeDiscussions: posts.length,
+      postsThisWeek: postsThisWeek,
+      trendingTopics: 5
+    };
+  }
+
+  async getAgriFeed(): Promise<AgriPost[]> {
+    const [userPosts, blogs, news, magazines] = await Promise.all([
+      this.getAgriPosts(),
+      this.getArticles(), // Assuming type 'ARTICLE' can be treated as blog
+      this.getNews(),
+      this.getMagazines()
+    ]);
+
+    const blogPosts: AgriPost[] = blogs.filter(b => b.type === 'BLOG').map(b => ({
+      id: b.id,
+      authorId: b.authorId,
+      authorName: b.authorName,
+      content: b.excerpt || b.title,
+      timestamp: b.submissionDate,
+      likes: [],
+      reposts: [],
+      replies: [],
+      type: 'BLOG',
+      label: 'Blog',
+      authorVerified: true
+    }));
+
+    const newsPosts: AgriPost[] = news.map(n => ({
+      id: n.id,
+      authorId: 'admin',
+      authorName: 'Agrigence News',
+      content: n.description,
+      timestamp: n.date,
+      likes: [],
+      reposts: [],
+      replies: [],
+      type: 'NEWS',
+      label: 'AgriNews',
+      authorVerified: true
+    }));
+
+    const magazinePosts: AgriPost[] = magazines.map(m => ({
+      id: m.id,
+      authorId: 'admin',
+      authorName: 'Agrigence Magazine',
+      content: m.description,
+      timestamp: m.publishDate,
+      likes: [],
+      reposts: [],
+      replies: [],
+      type: 'MAGAZINE',
+      label: 'Magazine',
+      authorVerified: true
+    }));
+
+    return [...userPosts, ...blogPosts, ...newsPosts, ...magazinePosts].sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+  }
+
+  // --- BACKUP ---
+  async backupSite(isAuto = false) {
+    try {
+      const data = {
+        users: await this.getUsers(),
+        articles: await this.getArticles(),
+        products: await this.getProducts(),
+        news: await this.getNews(),
+        magazines: await this.getMagazines(),
+        members: await this.getMembers(),
+        leadership: await this.getLeadership(),
+        plans: await this.getPlans(),
+        payments: await this.getPayments(),
+        coupons: await this.getCoupons(),
+        inquiries: await this.getInquiries(),
+        pages: await this.getPages(),
+        templates: await this.getTemplates(),
+        notifications: await this.getNotifications(),
+        trash: await this.getTrash(),
+        tools: await this.getAllTools(),
+        agriPosts: await this.getAgriPosts(),
+        agriTopics: await this.getAgriTopics(),
+        settings: this.getSettings(),
+        timestamp: new Date().toISOString()
+      };
+      
+      // Replace old backup
+      localStorage.setItem('agrigence_site_backup', JSON.stringify(data));
+      localStorage.setItem('last_auto_backup', new Date().toISOString());
+      
+      if (!isAuto) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `agrigence_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+      return true;
+    } catch (error) {
+      console.error("Backup failed:", error);
+      return false;
+    }
+  }
+
+  private handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+    const errInfo: FirestoreErrorInfo = {
+      error: error instanceof Error ? error.message : String(error),
+      authInfo: {
+        userId: auth.currentUser?.uid,
+        email: auth.currentUser?.email,
+        emailVerified: auth.currentUser?.emailVerified,
+        isAnonymous: auth.currentUser?.isAnonymous,
+        tenantId: auth.currentUser?.tenantId,
+        providerInfo: auth.currentUser?.providerData.map(provider => ({
+          providerId: provider.providerId,
+          displayName: provider.displayName,
+          email: provider.email,
+          photoUrl: provider.photoURL
+        })) || []
+      },
+      operationType,
+      path
+    }
+    console.error('Firestore Error: ', JSON.stringify(errInfo));
+    throw new Error(JSON.stringify(errInfo));
+  }
+
+  // --- TOOL HISTORY ---
+  async saveToolHistory(history: Omit<ToolHistory, 'id'>) {
+    const path = 'tool_history';
+    try {
+      const docRef = await addDoc(collection(this.db, path), {
+        ...history,
+        timestamp: new Date().toISOString()
+      });
+      return docRef.id;
+    } catch (error) {
+      this.handleFirestoreError(error, OperationType.CREATE, path);
+      throw error;
+    }
+  }
+
+  subscribeToToolHistory(userId: string, callback: (history: ToolHistory[]) => void) {
+    const path = 'tool_history';
+    if (!userId) {
+      console.warn("subscribeToToolHistory called with empty userId");
+      return () => {};
+    }
+    const q = query(
+      collection(this.db, path),
+      where('userId', '==', userId)
+    );
+    return onSnapshot(q, (snapshot) => {
+      const history = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ToolHistory));
+      history.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      callback(history);
+    }, (error) => {
+      const debugInfo = {
+        passedUserId: userId,
+        authUid: auth.currentUser?.uid,
+        isMatch: userId === auth.currentUser?.uid
+      };
+      console.error('Tool History Subscription Error Debug:', JSON.stringify(debugInfo));
+      this.handleFirestoreError(error, OperationType.LIST, path);
+    });
+  }
+
+  async getToolHistoryItem(id: string): Promise<ToolHistory | null> {
+    const path = `tool_history/${id}`;
+    try {
+      const docRef = doc(this.db, 'tool_history', id);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as ToolHistory;
+      }
+      return null;
+    } catch (error) {
+      this.handleFirestoreError(error, OperationType.GET, path);
+      throw error;
+    }
+  }
+
+  // --- KEYWORD INTELLIGENCE ---
+  async getKeywords(): Promise<Keyword[]> {
+    return this.getCollectionData<Keyword>('keywords');
+  }
+
+  async addKeyword(keyword: Omit<Keyword, 'id'>): Promise<Keyword> {
+    const docRef = await addDoc(collection(this.db, 'keywords'), keyword);
+    return { id: docRef.id, ...keyword } as Keyword;
+  }
+
+  async updateKeyword(id: string, updates: Partial<Keyword>): Promise<void> {
+    await updateDoc(doc(this.db, 'keywords', id), updates);
+  }
+
+  async deleteKeyword(id: string): Promise<void> {
+    await deleteDoc(doc(this.db, 'keywords', id));
+  }
+
+  async getKeywordClusters(): Promise<KeywordCluster[]> {
+    return this.getCollectionData<KeywordCluster>('keyword_clusters');
+  }
+
+  async addKeywordCluster(cluster: Omit<KeywordCluster, 'id'>): Promise<KeywordCluster> {
+    const docRef = await addDoc(collection(this.db, 'keyword_clusters'), cluster);
+    return { id: docRef.id, ...cluster } as KeywordCluster;
+  }
+
+  async updateKeywordCluster(id: string, updates: Partial<KeywordCluster>): Promise<void> {
+    await updateDoc(doc(this.db, 'keyword_clusters', id), updates);
+  }
+
+  async deleteKeywordCluster(id: string): Promise<void> {
+    await deleteDoc(doc(this.db, 'keyword_clusters', id));
+  }
+
+  async getKeywordPerformance(): Promise<KeywordPerformance[]> {
+    return this.getCollectionData<KeywordPerformance>('keyword_performance');
+  }
+
+  async getTrendingKeywords(): Promise<TrendingKeyword[]> {
+    return this.getCollectionData<TrendingKeyword>('trending_keywords');
+  }
+
+  // --- COOKIE CONSENT MANAGEMENT ---
+  async getCookieSettings(): Promise<CookieSettings> {
+    const path = 'site_identity/cookie_settings';
+    try {
+      const docRef = doc(this.db, 'site_identity', 'cookie_settings');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data() as CookieSettings;
+      }
+      
+      // Default settings if none exist
+      const defaultSettings: CookieSettings = {
+        defaultMode: 'ASK',
+        expiryDays: 180,
+        consentVersion: 1,
+        privacyPolicyUrl: '/privacy-policy',
+        cookiePolicyUrl: '/cookie-policy',
+        categories: [
+          { id: 'essential', name: 'Essential Cookies', description: 'Required for the website to function properly.', isEssential: true, isEnabled: true },
+          { id: 'analytics', name: 'Analytics Cookies', description: 'Help us understand how visitors interact with the website.', isEssential: false, isEnabled: true },
+          { id: 'marketing', name: 'Marketing Cookies', description: 'Used to track visitors across websites to display relevant ads.', isEssential: false, isEnabled: true },
+          { id: 'preferences', name: 'Preference Cookies', description: 'Allow the website to remember choices you make.', isEssential: false, isEnabled: true }
+        ],
+        scripts: []
+      };
+      
+      // Only attempt to save if user is an admin (to avoid permission errors for guests)
+      if (auth.currentUser) {
+        try {
+          const userDoc = await getDoc(doc(this.db, 'users', auth.currentUser.uid));
+          if (userDoc.exists() && (userDoc.data().role === 'SUPER_ADMIN' || userDoc.data().role === 'ADMIN')) {
+            await setDoc(docRef, defaultSettings);
+          }
+        } catch (e) {
+          console.warn("Could not save default cookie settings", e);
+        }
+      }
+      
+      return defaultSettings;
+    } catch (error: any) {
+      if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {
+        console.warn("Could not read cookie settings from backend due to permission denied. Using defaults.");
+        return {
+          defaultMode: 'ASK',
+          expiryDays: 180,
+          consentVersion: 1,
+          privacyPolicyUrl: '/privacy-policy',
+          cookiePolicyUrl: '/cookie-policy',
+          categories: [
+            { id: 'essential', name: 'Essential Cookies', description: 'Required for the website to function properly.', isEssential: true, isEnabled: true },
+            { id: 'analytics', name: 'Analytics Cookies', description: 'Help us understand how visitors interact with the website.', isEssential: false, isEnabled: true },
+            { id: 'marketing', name: 'Marketing Cookies', description: 'Used to track visitors across websites to display relevant ads.', isEssential: false, isEnabled: true },
+            { id: 'preferences', name: 'Preference Cookies', description: 'Allow the website to remember choices you make.', isEssential: false, isEnabled: true }
+          ],
+          scripts: []
+        };
+      }
+      this.handleFirestoreError(error, OperationType.GET, path);
+      throw error;
+    }
+  }
+
+  async updateCookieSettings(settings: CookieSettings): Promise<void> {
+    const path = 'site_identity/cookie_settings';
+    try {
+      await setDoc(doc(this.db, 'site_identity', 'cookie_settings'), settings);
+    } catch (error: any) {
+      if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {
+        console.warn("Could not update cookie settings due to permission denied.");
+        throw new Error("Permission denied. Please ensure you are an Admin or Super Admin and have updated firestore.rules.");
+      }
+      this.handleFirestoreError(error, OperationType.UPDATE, path);
+      throw error;
+    }
+  }
+
+  async saveCookiePreferences(preferences: CookiePreferences): Promise<void> {
+    const path = 'cookie_preferences';
+    try {
+      await addDoc(collection(this.db, 'cookie_preferences'), preferences);
+    } catch (error: any) {
+      // If the user hasn't deployed the updated firestore.rules, this will fail.
+      // We catch it gracefully so it doesn't break the frontend experience.
+      if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {
+        console.warn("Could not save cookie preferences to backend due to permission denied. Please update firestore.rules to allow create on /cookie_preferences/{docId}. Preferences are saved locally.");
+      } else {
+        this.handleFirestoreError(error, OperationType.CREATE, path);
+        throw error;
+      }
+    }
+  }
+
+  async getCookieConsentLogs(): Promise<CookiePreferences[]> {
+    try {
+      return await this.getCollectionData<CookiePreferences>('cookie_preferences');
+    } catch (error: any) {
+      if (error?.code === 'permission-denied' || error?.message?.includes('Missing or insufficient permissions')) {
+        console.warn("Could not read cookie consent logs due to permission denied.");
+        return [];
+      }
+      throw error;
+    }
   }
 }
 

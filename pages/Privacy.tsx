@@ -1,8 +1,13 @@
 import React from 'react';
+import SEO from '../components/SEO';
 
 const Privacy: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-12">
+      <SEO 
+        title="Privacy Policy | Agrigence"
+        description="Read the privacy policy for the Agrigence agricultural intelligence platform."
+      />
       <div className="max-w-4xl mx-auto bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-stone-100">
         <h1 className="text-3xl font-serif font-bold text-agri-darkGreen mb-2">Privacy Policy</h1>
         <p className="text-stone-500 mb-8 text-sm">Last Updated: {new Date().toLocaleDateString()}</p>

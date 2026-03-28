@@ -26,9 +26,17 @@ export interface User {
   articleUsage: number;
   blogLimit?: number | 'UNLIMITED';
   blogUsage: number;
+  adminArticleLimitAdjustment?: number;
+  adminBlogLimitAdjustment?: number;
+  adminEnabledTools?: string[];
+  adminExpiryOverride?: string;
+  userType?: 'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION';
+  limitAdjustmentNotes?: string;
   permissions: UserPermissions;
   avatar?: string;
   profilePhotoUrl?: string;
+  bio?: string;
+  isVerified?: boolean;
   status?: 'ACTIVE' | 'BLOCKED';
   lastLogin?: string;
   joinedDate?: string;
@@ -135,6 +143,25 @@ export interface Category {
   type: 'ARTICLE' | 'BLOG' | 'STORE' | 'NEWS';
 }
 
+export interface Tool {
+  id: string;
+  name: string;
+  description?: string;
+  categoryId: string;
+  route?: string;
+}
+
+export interface ToolCategory {
+  id: string;
+  name: string;
+  sectionId: string;
+}
+
+export interface ToolSection {
+  id: string;
+  name: string;
+}
+
 export interface EmailTemplate {
   id: string;
   name: string;
@@ -177,11 +204,94 @@ export interface PopupSettings {
   buttonLink?: string;
 }
 
-export interface GatewayConfig {
-  provider_name: 'razorpay';
-  key_id: string;
-  key_secret: string; // Only set on update, not returned fully on read for security
-  is_live: boolean;
+
+
+export type KeywordCategory = 'HIGH_VOLUME' | 'CROP_SPECIFIC' | 'PROBLEM_BASED' | 'LOCATION_BASED' | 'GOVERNMENT_SCHEME' | 'LONG_TAIL';
+export type KeywordPriority = 'HIGH' | 'MEDIUM' | 'LOW';
+
+export interface AIQuestionAnswer {
+  question: string;
+  answer: string;
+}
+
+export interface Keyword {
+  id: string;
+  term: string;
+  category: KeywordCategory;
+  subCategory?: string;
+  priority: KeywordPriority;
+  searchVolume: number;
+  difficulty: number;
+  aiOptimized: boolean;
+  aiQA?: AIQuestionAnswer;
+  synonyms: string[];
+  relatedQueries: string[];
+  mappedArticles: string[];
+  autoInsert: boolean;
+  densityTarget?: number; // e.g., 1.5 for 1.5%
+}
+
+export interface KeywordCluster {
+  id: string;
+  mainTopic: string;
+  subtopics: string[]; // Keyword IDs or terms
+  targetUrl?: string;
+}
+
+export interface KeywordPerformance {
+  keywordId: string;
+  term: string;
+  ranking: number;
+  searchVolume: number;
+  ctr: number;
+  traffic: number;
+  trend: 'UP' | 'DOWN' | 'STABLE';
+}
+
+export interface TrendingKeyword {
+  id: string;
+  term: string;
+  searchVolume: number;
+  growthPercentage: number;
+  category: string;
+}
+
+export interface CookieCategory {
+  id: string; // 'essential', 'analytics', 'marketing', 'preferences'
+  name: string;
+  description: string;
+  isEssential: boolean;
+  isEnabled: boolean;
+}
+
+export interface CookieScript {
+  id: string;
+  categoryId: string;
+  name: string;
+  scriptContent: string;
+  isSrc: boolean;
+}
+
+export interface CookieSettings {
+  defaultMode: 'ACCEPT_ALL' | 'REJECT_ALL' | 'ASK';
+  expiryDays: number;
+  consentVersion: number;
+  privacyPolicyUrl: string;
+  cookiePolicyUrl: string;
+  categories: CookieCategory[];
+  scripts: CookieScript[];
+}
+
+export interface CookiePreferences {
+  id?: string;
+  userId?: string | null;
+  essential: boolean;
+  analytics: boolean;
+  marketing: boolean;
+  preferences: boolean;
+  consentVersion: number;
+  timestamp: string;
+  ipAddress?: string;
 }
 
 export interface SiteSettings {
@@ -206,7 +316,7 @@ export interface SiteSettings {
   navigation: NavigationItem[];
   homepageLayout: HomepageSection[];
   seo: SEOSettings;
-  paymentGateway?: GatewayConfig;
+  paymentGateway?: any;
 }
 
 export type DownloadAccessLevel = 'FREE' | 'SUBSCRIBERS_ONLY';
@@ -219,12 +329,36 @@ export interface Reference {
   type: 'JOURNAL' | 'BOOK' | 'WEB' | 'UNKNOWN';
 }
 
+export type Recommendation = 'A' | 'MR' | 'MJ' | 'R';
+
+export interface Review {
+  id: string;
+  manuscriptId: string;
+  reviewerId: string;
+  commentsToAuthor: string;
+  commentsToEditor: string;
+  recommendation: Recommendation | null;
+  status: 'draft' | 'submitted';
+  lastSavedAt: string;
+  submittedAt?: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  actionType: 'draft_saved' | 'review_submitted' | 'login' | 'logout';
+  actorId: string;
+  manuscriptId?: string;
+  timestamp: string;
+  ipAddress?: string;
+  details?: string;
+}
+
 export interface ReviewAssignment {
   id: string;
   articleId: string;
   reviewerId: string;
   reviewerName: string;
-  status: 'PENDING' | 'UNDER_REVIEW' | 'REVIEWED';
+  status: 'PENDING' | 'UNDER_REVIEW' | 'REVIEWED' | 'ACCEPTED' | 'REJECTED';
   assignedAt: string;
   assignedBy: string;
   startedAt?: string;
@@ -247,6 +381,9 @@ export type ReviewStatus =
   | 'under_admin_check' 
   | 'assigned_for_review' 
   | 'under_review' 
+  | 'DraftSaved'
+  | 'Submitted'
+  | 'EditorQueue'
   | 'review_completed' 
   | 'admin_verified' 
   | 'final_decision' 
@@ -266,13 +403,15 @@ export interface Article {
   excerpt?: string;
   featuredImage?: string;
   submissionDate: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | 'PENDING' | 'REJECTED' | 'APPROVED';
+  status: 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | 'PENDING' | 'REJECTED' | 'APPROVED' | 'Pending' | 'Under Review' | 'Approved' | 'Published' | 'Rejected';
   review_status?: ReviewStatus; // New Granular Status
   views?: number;
   fileUrl?: string;
   downloadAccess: DownloadAccessLevel;
   type: 'ARTICLE' | 'BLOG';
   isFeatured?: boolean;
+  category?: string;
+  abstract?: string;
   seoTitle?: string;
   metaDescription?: string;
   
@@ -305,6 +444,8 @@ export interface Magazine {
   month: string;
   year: number;
   coverImage: string;
+  coverUrl?: string;
+  issue?: string;
   pdfUrl: string;
   description: string;
   status: 'DRAFT' | 'PUBLISHED';
@@ -330,7 +471,7 @@ export interface EditorialMember {
   id: string;
   name: string;
   designation: string;
-  qualification: string;
+  profession: string;
   expertise: string;
   email?: string;
   imageUrl: string;
@@ -370,6 +511,7 @@ export interface Product {
   description: string;
   stockStatus: 'IN_STOCK' | 'OUT_OF_STOCK';
   featured?: boolean;
+  isDigital?: boolean;
   seoTitle?: string;
   metaDescription?: string;
   referenceLink?: string;
@@ -378,16 +520,18 @@ export interface Product {
 export interface SubscriptionPlan {
   id: string;
   name: string;
-  type: 'ARTICLE_ACCESS' | 'BLOG_ACCESS' | 'COMBO_ACCESS';
+  type: 'ARTICLE_ACCESS' | 'BLOG_ACCESS' | 'COMBO_ACCESS' | 'TOOL_ACCESS';
   price: number;
   durationMonths: number;
   description: string;
   features: string[];
   isActive: boolean;
   isRecommended?: boolean;
+  is_research_enabled?: boolean;
   articleLimit?: number | 'UNLIMITED';
   blogLimit?: number | 'UNLIMITED';
   validityLabel: string;
+  allowedTools?: string[];
 }
 
 export interface PaymentRecord {
@@ -397,13 +541,12 @@ export interface PaymentRecord {
   planId: string;
   planName: string;
   amount: number;
-  method: 'QR' | 'RAZORPAY' | 'INTERNATIONAL';
+  method: 'QR' | 'INTERNATIONAL' | 'ONLINE';
   status: 'PENDING' | 'COMPLETED' | 'FAILED';
   date: string;
   upiTxnId?: string;
+  txnId?: string;
   screenshotUrl?: string;
-  razorpayOrderId?: string;
-  razorpayPaymentId?: string;
   sessionId?: string;
   displayCurrency?: string;
   displayAmount?: number;
@@ -418,6 +561,101 @@ export interface Coupon {
   expiryDate: string;
   isActive: boolean;
   usageCount: number;
+}
+
+// AgriFeed Types
+export interface AgriPost {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  authorField?: string;
+  authorVerified?: boolean;
+  content: string;
+  attachments?: {
+    url: string;
+    type: 'IMAGE' | 'PDF' | 'DOC' | 'DATA';
+    name: string;
+  }[];
+  timestamp: string;
+  likes: string[]; // Array of user IDs
+  reposts: string[]; // Array of user IDs
+  upvotes?: string[]; // Array of user IDs for research questions
+  sharesCount?: number;
+  replies: AgriComment[];
+  type: 'POST' | 'DISCUSSION' | 'BLOG' | 'NEWS' | 'MAGAZINE' | 'POLL' | 'RESEARCH_QUESTION' | 'FARMER_PROBLEM';
+  label?: string; // e.g., "Blog", "AgriNews", "Magazine"
+  pollOptions?: { id: string; text: string; votes: string[] }[];
+}
+
+export interface AgriComment {
+  id: string;
+  postId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  content: string;
+  timestamp: string;
+  likes: string[];
+}
+
+export interface AgriConnection {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'BLOCKED';
+  createdAt: string;
+}
+
+export interface AgriConversation {
+  id: string;
+  participants: string[]; // User IDs
+  lastMessage?: string;
+  lastTimestamp?: string;
+  unreadCount: Record<string, number>; // userId -> count
+}
+
+export interface AgriMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  receiverId: string;
+  text: string;
+  timestamp: string;
+  readStatus: boolean;
+  attachments?: {
+    url: string;
+    type: string;
+    name: string;
+  }[];
+}
+
+export interface AgriTopic {
+  id: string;
+  name: string;
+  postCount: number;
+  likesCount?: number;
+  commentsCount?: number;
+  sharesCount?: number;
+  score?: number; // Calculated trending score
+}
+
+export interface AgriNotification {
+  id: string;
+  userId: string;
+  type: 'LIKE' | 'REPOST' | 'REPLY' | 'CONNECTION_REQUEST' | 'CONNECTION_ACCEPTED' | 'MESSAGE';
+  actorId: string;
+  actorName: string;
+  postId?: string;
+  timestamp: string | number;
+  read: boolean;
+}
+
+export interface AgriFeedStats {
+  totalResearchers: number;
+  postsThisWeek: number;
+  activeDiscussions: number;
+  trendingTopics: number;
 }
 
 export interface AdminLog {
@@ -435,10 +673,21 @@ export interface Feedback {
   userName: string;
   userAvatar?: string;
   userOccupation?: string;
+  userRole?: string;
   rating: number;
   comment: string;
   date: string;
   status: 'APPROVED' | 'PENDING' | 'HIDDEN';
+}
+
+export interface UserFieldData {
+  id: string;
+  user_id: string;
+  dataset_name: string;
+  variables: string[];
+  data: Record<string, any>[];
+  created_at: string;
+  is_temporary?: boolean;
 }
 
 // Enterprise Publishing Types
@@ -474,8 +723,41 @@ export interface OAIRecord {
   }
 }
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
+export interface ToolHistory {
+  id: string;
+  userId: string;
+  toolName: string;
+  timestamp: string;
+  status: 'SUCCESS' | 'FAILED';
+  inputData: any;
+  outputData: any;
 }
+
+export interface WebsiteVisitor {
+  id: string;
+  visitor_id: string;
+  ip_address: string;
+  country: string;
+  state: string;
+  city: string;
+  latitude: number;
+  longitude: number;
+  device_type: string;
+  os: string;
+  browser: string;
+  screen_resolution: string;
+  isp: string;
+  referrer: string;
+  landing_page: string;
+  pages_visited: number;
+  session_id: string;
+  visit_duration: number;
+  first_visit: string;
+  last_visit: string;
+  created_at: string;
+  is_bot: boolean;
+  traffic_source: string;
+  page_views: { path: string; timestamp: string }[];
+}
+
+

@@ -4,7 +4,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../App';
 import Logo from './Logo';
 import { 
-  LogOut, Menu, X, FileText, MessageSquare, User, PenTool
+  LogOut, Menu, X, FileText, MessageSquare, User, PenTool, Home
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -20,6 +20,7 @@ export const ReviewerLayout: React.FC = () => {
   };
 
   const menuItems = [
+    { label: 'Home', path: '/', icon: Home },
     { label: 'Assigned Articles', path: '/reviewer', icon: FileText },
     { label: 'My Reviews', path: '/reviewer/history', icon: PenTool }, // Could just filter on main page
     // { label: 'Messages', path: '/reviewer/messages', icon: MessageSquare }, // Could be integrated
@@ -46,7 +47,7 @@ export const ReviewerLayout: React.FC = () => {
       >
         <div className="p-6 flex items-center justify-between border-b border-stone-100 h-20 shrink-0">
             <div className="flex items-center gap-3">
-               <span className="font-serif font-bold text-xl tracking-tight text-agri-primary">Agrigence</span>
+               <Logo className="h-8 w-auto" showText={true} />
                <span className="text-[10px] font-black uppercase bg-agri-secondary/10 text-agri-secondary px-2 py-1 rounded">Reviewer</span>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-stone-400 hover:text-black">

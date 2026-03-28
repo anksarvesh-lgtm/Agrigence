@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
 import { Article } from '../types';
-import { Loader2, ArrowLeft, Calendar, Clock, Share2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Calendar, Clock, Share2, FileText } from 'lucide-react';
 
 const BlogView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -78,15 +78,37 @@ const BlogView: React.FC = () => {
 
         {/* 
            Content Render 
-           - '!whitespace-pre-wrap' forces newlines/spaces preservation, overriding resets
            - 'prose' handles the HTML tags (b, i, h2, ul)
+           - Jodit Editor handles the rest
         */}
         <div 
-          className="prose prose-stone prose-lg max-w-none font-serif text-stone-700 leading-relaxed !whitespace-pre-wrap"
-          style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }} 
-          dangerouslySetInnerHTML={{ __html: article.content || '<p>No content available.</p>' }}
+          className="prose prose-stone prose-lg max-w-none font-serif text-stone-700 leading-relaxed"
+          style={{ wordWrap: 'break-word' }} 
+          dangerouslySetInnerHTML={{ __html: article.content || (article.fileUrl ? '<p>This blog post was submitted as a document. Please download it below to read the full content.</p>' : '<p>No content available.</p>') }}
         >
         </div>
+
+        {article.fileUrl && (
+          <div className="mt-12 p-8 bg-stone-50 rounded-[2rem] border border-stone-200 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-agri-secondary/10 rounded-2xl flex items-center justify-center text-agri-secondary">
+                <FileText size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-agri-primary">Full Document Available</p>
+                <p className="text-[10px] text-stone-400 uppercase font-black tracking-widest">Manuscript Submission</p>
+              </div>
+            </div>
+            <a 
+              href={article.fileUrl} 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-agri-secondary text-white px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg hover:bg-agri-primary transition-all flex items-center gap-2"
+            >
+              <ArrowLeft className="rotate-90" size={14} /> Download Manuscript
+            </a>
+          </div>
+        )}
 
         <div className="mt-16 pt-8 border-t border-stone-200 flex justify-between items-center">
            <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Share this article</p>

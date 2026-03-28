@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../services/mockBackend';
 import { Article, EditorialMember, NewsItem, Product } from '../types';
-import { Plus, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, XCircle, Edit2 } from 'lucide-react';
 
 const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'articles' | 'news' | 'journals' | 'members' | 'products'>('articles');
@@ -46,17 +46,35 @@ const Admin: React.FC = () => {
   };
 
   // Member Management (Simplified)
-  const [newMember, setNewMember] = useState({ name: '', designation: '', expertise: '' });
+  const [newMember, setNewMember] = useState({ name: '', designation: '', expertise: '', profession: '', institution: '' });
+  const [editingMember, setEditingMember] = useState<EditorialMember | null>(null);
+
   const handleAddMember = async () => {
      if(!newMember.name) return;
      await mockBackend.addMember({
         ...newMember,
-        qualification: 'PhD',
-        institution: 'Zura Haradhan, Chandauli, Uttar Pradesh, 221115',
-        imageUrl: `https://picsum.photos/200/200?random=${Math.random()}`
-     });
+        profession: newMember.profession || 'Professor',
+        institution: newMember.institution || 'H.N.130, JUDAHARADHAN BHAG-1, Juda haradhan, P.S.-Baluwa, Tahshil-Sakaldiha, Dist.- Chandauli, Uttar Pradesh, India , 221115',
+        imageUrl: `https://picsum.photos/200/200?random=${Math.random()}`,
+        order: members.length + 1,
+        isEnabled: true
+     } as any);
      setMembers(await mockBackend.getMembers());
-     setNewMember({ name: '', designation: '', expertise: '' });
+     setNewMember({ name: '', designation: '', expertise: '', profession: '', institution: '' });
+  };
+
+  const handleDeleteMember = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this member?')) {
+      await mockBackend.deleteMember(id);
+      setMembers(await mockBackend.getMembers());
+    }
+  };
+
+  const handleUpdateMember = async () => {
+    if (!editingMember || !editingMember.name) return;
+    await mockBackend.updateMember(editingMember);
+    setMembers(await mockBackend.getMembers());
+    setEditingMember(null);
   };
 
   // Product Management
@@ -154,22 +172,49 @@ const Admin: React.FC = () => {
       {/* MEMBERS TAB */}
       {activeTab === 'members' && (
         <div>
-           <div className="bg-stone-50 p-4 rounded-lg mb-6 border border-stone-200">
-            <h3 className="font-bold mb-3">Add Board Member</h3>
-            <div className="grid grid-cols-3 gap-2 mb-2">
-              <input className="p-2 rounded border" placeholder="Name" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
-              <input className="p-2 rounded border" placeholder="Designation" value={newMember.designation} onChange={e => setNewMember({...newMember, designation: e.target.value})} />
-              <input className="p-2 rounded border" placeholder="Expertise" value={newMember.expertise} onChange={e => setNewMember({...newMember, expertise: e.target.value})} />
+           {editingMember ? (
+             <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
+                <h3 className="font-bold mb-3 text-blue-800">Edit Board Member</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                  <input className="p-2 rounded border" placeholder="Name" value={editingMember.name} onChange={e => setEditingMember({...editingMember, name: e.target.value})} />
+                  <input className="p-2 rounded border" placeholder="Designation" value={editingMember.designation} onChange={e => setEditingMember({...editingMember, designation: e.target.value})} />
+                  <input className="p-2 rounded border" placeholder="Expertise" value={editingMember.expertise} onChange={e => setEditingMember({...editingMember, expertise: e.target.value})} />
+                  <input className="p-2 rounded border" placeholder="Profession" value={editingMember.profession} onChange={e => setEditingMember({...editingMember, profession: e.target.value})} />
+                  <input className="p-2 rounded border md:col-span-2" placeholder="Institution" value={editingMember.institution} onChange={e => setEditingMember({...editingMember, institution: e.target.value})} />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={handleUpdateMember} className="bg-blue-600 text-white px-4 py-2 rounded text-sm">Save Changes</button>
+                  <button onClick={() => setEditingMember(null)} className="bg-stone-200 text-stone-700 px-4 py-2 rounded text-sm">Cancel</button>
+                </div>
+             </div>
+           ) : (
+             <div className="bg-stone-50 p-4 rounded-lg mb-6 border border-stone-200">
+              <h3 className="font-bold mb-3">Add Board Member</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                <input className="p-2 rounded border" placeholder="Name" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
+                <input className="p-2 rounded border" placeholder="Designation" value={newMember.designation} onChange={e => setNewMember({...newMember, designation: e.target.value})} />
+                <input className="p-2 rounded border" placeholder="Expertise" value={newMember.expertise} onChange={e => setNewMember({...newMember, expertise: e.target.value})} />
+                <input className="p-2 rounded border" placeholder="Profession" value={newMember.profession} onChange={e => setNewMember({...newMember, profession: e.target.value})} />
+                <input className="p-2 rounded border md:col-span-2" placeholder="Institution" value={newMember.institution} onChange={e => setNewMember({...newMember, institution: e.target.value})} />
+              </div>
+              <button onClick={handleAddMember} className="bg-agri-green text-white px-4 py-2 rounded text-sm">Add Member</button>
             </div>
-            <button onClick={handleAddMember} className="bg-agri-green text-white px-4 py-2 rounded text-sm">Add Member</button>
-          </div>
+           )}
+          
           <div className="grid md:grid-cols-2 gap-4">
              {members.map(m => (
-               <div key={m.id} className="bg-white p-4 border rounded flex items-center gap-3">
-                  <img src={m.imageUrl} className="w-12 h-12 rounded-full" />
-                  <div>
-                    <p className="font-bold">{m.name}</p>
-                    <p className="text-xs text-stone-500">{m.designation}</p>
+               <div key={m.id} className="bg-white p-4 border rounded flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <img src={m.imageUrl} className="w-12 h-12 rounded-full object-cover" alt={m.name} />
+                    <div>
+                      <p className="font-bold">{m.name}</p>
+                      <p className="text-xs text-stone-500">{m.designation} • {m.profession}</p>
+                      <p className="text-[10px] text-stone-400 truncate max-w-[200px]">{m.institution}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setEditingMember(m)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-full" title="Edit"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDeleteMember(m.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-full" title="Delete"><Trash2 size={16} /></button>
                   </div>
                </div>
              ))}

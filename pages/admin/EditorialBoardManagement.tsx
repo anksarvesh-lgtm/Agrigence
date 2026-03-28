@@ -99,7 +99,7 @@ const EditorialBoardManagement: React.FC = () => {
              
              <div className="space-y-4 mb-8">
                 <div className="flex items-start gap-3 text-xs text-gray-500">
-                   <Award size={16} className="shrink-0 text-agri-secondary" /> <span className="line-clamp-1">{member.qualification}</span>
+                   <Award size={16} className="shrink-0 text-agri-secondary" /> <span className="line-clamp-1">{member.profession}</span>
                 </div>
                 <div className="flex items-start gap-3 text-xs text-gray-500">
                    <MapPin size={16} className="shrink-0 text-agri-secondary" /> <span className="line-clamp-1">{member.institution}</span>
@@ -207,8 +207,8 @@ const EditorialBoardManagement: React.FC = () => {
 
                        <div className="grid md:grid-cols-3 gap-6">
                           <div>
-                             <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Qualification</label>
-                             <input className="w-full bg-white border border-gray-300 rounded-2xl p-4 text-gray-900 outline-none focus:border-agri-secondary text-xs" placeholder="e.g. Ph.D." value={editingMember.qualification || ''} onChange={e => setEditingMember({...editingMember, qualification: e.target.value})} />
+                             <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Profession</label>
+                             <input className="w-full bg-white border border-gray-300 rounded-2xl p-4 text-gray-900 outline-none focus:border-agri-secondary text-xs" placeholder="e.g. Professor" value={editingMember.profession || ''} onChange={e => setEditingMember({...editingMember, profession: e.target.value})} />
                           </div>
                           <div>
                              <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Experience (Years)</label>

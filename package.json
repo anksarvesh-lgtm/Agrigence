@@ -1,21 +1,37 @@
-
 {
   "name": "agrigence-journal",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "tsx server.ts",
+    "start": "node server.ts",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@google/genai": "^1.42.0",
+    "@types/express": "^5.0.6",
+    "date-fns": "^4.1.0",
+    "express": "^5.2.1",
+    "firebase": "^10.8.1",
+    "framer-motion": "^11.0.8",
+    "jodit-react": "^5.3.21",
+    "jspdf": "^4.2.0",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-react": "^0.344.0",
+    "ml-matrix": "^6.12.1",
+    "ml-pca": "^4.1.1",
+    "razorpay": "^2.9.6",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-helmet-async": "^3.0.0",
     "react-router-dom": "^6.22.3",
-    "framer-motion": "^11.0.8",
-    "lucide-react": "^0.344.0",
-    "firebase": "^10.8.1"
+    "recharts": "^3.7.0",
+    "simple-statistics": "^7.8.8",
+    "tsx": "^4.21.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",

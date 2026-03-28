@@ -5,6 +5,8 @@ import { BookOpen } from 'lucide-react';
 import PDFAction from '../components/PDFAction';
 import { motion } from 'framer-motion';
 import { Magazine, Article } from '../types';
+import OptimizedImage from '../components/OptimizedImage';
+import SEO from '../components/SEO';
 
 const Journals: React.FC = () => {
   const [journals, setJournals] = useState<Magazine[]>([]);
@@ -34,26 +36,39 @@ const Journals: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-agri-bg">
+      <SEO 
+        title="Journal Archive & Publications | Agrigence"
+        description="Access our complete repository of peer-reviewed agricultural research, monthly magazines, and scientific publications."
+      />
       
       {/* Header */}
-      <div className="bg-[#0F392B] text-white py-16 px-6 relative overflow-hidden">
-         {/* Background Image */}
+      <section className="relative h-[50vh] flex items-center bg-agri-primary text-white overflow-hidden mb-16">
          <div className="absolute inset-0">
-            <img 
+            <OptimizedImage 
               src="https://images.unsplash.com/photo-1507413245164-6160d8298b31?q=80&w=2070&auto=format&fit=crop" 
-              alt="Library Archive" 
-              className="w-full h-full object-cover opacity-20"
+              alt="Agricultural research journals and library archive" 
+              title="Agrigence Journal Archive"
+              className="w-full h-full object-cover"
+              priority={true}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0F392B] to-[#0F392B]/90"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-stone-900 via-stone-900/80 to-transparent z-10"></div>
          </div>
 
-         <div className="container mx-auto relative z-10">
-            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-4">Journal Archive</h1>
-            <p className="text-xl text-stone-300 font-light max-w-2xl">Access our complete repository of peer-reviewed agricultural research and monthly magazines.</p>
+         <div className="container mx-auto px-6 relative z-30">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="h-px w-12 bg-agri-secondary"></span>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-agri-secondary">Publications</span>
+            </div>
+            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-[1.1] text-white">
+              Journal Archive
+            </h1>
+            <p className="text-lg text-white/80 font-light leading-relaxed max-w-xl">
+              Access our complete repository of peer-reviewed agricultural research and monthly magazines.
+            </p>
          </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-6 py-16">
+      <div className="container mx-auto px-6 pb-24">
         
         {/* Magazines Grid */}
         <section className="mb-20">
@@ -71,7 +86,7 @@ const Journals: React.FC = () => {
                  className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-premium transition-all group flex flex-col"
                >
                  <div className="h-64 bg-stone-200 overflow-hidden relative">
-                   <img src={journal.coverImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Cover" />
+                   <OptimizedImage src={journal.coverImage} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt={journal.title} />
                    <div className="absolute inset-0 bg-gradient-to-t from-[#0F392B]/90 to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
                    <div className="absolute bottom-6 right-6">
                       <PDFAction 

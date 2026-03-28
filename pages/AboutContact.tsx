@@ -4,6 +4,8 @@ import { Mail, Phone, MapPin, CheckCircle, Globe, Users, BookOpen, Mic, ArrowRig
 import { mockBackend } from '../services/mockBackend';
 import { motion } from 'framer-motion';
 import { LeadershipMember } from '../types';
+import OptimizedImage from '../components/OptimizedImage';
+import SEO from '../components/SEO';
 
 const AboutContact: React.FC = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
@@ -29,21 +31,42 @@ const AboutContact: React.FC = () => {
 
   return (
     <div className="bg-agri-bg min-h-screen">
+      <SEO 
+        title="About Us & Contact | Agrigence"
+        description="Learn about Agrigence, our mission, leadership, and how to get in touch with our team."
+      />
       
       {/* Hero Section */}
-      <section className="relative py-24 bg-agri-primary overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1625246333195-58197bdc0700?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-10"></div>
-        <div className="container mx-auto px-6 relative z-10 text-center">
-           <motion.div
-             initial={{ opacity: 0, y: 30 }}
-             animate={{ opacity: 1, y: 0 }}
-             transition={{ duration: 0.8 }}
-           >
-             <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6">About Agrigence</h1>
-             <p className="text-xl text-stone-200 max-w-3xl mx-auto font-light leading-relaxed">
-               Bridging the gap between agricultural research, innovation, and practical field application to foster a sustainable future for India.
-             </p>
-           </motion.div>
+      <section className="relative h-[50vh] flex items-center bg-agri-primary text-white overflow-hidden mb-16">
+        <div className="absolute inset-0">
+           <OptimizedImage 
+             src="https://images.unsplash.com/photo-1625246333195-58197bdc0700?auto=format&fit=crop&q=80" 
+             alt="Agrigence team and agricultural fields" 
+             title="About Agrigence"
+             className="w-full h-full object-cover"
+             priority={true}
+           />
+           <div className="absolute inset-0 bg-gradient-to-r from-stone-900 via-stone-900/80 to-transparent z-10"></div>
+        </div>
+
+        <div className="container mx-auto px-6 relative z-30">
+          <motion.div 
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="max-w-3xl"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <span className="h-px w-12 bg-agri-secondary"></span>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-agri-secondary">Our Story</span>
+            </div>
+            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-[1.1] text-white">
+              About Agrigence
+            </h1>
+            <p className="text-lg text-white/80 font-light leading-relaxed max-w-xl">
+              Bridging the gap between agricultural research, innovation, and practical field application to foster a sustainable future for India.
+            </p>
+          </motion.div>
         </div>
       </section>
 
@@ -200,7 +223,7 @@ const AboutContact: React.FC = () => {
                         </div>
                         <div>
                            <h4 className="font-bold text-xl mb-1">Office</h4>
-                           <p className="text-white/60">Zura Haradhan, Chandauli, Uttar Pradesh, 221115</p>
+                           <p className="text-white/60">H.N.130, JUDAHARADHAN BHAG-1, Juda haradhan, P.S.-Baluwa, Tahshil-Sakaldiha, Dist.- Chandauli, Uttar Pradesh, India , 221115</p>
                         </div>
                      </div>
                   </div>

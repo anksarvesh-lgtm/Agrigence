@@ -1,29 +1,66 @@
 
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
-import { User, Role, EditorialRole } from '../../types';
-import { Search, Edit, Trash2, Shield, Lock, Unlock, UserPlus, X, Globe, Smartphone, BookOpen } from 'lucide-react';
+import { User, Role, EditorialRole, Tool, SubscriptionPlan } from '../../types';
+import { Search, Edit, Trash2, Shield, Lock, Unlock, UserPlus, X, Globe, Smartphone, BookOpen, Activity, Plus, Minus, FileText, PenTool, Clock, Gift } from 'lucide-react';
 import { useConfirm } from '../../components/ContextualConfirm';
+import { useAuth } from '../../App';
 
 const UserManagement: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
+  
+  // Limit Adjustment States
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
+  const [selectedUserForLimits, setSelectedUserForLimits] = useState<User | null>(null);
+  const [allTools, setAllTools] = useState<Tool[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [selectedGiftPlanId, setSelectedGiftPlanId] = useState<string>('');
+  const [limitForm, setLimitForm] = useState({
+    articleAdjustment: 0,
+    blogAdjustment: 0,
+    notes: '',
+    adminEnabledTools: [] as string[],
+    adminExpiryOverride: '' as string,
+    userType: 'INDIVIDUAL' as 'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION'
+  });
+  const [isSavingLimits, setIsSavingLimits] = useState(false);
+
   const { confirm } = useConfirm();
 
   useEffect(() => {
     loadUsers();
+    loadTools();
+    loadPlans();
   }, []);
 
   const loadUsers = async () => {
     setUsers([...(await mockBackend.getUsers())]);
   };
 
+  const loadTools = async () => {
+    const tools = await mockBackend.getAllTools();
+    setAllTools(tools);
+  };
+
+  const loadPlans = async () => {
+    const p = await mockBackend.getPlans();
+    setPlans(p);
+  };
+
+  const filteredUsers = users.filter(u => 
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleSaveUser = async () => {
     if (!editingUser?.email || !editingUser?.name) return;
 
     if (editingUser.id) {
-      await mockBackend.updateUser(editingUser as User);
+      await mockBackend.updateUser(editingUser.id, editingUser);
     } else {
       await mockBackend.register(editingUser as User);
     }
@@ -47,28 +84,85 @@ const UserManagement: React.FC = () => {
 
   const handleToggleBlock = async (user: User) => {
     const newStatus = user.status === 'BLOCKED' ? 'ACTIVE' : 'BLOCKED';
-    await mockBackend.updateUser({ ...user, status: newStatus });
+    await mockBackend.updateUser(user.id, { status: newStatus });
     loadUsers();
   };
+
+  const openLimitModal = (user: User) => {
+    setSelectedUserForLimits(user);
+    setLimitForm({
+      articleAdjustment: user.adminArticleLimitAdjustment || 0,
+      blogAdjustment: user.adminBlogLimitAdjustment || 0,
+      notes: user.limitAdjustmentNotes || '',
+      adminEnabledTools: user.adminEnabledTools || [],
+      adminExpiryOverride: user.adminExpiryOverride || '',
+      userType: user.userType || 'INDIVIDUAL'
+    });
+    setIsLimitModalOpen(true);
+  };
+
+  const handleGiftPlan = async () => {
+    if (!selectedUserForLimits || !selectedGiftPlanId) return;
+    const isConfirmed = await confirm({
+      message: `Are you sure you want to gift this plan to ${selectedUserForLimits.name}? This will update their subscription immediately.`,
+      type: 'default'
+    });
+
+    if (isConfirmed) {
+      setIsSavingLimits(true);
+      try {
+        await mockBackend.adminGrantPlan(selectedUserForLimits.id, selectedGiftPlanId);
+        setIsLimitModalOpen(false);
+        loadUsers();
+        alert("Plan gifted successfully!");
+      } catch (err) {
+        console.error(err);
+        alert("Failed to gift plan");
+      } finally {
+        setIsSavingLimits(false);
+      }
+    }
+  };
+
+  const handleSaveLimits = async () => {
+    if (!selectedUserForLimits) return;
+    setIsSavingLimits(true);
+    try {
+      await mockBackend.updateUserLimitAdjustment(selectedUserForLimits.id, limitForm);
+      setIsLimitModalOpen(false);
+      loadUsers();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update limits");
+    } finally {
+      setIsSavingLimits(false);
+    }
+  };
+
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <h1 className="text-2xl font-bold text-admin-text">User Management</h1>
-        <button 
-          onClick={() => { setEditingUser({}); setIsModalOpen(true); }}
-          className="bg-agri-secondary hover:bg-agri-primary text-white px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all font-bold text-sm shadow-md"
-        >
-          <UserPlus size={18} /> Add User
-        </button>
+        {isSuperAdmin && (
+          <button 
+            onClick={() => { setEditingUser({}); setIsModalOpen(true); }}
+            className="bg-agri-secondary hover:bg-agri-primary text-white px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all font-bold text-sm shadow-md"
+          >
+            <UserPlus size={18} /> Add User
+          </button>
+        )}
       </div>
 
       <div className="bg-admin-panel border border-admin-border rounded-2xl overflow-hidden shadow-admin">
         <div className="p-4 border-b border-admin-border flex items-center gap-3 bg-white">
           <Search className="text-admin-muted" size={20} />
           <input 
-            placeholder="Search users..." 
+            placeholder="Search users by name or email..." 
             className="bg-transparent border-none focus:outline-none text-admin-text w-full placeholder:text-admin-muted"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="overflow-x-auto">
@@ -76,7 +170,7 @@ const UserManagement: React.FC = () => {
             <thead className="bg-admin-header text-admin-text text-xs uppercase tracking-wider font-bold">
               <tr>
                 <th className="p-4">User</th>
-                <th className="p-4">Location & Contact</th>
+                <th className="p-4">Plan & Limits</th>
                 <th className="p-4">Role</th>
                 <th className="p-4">Status</th>
                 <th className="p-4">Last Login</th>
@@ -84,7 +178,7 @@ const UserManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-admin-border text-sm text-admin-text">
-              {users.map(user => (
+              {filteredUsers.map(user => (
                 <tr key={user.id} className="odd:bg-white even:bg-admin-rowEven hover:bg-admin-hover transition-colors">
                   <td className="p-4">
                     <div className="flex items-center gap-3">
@@ -97,17 +191,17 @@ const UserManagement: React.FC = () => {
                   </td>
                   <td className="p-4">
                     <div className="space-y-1">
-                        {user.country && (
-                            <div className="flex items-center gap-2 text-xs text-admin-secondary font-medium">
-                                <Globe size={12} className="text-admin-muted" /> {user.country}
+                        <div className="flex items-center gap-2 text-xs font-bold text-admin-text">
+                            <span className="text-agri-secondary">{user.subscriptionTier || 'Free'}</span>
+                        </div>
+                        <div className="flex gap-3 mt-1">
+                            <div className="flex items-center gap-1 text-[10px] text-admin-secondary">
+                                <FileText size={10} /> {user.articleLimit === 'UNLIMITED' ? '∞' : (Number(user.articleLimit) || 0) + (user.adminArticleLimitAdjustment || 0)}
                             </div>
-                        )}
-                        {user.mobileNumber && (
-                            <div className="flex items-center gap-2 text-xs text-admin-secondary font-medium">
-                                <Smartphone size={12} className="text-admin-muted" /> {user.mobileNumber}
+                            <div className="flex items-center gap-1 text-[10px] text-admin-secondary">
+                                <PenTool size={10} /> {user.blogLimit === 'UNLIMITED' ? '∞' : (Number(user.blogLimit) || 0) + (user.adminBlogLimitAdjustment || 0)}
                             </div>
-                        )}
-                        {!user.country && !user.mobileNumber && <span className="text-admin-muted text-xs italic">Not Provided</span>}
+                        </div>
                     </div>
                   </td>
                   <td className="p-4">
@@ -137,15 +231,26 @@ const UserManagement: React.FC = () => {
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => handleToggleBlock(user)} className="p-2 hover:bg-white border border-transparent hover:border-admin-border rounded-lg text-admin-muted hover:text-admin-text transition-all shadow-sm" title={user.status === 'BLOCKED' ? "Unblock" : "Block"}>
-                        {user.status === 'BLOCKED' ? <Unlock size={16} /> : <Lock size={16} />}
+                      <button 
+                        onClick={() => openLimitModal(user)} 
+                        className="p-2 hover:bg-agri-secondary/10 rounded-lg text-agri-secondary transition-all shadow-sm" 
+                        title="Manage Limits"
+                      >
+                        <Activity size={16} />
                       </button>
-                      <button onClick={() => { setEditingUser(user); setIsModalOpen(true); }} className="p-2 hover:bg-blue-50 rounded-lg text-admin-muted hover:text-blue-600 transition-colors">
-                        <Edit size={16} />
-                      </button>
-                      <button onClick={(e) => handleDelete(user.id, e)} className="p-2 hover:bg-red-50 rounded-lg text-admin-muted hover:text-red-600 transition-colors">
-                        <Trash2 size={16} />
-                      </button>
+                      {isSuperAdmin && (
+                        <>
+                          <button onClick={() => handleToggleBlock(user)} className="p-2 hover:bg-white border border-transparent hover:border-admin-border rounded-lg text-admin-muted hover:text-admin-text transition-all shadow-sm" title={user.status === 'BLOCKED' ? "Unblock" : "Block"}>
+                            {user.status === 'BLOCKED' ? <Unlock size={16} /> : <Lock size={16} />}
+                          </button>
+                          <button onClick={() => { setEditingUser(user); setIsModalOpen(true); }} className="p-2 hover:bg-blue-50 rounded-lg text-admin-muted hover:text-blue-600 transition-colors">
+                            <Edit size={16} />
+                          </button>
+                          <button onClick={(e) => handleDelete(user.id, e)} className="p-2 hover:bg-red-50 rounded-lg text-admin-muted hover:text-red-600 transition-colors">
+                            <Trash2 size={16} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -155,8 +260,183 @@ const UserManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
+      {/* Limit Management Modal */}
+      {isLimitModalOpen && selectedUserForLimits && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-admin-border rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-6 border-b border-admin-border flex justify-between items-center bg-admin-header">
+              <div>
+                <h3 className="text-xl font-bold text-admin-text">Manage User Limits</h3>
+                <p className="text-xs text-admin-secondary mt-1">{selectedUserForLimits.name} ({selectedUserForLimits.email})</p>
+              </div>
+              <button onClick={() => setIsLimitModalOpen(false)}><X className="text-admin-muted hover:text-admin-text transition-colors" /></button>
+            </div>
+            
+            <div className="p-6 space-y-6 overflow-y-auto max-h-[60vh] custom-scrollbar">
+              {/* Plan Info */}
+              <div className="bg-stone-50 rounded-xl p-4 border border-stone-100">
+                <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2">Current Plan Details</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-bold text-agri-primary">{selectedUserForLimits.subscriptionTier || 'Free Tier'}</span>
+                  <div className="flex gap-4">
+                    <div className="text-center">
+                      <p className="text-[9px] font-bold text-stone-400 uppercase">Plan Article</p>
+                      <p className="text-xs font-black">{selectedUserForLimits.articleLimit === 'UNLIMITED' ? '∞' : selectedUserForLimits.articleLimit || 0}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[9px] font-bold text-stone-400 uppercase">Plan Blog</p>
+                      <p className="text-xs font-black">{selectedUserForLimits.blogLimit === 'UNLIMITED' ? '∞' : selectedUserForLimits.blogLimit || 0}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gift Plan Section */}
+              <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+                <label className="block text-xs font-bold text-purple-800 mb-2 uppercase tracking-wide flex items-center gap-2">
+                  <Gift size={14} /> Gift Subscription Plan
+                </label>
+                <div className="flex gap-2">
+                  <select 
+                    className="flex-1 bg-white border border-purple-200 rounded-lg p-2 text-sm text-admin-text focus:border-purple-500 outline-none"
+                    value={selectedGiftPlanId}
+                    onChange={e => setSelectedGiftPlanId(e.target.value)}
+                  >
+                    <option value="">Select a plan to gift...</option>
+                    {plans.map(p => (
+                      <option key={p.id} value={p.id}>{p.name} ({p.durationMonths} Months)</option>
+                    ))}
+                  </select>
+                  <button 
+                    onClick={handleGiftPlan}
+                    disabled={!selectedGiftPlanId || isSavingLimits}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Gift Plan
+                  </button>
+                </div>
+                <p className="text-[10px] text-purple-600 mt-2 italic">
+                  This will immediately update the user's subscription tier, limits, and expiry date.
+                </p>
+              </div>
+
+              {/* Adjustments */}
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-admin-secondary mb-2 uppercase tracking-wide flex items-center gap-2">
+                      <FileText size={14} /> Extra Articles
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="number"
+                        className="w-full bg-white border border-admin-border rounded-lg p-2 text-center font-bold text-admin-text focus:border-agri-secondary outline-none"
+                        value={limitForm.articleAdjustment}
+                        onChange={e => setLimitForm(prev => ({ ...prev, articleAdjustment: parseInt(e.target.value) || 0 }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-admin-secondary mb-2 uppercase tracking-wide flex items-center gap-2">
+                      <PenTool size={14} /> Extra Blogs
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="number"
+                        className="w-full bg-white border border-admin-border rounded-lg p-2 text-center font-bold text-admin-text focus:border-agri-secondary outline-none"
+                        value={limitForm.blogAdjustment}
+                        onChange={e => setLimitForm(prev => ({ ...prev, blogAdjustment: parseInt(e.target.value) || 0 }))}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-admin-secondary mb-2 uppercase tracking-wide flex items-center gap-2">
+                    <Globe size={14} /> Account Type
+                  </label>
+                  <select 
+                    className="w-full bg-white border border-admin-border rounded-lg p-3 text-admin-text focus:border-agri-secondary outline-none font-bold text-sm"
+                    value={limitForm.userType}
+                    onChange={e => setLimitForm(prev => ({ ...prev, userType: e.target.value as any }))}
+                  >
+                    <option value="INDIVIDUAL">Individual</option>
+                    <option value="INSTITUTE">Institute</option>
+                    <option value="ORGANISATION">Organisation</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-admin-secondary mb-2 uppercase tracking-wide flex items-center gap-2">
+                    <Clock size={14} /> Expiry Override
+                  </label>
+                  <input 
+                    type="date"
+                    className="w-full bg-white border border-admin-border rounded-lg p-3 text-admin-text focus:border-agri-secondary outline-none font-bold text-sm"
+                    value={limitForm.adminExpiryOverride}
+                    onChange={e => setLimitForm(prev => ({ ...prev, adminExpiryOverride: e.target.value }))}
+                  />
+                  <p className="text-[10px] text-admin-muted mt-1 italic">Leave empty to use plan default expiry</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-admin-secondary mb-3 uppercase tracking-wide flex items-center gap-2">
+                    <Shield size={14} /> Admin Enabled Tools
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 bg-stone-50 p-4 rounded-xl border border-stone-100">
+                    {allTools.map(tool => (
+                      <label key={tool.id} className="flex items-center gap-2 cursor-pointer group">
+                        <input 
+                          type="checkbox"
+                          className="rounded border-stone-300 text-agri-secondary focus:ring-agri-secondary"
+                          checked={limitForm.adminEnabledTools.includes(tool.id)}
+                          onChange={e => {
+                            const tools = e.target.checked 
+                              ? [...limitForm.adminEnabledTools, tool.id]
+                              : limitForm.adminEnabledTools.filter(id => id !== tool.id);
+                            setLimitForm(prev => ({ ...prev, adminEnabledTools: tools }));
+                          }}
+                        />
+                        <span className="text-[10px] font-bold text-stone-600 group-hover:text-agri-primary transition-colors">{tool.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-admin-secondary mb-1 uppercase tracking-wide">Adjustment Notes</label>
+                  <textarea 
+                    className="w-full bg-white border border-admin-border rounded-lg p-3 text-admin-text focus:border-agri-secondary outline-none h-20 resize-none text-sm"
+                    placeholder="Reason for adjustment..."
+                    value={limitForm.notes}
+                    onChange={e => setLimitForm(prev => ({ ...prev, notes: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-admin-border flex justify-end gap-3 bg-admin-bg">
+              <button 
+                onClick={() => setIsLimitModalOpen(false)} 
+                className="px-4 py-2 text-admin-secondary hover:text-admin-text font-bold text-sm"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSaveLimits} 
+                disabled={isSavingLimits}
+                className="bg-agri-secondary hover:bg-agri-primary text-white px-6 py-2 rounded-xl font-bold shadow-lg transition-all text-sm flex items-center gap-2"
+              >
+                {isSavingLimits ? 'Saving...' : 'Save Adjustments'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Edit Modal (Super Admin Only) */}
+      {isModalOpen && isSuperAdmin && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-admin-border rounded-2xl w-full max-w-lg shadow-2xl">
             <div className="p-6 border-b border-admin-border flex justify-between items-center bg-admin-header rounded-t-2xl">

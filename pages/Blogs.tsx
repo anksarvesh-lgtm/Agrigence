@@ -5,6 +5,8 @@ import { Article } from '../types';
 import { motion } from 'framer-motion';
 import { User, Calendar, ArrowRight, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import OptimizedImage from '../components/OptimizedImage';
+import SEO from '../components/SEO';
 
 const Blogs: React.FC = () => {
   const [blogs, setBlogs] = useState<Article[]>([]);
@@ -32,29 +34,39 @@ const Blogs: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-agri-bg">
+      <SEO 
+        title="Research & Knowledge Blog | Agrigence"
+        description="Read the latest agricultural research articles, opinions, and field reports from our expert community."
+      />
       
       {/* Header */}
-      <div className="bg-[#0F392B] text-white py-16 px-6 relative overflow-hidden">
+      <section className="relative h-[50vh] flex items-center bg-agri-primary text-white overflow-hidden mb-16">
          <div className="absolute inset-0">
-            <img 
+            <OptimizedImage 
               src="https://images.unsplash.com/photo-1595841696677-6489ff3f8cd1?q=80&w=2070&auto=format&fit=crop" 
-              alt="Blogs Header" 
-              className="w-full h-full object-cover opacity-30"
+              alt="Agricultural research and knowledge sharing" 
+              title="Agrigence Research Blog"
+              className="w-full h-full object-cover"
+              priority={true}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0F392B] to-[#0F392B]/80"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-stone-900 via-stone-900/80 to-transparent z-10"></div>
          </div>
 
-         <div className="container mx-auto relative z-10">
-            <div className="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm border border-white/10 mb-6">
-                 <BookOpen size={16} className="text-agri-secondary" />
-                 <span className="text-xs font-bold tracking-widest uppercase">Expert Insights</span>
+         <div className="container mx-auto px-6 relative z-30">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="h-px w-12 bg-agri-secondary"></span>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-agri-secondary">Expert Insights</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4">Agrigence Blog</h1>
-            <p className="text-xl text-stone-300 font-light max-w-2xl">Read the latest articles, opinions, and field reports from our expert community.</p>
+            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-[1.1] text-white">
+              Research & Knowledge
+            </h1>
+            <p className="text-lg text-white/80 font-light leading-relaxed max-w-xl">
+              Read the latest articles, opinions, and field reports from our expert community.
+            </p>
          </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-6 py-16">
+      <div className="container mx-auto px-6 pb-24">
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
             {blogs.map((blog, idx) => (
               <motion.div 
@@ -66,10 +78,10 @@ const Blogs: React.FC = () => {
                 onClick={() => navigate(`/blog/${blog.id}`)}
               >
                  <div className="h-56 relative overflow-hidden">
-                    <img 
+                    <OptimizedImage 
                       src={blog.featuredImage || `https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=800`} 
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                      alt="" 
+                      alt={blog.title} 
                     />
                     <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest text-agri-primary shadow-sm">
                        {new Date(blog.submissionDate).toLocaleDateString()}
@@ -87,7 +99,7 @@ const Blogs: React.FC = () => {
                     </div>
 
                     <p className="text-stone-600 text-sm leading-relaxed mb-8 line-clamp-3 flex-1">
-                       {blog.excerpt || blog.content.substring(0, 150)}...
+                       {blog.excerpt || (blog.content ? blog.content.replace(/<[^>]*>/g, '').substring(0, 150) : (blog.fileUrl ? 'This blog post was submitted as a document. Click to read more.' : 'No content available.'))}
                     </p>
 
                     <div className="flex items-center justify-between">

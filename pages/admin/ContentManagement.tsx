@@ -1,11 +1,12 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../App';
 import { mockBackend } from '../../services/mockBackend';
 import { Magazine, Article } from '../../types';
 import { FileText, BookOpen, Plus, X, Upload, Save, FileCheck, Image as ImageIcon, Trash2, Globe, Star, Calendar, Bookmark, File, Loader2, Bold, Italic, Underline, Heading1, Heading2, List, Eye, Edit3, AlertTriangle, ShieldCheck, Activity } from 'lucide-react';
 import { useConfirm } from '../../components/ContextualConfirm';
+import JoditEditor from 'jodit-react';
 
 const ContentManagement: React.FC = () => {
   const location = useLocation();
@@ -22,9 +23,9 @@ const ContentManagement: React.FC = () => {
   
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl font-bold text-admin-text">Content Repository</h1>
-        <div className="flex bg-white rounded-xl p-1 border border-admin-border shadow-sm">
+        <div className="flex flex-wrap bg-white rounded-xl p-1 border border-admin-border shadow-sm">
             <button onClick={() => setActiveTab('articles')} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'articles' ? 'bg-agri-secondary text-white' : 'text-admin-secondary hover:bg-admin-hover'}`}>Articles</button>
             <button onClick={() => setActiveTab('blogs')} className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'blogs' ? 'bg-agri-secondary text-white' : 'text-admin-secondary hover:bg-admin-hover'}`}>Blogs</button>
             {isSuperAdmin && (
@@ -46,7 +47,10 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
     const [editingArticle, setEditingArticle] = useState<Partial<Article>>({});
     const [isUploading, setIsUploading] = useState(false);
     const [showPreview, setShowPreview] = useState(false);
-    const editorRef = useRef<HTMLTextAreaElement>(null);
+    const [strictWordMode, setStrictWordMode] = useState(true);
+    const [defaultFont, setDefaultFont] = useState('Arial, Helvetica, sans-serif');
+    const [defaultFontSize, setDefaultFontSize] = useState('14px');
+    const editorRef = useRef(null);
     const { confirm } = useConfirm();
 
     useEffect(() => {
@@ -94,30 +98,6 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
             setIsUploading(false);
         }
       }
-    };
-
-    // Text formatting helper
-    const insertTag = (startTag: string, endTag: string = '') => {
-        const textarea = editorRef.current;
-        if (!textarea) return;
-
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const text = textarea.value;
-        
-        const before = text.substring(0, start);
-        const selection = text.substring(start, end);
-        const after = text.substring(end);
-
-        const newText = before + startTag + selection + (endTag || startTag.replace('<', '</')) + after;
-        
-        setEditingArticle({ ...editingArticle, content: newText });
-        
-        // Restore focus
-        setTimeout(() => {
-            textarea.focus();
-            textarea.setSelectionRange(start + startTag.length, end + startTag.length);
-        }, 0);
     };
 
     return (
@@ -230,40 +210,88 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
                                     <label className="text-[10px] uppercase font-bold text-admin-secondary block tracking-widest">
                                         Content Body (HTML Supported)
                                     </label>
-                                    <button 
-                                        onClick={() => setShowPreview(!showPreview)}
-                                        className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border transition-all ${showPreview ? 'bg-agri-secondary text-white border-agri-secondary' : 'bg-white text-admin-secondary border-admin-border'}`}
-                                    >
-                                        {showPreview ? <><Edit3 size={12}/> Edit Mode</> : <><Eye size={12}/> Live Preview</>}
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {isSuperAdmin && (
+                                            <div className="flex items-center gap-2 bg-admin-hover px-3 py-1 rounded-lg border border-admin-border text-[10px] font-bold text-admin-secondary">
+                                                <label className="flex items-center gap-1 cursor-pointer">
+                                                    <input type="checkbox" checked={strictWordMode} onChange={e => setStrictWordMode(e.target.checked)} className="rounded text-agri-secondary focus:ring-agri-secondary" />
+                                                    Strict Word Paste
+                                                </label>
+                                                <div className="w-px h-3 bg-admin-border mx-1"></div>
+                                                <select value={defaultFont} onChange={e => setDefaultFont(e.target.value)} className="bg-transparent outline-none cursor-pointer">
+                                                    <option value="Arial, Helvetica, sans-serif">Arial</option>
+                                                    <option value="'Times New Roman', Times, serif">Times New Roman</option>
+                                                    <option value="'Courier New', Courier, monospace">Courier New</option>
+                                                    <option value="'Plus Jakarta Sans', sans-serif">Plus Jakarta Sans</option>
+                                                    <option value="'Playfair Display', serif">Playfair Display</option>
+                                                </select>
+                                                <div className="w-px h-3 bg-admin-border mx-1"></div>
+                                                <select value={defaultFontSize} onChange={e => setDefaultFontSize(e.target.value)} className="bg-transparent outline-none cursor-pointer">
+                                                    <option value="12px">12px</option>
+                                                    <option value="14px">14px</option>
+                                                    <option value="16px">16px</option>
+                                                    <option value="18px">18px</option>
+                                                </select>
+                                            </div>
+                                        )}
+                                        <button 
+                                            onClick={() => setShowPreview(!showPreview)}
+                                            className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border transition-all ${showPreview ? 'bg-agri-secondary text-white border-agri-secondary' : 'bg-white text-admin-secondary border-admin-border'}`}
+                                        >
+                                            {showPreview ? <><Edit3 size={12}/> Edit Mode</> : <><Eye size={12}/> Live Preview</>}
+                                        </button>
+                                    </div>
                                   </div>
                                   
                                   <div className="bg-white border border-admin-inputBorder rounded-2xl overflow-hidden relative shadow-inner">
                                      {!showPreview ? (
-                                        <>
-                                            <div className="flex gap-1 p-2 bg-admin-header border-b border-admin-border">
-                                                <button onClick={() => insertTag('<b>', '</b>')} className="p-2 text-admin-secondary hover:bg-white hover:shadow-sm rounded" title="Bold"><Bold size={14}/></button>
-                                                <button onClick={() => insertTag('<i>', '</i>')} className="p-2 text-admin-secondary hover:bg-white hover:shadow-sm rounded" title="Italic"><Italic size={14}/></button>
-                                                <button onClick={() => insertTag('<u>', '</u>')} className="p-2 text-admin-secondary hover:bg-white hover:shadow-sm rounded" title="Underline"><Underline size={14}/></button>
-                                                <div className="w-px bg-admin-border mx-1"></div>
-                                                <button onClick={() => insertTag('<h2>', '</h2>')} className="p-2 text-admin-secondary hover:bg-white hover:shadow-sm rounded" title="Heading 2"><Heading1 size={14}/></button>
-                                                <button onClick={() => insertTag('<h3>', '</h3>')} className="p-2 text-admin-secondary hover:bg-white hover:shadow-sm rounded" title="Heading 3"><Heading2 size={14}/></button>
-                                                <button onClick={() => insertTag('<ul>\n<li>', '</li>\n</ul>')} className="p-2 text-admin-secondary hover:bg-white hover:shadow-sm rounded" title="List"><List size={14}/></button>
-                                                <div className="w-px bg-admin-border mx-1"></div>
-                                                <button onClick={() => insertTag('<br/>')} className="p-2 text-admin-secondary hover:bg-white hover:shadow-sm rounded text-[10px] font-bold px-3">BR</button>
-                                            </div>
-                                            <textarea 
-                                                ref={editorRef}
-                                                className="w-full bg-white p-4 text-admin-text outline-none h-96 text-sm font-mono leading-relaxed resize-none" 
-                                                value={editingArticle.content || ''} 
-                                                onChange={e => setEditingArticle({...editingArticle, content: e.target.value})} 
-                                                placeholder="Write here... Use 'Enter' for new lines. HTML tags like <b>, <h2> supported."
-                                            />
-                                        </>
+                                        <JoditEditor
+                                            ref={editorRef as any}
+                                            value={editingArticle.content || ''}
+                                            config={{
+                                                readonly: false,
+                                                placeholder: 'Write here... Paste from Word supported.',
+                                                height: 600,
+                                                uploader: {
+                                                    insertImageAsBase64URI: true
+                                                },
+                                                askBeforePasteHTML: false,
+                                                askBeforePasteFromWord: false,
+                                                defaultActionOnPaste: strictWordMode ? 'insert_as_html' : 'insert_clear_html',
+                                                cleanHTML: {
+                                                    fillEmptyParagraph: true,
+                                                    removeEmptyElements: false,
+                                                    replaceNBSP: false,
+                                                    removeOnError: true,
+                                                    denyTags: 'script,applet,embed,object'
+                                                },
+                                                style: {
+                                                    fontFamily: defaultFont,
+                                                    fontSize: defaultFontSize
+                                                },
+                                                buttons: [
+                                                    'source', '|',
+                                                    'bold', 'strikethrough', 'underline', 'italic', '|',
+                                                    'superscript', 'subscript', '|',
+                                                    'ul', 'ol', '|',
+                                                    'outdent', 'indent', '|',
+                                                    'font', 'fontsize', 'brush', 'paragraph', '|',
+                                                    'image', 'table', 'link', '|',
+                                                    'align', 'undo', 'redo', '|',
+                                                    'hr', 'eraser', 'copyformat', 'fullsize'
+                                                ],
+                                                removeButtons: [],
+                                                showXPathInStatusbar: false,
+                                                showCharsCounter: false,
+                                                showWordsCounter: false,
+                                                toolbarAdaptive: false
+                                            }}
+                                            onChange={newContent => setEditingArticle({...editingArticle, content: newContent})}
+                                        />
                                      ) : (
-                                        <div className="w-full bg-white p-6 h-[430px] overflow-y-auto">
+                                        <div className="w-full bg-white p-6 h-[600px] overflow-y-auto">
                                             <div 
-                                                className="prose prose-stone prose-sm max-w-none font-serif text-stone-700 whitespace-pre-wrap"
+                                                className="prose prose-stone prose-sm max-w-none font-serif text-stone-700"
                                                 dangerouslySetInnerHTML={{ __html: editingArticle.content || '<p>Start writing to see preview...</p>' }}
                                             />
                                         </div>

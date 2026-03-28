@@ -43,7 +43,7 @@ const PopupManager: React.FC = () => {
 
   return (
     <div className="space-y-8 max-w-4xl">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm gap-4">
         <div>
           <h1 className="text-2xl font-bold text-black">Announcement Popup</h1>
           <p className="text-stone-500 text-xs mt-1 uppercase tracking-widest font-bold">Manage system-wide alerts</p>
@@ -51,7 +51,7 @@ const PopupManager: React.FC = () => {
         <button 
           onClick={handleSave} 
           disabled={isSaving}
-          className="bg-agri-secondary text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 disabled:opacity-50"
+          className="bg-agri-secondary text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:scale-105 transition-transform active:scale-95 disabled:opacity-50 w-full md:w-auto justify-center"
         >
            <Save size={18} /> {isSaving ? 'SYNCING...' : 'SAVE POPUP'}
         </button>

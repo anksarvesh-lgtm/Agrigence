@@ -7,7 +7,7 @@ import {
   Settings, LogOut, Menu, X, Image, CreditCard,
   Rss, Award, Newspaper, Tag, ShieldCheck, Megaphone,
   Navigation, Layout as LayoutIcon, Globe, Mail, MessageSquare, Files, Sliders, Trash2,
-  Activity, FolderOpen, Crown, Layers, PenTool
+  Activity, FolderOpen, Crown, Layers, PenTool, Home, BrainCircuit
 } from 'lucide-react';
 import Logo from '../components/Logo';
 
@@ -51,6 +51,7 @@ const AdminLayout: React.FC = () => {
     // SuperAdmin sees EVERYTHING
     menuItems = [
       { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+      { label: 'Web Intelligence', path: '/admin/web-intelligence', icon: Activity },
       { label: 'All Submissions', path: '/admin/submissions', icon: FolderOpen },
       { label: 'Status Tracker', path: '/admin/tracker', icon: Activity },
       { label: 'Users', path: '/admin/users', icon: Users },
@@ -72,6 +73,8 @@ const AdminLayout: React.FC = () => {
       { label: 'Layout', path: '/admin/layout', icon: LayoutIcon },
       { label: 'Popup Manager', path: '/admin/popup', icon: Layers },
       { label: 'SEO Settings', path: '/admin/seo', icon: Globe },
+      { label: 'Keyword Intel', path: '/admin/keywords', icon: BrainCircuit },
+      { label: 'Cookie Manager', path: '/admin/cookies', icon: ShieldCheck },
       { label: 'Media Library', path: '/admin/media', icon: Image },
       { label: 'Trash', path: '/admin/trash', icon: Trash2 },
       { label: 'Settings', path: '/admin/settings', icon: Sliders },
@@ -80,11 +83,13 @@ const AdminLayout: React.FC = () => {
     // Admin: Operational Role Only
     menuItems = [
       { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+      { label: 'Web Intelligence', path: '/admin/web-intelligence', icon: Activity },
       { label: 'Submissions', path: '/admin/submissions', icon: FolderOpen }, // Verify & Assign
       { label: 'Payments', path: '/admin/payments', icon: ShieldCheck }, // Approve Payments
       { label: 'Inquiries', path: '/admin/inquiries', icon: MessageSquare }, // Reply to messages
       { label: 'News', path: '/admin/news', icon: Newspaper }, // Publish News
       { label: 'Blogs', path: '/admin/blogs', icon: Rss }, // Publish Blogs
+      { label: 'Leadership', path: '/admin/leadership', icon: Crown }, // Manage Leadership
       { label: 'Notifications', path: '/admin/broadcast', icon: Megaphone }, // Send alerts
     ];
   }
@@ -115,15 +120,14 @@ const AdminLayout: React.FC = () => {
           ${isSidebarOpen ? 'w-72 translate-x-0' : 'w-72 -translate-x-full lg:translate-x-0 lg:w-20'}
         `}
       >
-        <div className="p-6 flex items-center justify-between border-b border-admin-border h-20 shrink-0 bg-admin-sidebar">
+        <div className="p-6 flex items-center justify-between border-b border-admin-border h-24 shrink-0 bg-admin-sidebar">
           {(isSidebarOpen || isMobile) ? (
             <div className="flex items-center gap-3 animate-in fade-in duration-300">
-               <Logo variant="dark" className="h-8 w-auto" />
-               <span className="font-serif font-bold text-xl tracking-tight text-admin-text">Agrigence</span>
+               <Logo variant="dark" className="h-12 w-auto" showText={true} />
             </div>
           ) : (
-             <div className="w-8 h-8 flex items-center justify-center mx-auto">
-                <Logo variant="dark" className="h-8 w-8" />
+             <div className="w-12 h-12 flex items-center justify-center mx-auto">
+                <Logo variant="dark" className="h-12 w-12" />
              </div>
           )}
           {isMobile && (
@@ -191,6 +195,9 @@ const AdminLayout: React.FC = () => {
              >
                {isSidebarOpen && !isMobile ? <X size={20} /> : <Menu size={20} />}
              </button>
+             <Link to="/" className="text-admin-secondary p-2 hover:bg-admin-hover rounded-lg transition-colors" title="Go to Home">
+                <Home size={20} />
+             </Link>
              <h2 className="text-xl font-serif font-bold text-black capitalize tracking-wide truncate max-w-[200px] md:max-w-none">
                 {location.pathname.split('/').pop()?.replace(/-/g, ' ')}
              </h2>

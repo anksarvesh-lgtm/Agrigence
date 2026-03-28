@@ -4,6 +4,8 @@ import { mockBackend } from '../services/mockBackend';
 import { ShoppingBag, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Product } from '../types';
+import OptimizedImage from '../components/OptimizedImage';
+import SEO from '../components/SEO';
 
 const Products: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -48,25 +50,39 @@ const Products: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-agri-bg">
+      <SEO 
+        title="Agri Store & Resources | Agrigence"
+        description="Curated agricultural resources, books, and equipment for the modern agriculturist."
+      />
+
       {/* Header */}
-      <div className="bg-[#0F392B] text-white py-16 px-6 relative overflow-hidden">
-         {/* Background Image */}
+      <section className="relative h-[50vh] flex items-center bg-agri-primary text-white overflow-hidden mb-16">
          <div className="absolute inset-0">
-            <img 
+            <OptimizedImage 
               src="https://images.unsplash.com/photo-1474447976065-67d23accb1e3?q=80&w=2085&auto=format&fit=crop" 
-              alt="Harvest Market" 
-              className="w-full h-full object-cover opacity-20"
+              alt="Agricultural harvest and resources" 
+              title="Agrigence Store"
+              className="w-full h-full object-cover"
+              priority={true}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0F392B] to-[#0F392B]/80"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-stone-900 via-stone-900/80 to-transparent z-10"></div>
          </div>
 
-         <div className="container mx-auto text-center relative z-10">
-            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4">Agri Store</h1>
-            <p className="text-xl text-stone-300 font-light">Curated resources, books, and equipment for the modern agriculturist.</p>
+         <div className="container mx-auto px-6 relative z-30">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="h-px w-12 bg-agri-secondary"></span>
+              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-agri-secondary">Marketplace</span>
+            </div>
+            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-[1.1] text-white">
+              Agri Store
+            </h1>
+            <p className="text-lg text-white/80 font-light leading-relaxed max-w-xl">
+              Curated resources, books, and equipment for the modern agriculturist.
+            </p>
          </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-6 py-16">
+      <div className="container mx-auto px-6 pb-24">
         
         {/* Books Section */}
         {books.length > 0 && (

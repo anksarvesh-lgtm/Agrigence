@@ -6,6 +6,7 @@ import { getMetaFile, updateMetaStatus, deleteMetaFile, SubmissionMeta } from '.
 import { Download, Eye, Search, Filter, FileText, Check, X, AlertCircle, Loader2, Save, Trash2, UserPlus, ShieldAlert, Activity, ArrowRight, CornerUpRight, RotateCcw } from 'lucide-react';
 import { sendNotification } from '../notifications/service';
 import { User, Article, PlagiarismReport, ReviewStatus } from '../../types';
+import { useConfirm } from '../../components/ContextualConfirm';
 
 interface CombinedSubmission {
   articleId: string;
@@ -27,6 +28,7 @@ const SubmissionAdminPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const { confirm } = useConfirm();
   
   // Editing State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -44,47 +46,69 @@ const SubmissionAdminPanel: React.FC = () => {
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
 
   useEffect(() => {
-    loadData();
+    let unsubArticles: (() => void) | null = null;
+
+    const init = async () => {
+        const users: User[] = await mockBackend.getUsers();
+        const userMap = new Map(users.map(u => [u.id, u]));
+        setReviewers(users.filter(u => u.role === 'EDITORIAL_MEMBER'));
+
+        unsubArticles = mockBackend.subscribeToArticles(async (articles) => {
+            const combined: CombinedSubmission[] = [];
+
+            for (const art of articles) {
+                const meta = await getMetaFile(art);
+                const author = userMap.get(art.authorId);
+                const assignments = art.reviewAssignments?.map(a => a.reviewerId) || [];
+                
+                let displayStatus: SubmissionMeta['status'] = 'Pending';
+                const rawStatus = art.status || (meta ? meta.status : 'Pending');
+                if (rawStatus.toUpperCase() === 'PENDING') displayStatus = 'Pending';
+                else if (rawStatus.toUpperCase() === 'APPROVED') displayStatus = 'Approved';
+                else if (rawStatus.toUpperCase() === 'REJECTED') displayStatus = 'Rejected';
+                else if (rawStatus.toUpperCase() === 'PUBLISHED') displayStatus = 'Published';
+                else if (rawStatus.toUpperCase() === 'UNDER REVIEW') displayStatus = 'Under Review';
+                else displayStatus = rawStatus as any;
+
+                combined.push({
+                    articleId: art.id,
+                    title: art.title,
+                    fileUrl: art.fileUrl || '#',
+                    submittedAt: art.submissionDate,
+                    authorName: art.authorName,
+                    authorEmail: author?.email || 'Unknown Source',
+                    status: displayStatus, 
+                    review_status: art.review_status,
+                    remarks: meta ? meta.remarks : '',
+                    assignedReviewers: assignments,
+                    plagiarismReport: art.plagiarismReport
+                });
+            }
+            
+            combined.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+            setSubmissions(combined);
+            setLoading(false);
+        });
+    };
+
+    init();
+
+    return () => {
+        if (unsubArticles) unsubArticles();
+    };
   }, []);
 
   const loadData = async () => {
-    const articles = await mockBackend.getArticles();
-    const users: User[] = await mockBackend.getUsers();
-    const userMap = new Map(users.map(u => [u.id, u]));
-    
-    setReviewers(users.filter(u => u.role === 'EDITORIAL_MEMBER'));
-
-    const combined: CombinedSubmission[] = [];
-
-    for (const art of articles) {
-      const meta = await getMetaFile(art);
-      const author = userMap.get(art.authorId);
-      const assignments = art.reviewAssignments?.map(a => a.reviewerId) || [];
-      
-      combined.push({
-        articleId: art.id,
-        title: art.title,
-        fileUrl: art.fileUrl || '#',
-        submittedAt: art.submissionDate,
-        authorName: art.authorName,
-        authorEmail: author?.email || 'Unknown Source',
-        status: meta ? meta.status : 'Pending', 
-        review_status: art.review_status,
-        remarks: meta ? meta.remarks : '',
-        assignedReviewers: assignments,
-        plagiarismReport: art.plagiarismReport
-      });
-    }
-    
-    combined.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-    setSubmissions(combined);
-    setLoading(false);
+    // This is now handled by the real-time subscription in useEffect
   };
 
   const handleStatusUpdate = async (id: string) => {
+     const sub = submissions.find(s => s.articleId === id);
      await updateMetaStatus(id, tempStatus, tempRemarks);
      
-     // Sync workflow status if approved/rejected directly
+     // Sync BOTH status and workflow status to Firestore
+     await mockBackend.updateArticleStatus(id, tempStatus as any);
+
      if (tempStatus === 'Approved') {
          await mockBackend.updateWorkflowStatus(id, 'admin_verified');
      } else if (tempStatus === 'Published') {
@@ -93,26 +117,21 @@ const SubmissionAdminPanel: React.FC = () => {
          await mockBackend.updateWorkflowStatus(id, 'rejected');
      }
 
-     setSubmissions(prev => prev.map(sub => {
-        if (sub.articleId === id) {
-            sendNotification('STATUS_UPDATE', {
-                email: sub.authorEmail,
-                title: sub.title,
-                status: tempStatus,
-                remarks: tempRemarks
-            });
-            return { ...sub, status: tempStatus, remarks: tempRemarks };
-        }
-        return sub;
-     }));
+     if (sub) {
+        sendNotification('STATUS_UPDATE', {
+            email: sub.authorEmail,
+            title: sub.title,
+            status: tempStatus,
+            remarks: tempRemarks
+        });
+     }
+
      setEditingId(null);
-     loadData(); // Full refresh to ensure consistency
   };
 
   // State Transition Handlers
   const handleWorkflowTransition = async (id: string, newStatus: ReviewStatus) => {
       await mockBackend.updateWorkflowStatus(id, newStatus);
-      loadData();
   };
 
   const handleAssignReviewer = async () => {
@@ -122,16 +141,19 @@ const SubmissionAdminPanel: React.FC = () => {
           alert("Reviewer Assigned Successfully.");
           setAssignmentModalId(null);
           setSelectedReviewer('');
-          loadData();
-      } catch(e) {
+      } catch(e: any) {
           alert("Assignment Failed.");
-          console.error(e);
+          console.error(e.message || e);
       }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
     if (!isSuperAdmin) return alert("Access Denied");
-    if (confirm('PERMANENT ACTION: Delete submission record?')) {
+    const isConfirmed = await confirm({
+        message: 'PERMANENT ACTION: Delete submission record?',
+        trigger: e.currentTarget
+    });
+    if (isConfirmed) {
       try {
         await mockBackend.deleteSubmissionPermanent(id);
         deleteMetaFile(id); 
@@ -285,7 +307,7 @@ const SubmissionAdminPanel: React.FC = () => {
                                  <button onClick={() => startEdit(sub)} className="p-2 hover:bg-stone-100 text-stone-600 rounded-lg transition-all" title="Override Status"><AlertCircle size={18}/></button>
 
                                  {/* Delete (SuperAdmin) */}
-                                 {isSuperAdmin && <button onClick={() => handleDelete(sub.articleId)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-all" title="Delete"><Trash2 size={18} /></button>}
+                                 {isSuperAdmin && <button onClick={(e) => handleDelete(sub.articleId, e)} className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-all" title="Delete"><Trash2 size={18} /></button>}
                               </div>
                            </td>
                         </tr>

@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
-import { Article, ReviewMessage } from '../types';
-import { FileText, MessageCircle, CheckCircle, Clock, Eye, Send, ArrowLeft, ShieldAlert, Activity, Download, User, PlayCircle } from 'lucide-react';
+import { Article, ReviewMessage, Review, Recommendation } from '../types';
+import { FileText, MessageCircle, CheckCircle, Clock, Eye, Send, ArrowLeft, ShieldAlert, Activity, Download, User, PlayCircle, X } from 'lucide-react';
+import { useConfirm } from '../components/ContextualConfirm';
 
 const ReviewerDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -11,10 +13,74 @@ const ReviewerDashboard: React.FC = () => {
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState('');
+  const [activeTab, setActiveTab] = useState<'protocol' | 'evaluation'>('evaluation');
+  const [reviewDraft, setReviewDraft] = useState<Partial<Review>>({
+    commentsToAuthor: '',
+    commentsToEditor: '',
+    recommendation: null
+  });
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     loadAssignments();
   }, [user]);
+
+  useEffect(() => {
+    if (selectedArticle && user) {
+      loadReviewDraft();
+    }
+  }, [selectedArticle]);
+
+  // Debounced Autosave
+  useEffect(() => {
+    if (!selectedArticle || !user || !reviewDraft || saveStatus === 'saving') return;
+    
+    // Don't save if it's the initial empty state and no draft exists yet
+    if (!reviewDraft.commentsToAuthor && !reviewDraft.commentsToEditor && !reviewDraft.recommendation && saveStatus === 'idle') return;
+
+    const timer = setTimeout(async () => {
+      setSaveStatus('saving');
+      try {
+        await mockBackend.saveReviewDraft({
+          ...reviewDraft,
+          manuscriptId: selectedArticle.id,
+          reviewerId: user.id
+        });
+        setSaveStatus('saved');
+        setLastSaved(new Date().toISOString());
+      } catch (err: any) {
+        console.error(err.message || err);
+        setSaveStatus('error');
+      }
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [reviewDraft, selectedArticle, user]);
+
+  const loadReviewDraft = async () => {
+    if (!selectedArticle || !user) return;
+    const draft = await mockBackend.getReview(selectedArticle.id, user.id);
+    if (draft) {
+      setReviewDraft({
+        commentsToAuthor: draft.commentsToAuthor,
+        commentsToEditor: draft.commentsToEditor,
+        recommendation: draft.recommendation,
+        status: draft.status
+      });
+      setLastSaved(draft.lastSavedAt);
+      setSaveStatus('saved');
+    } else {
+      setReviewDraft({
+        commentsToAuthor: '',
+        commentsToEditor: '',
+        recommendation: null
+      });
+      setLastSaved(null);
+      setSaveStatus('idle');
+    }
+  };
 
   const loadAssignments = async () => {
     if(!user) return;
@@ -38,6 +104,38 @@ const ReviewerDashboard: React.FC = () => {
     setLoading(false);
   };
 
+  const handleSubmitReview = async (e: React.MouseEvent) => {
+      if (!selectedArticle || !user || !reviewDraft.recommendation) {
+          alert("Please select a recommendation before submitting.");
+          return;
+      }
+
+      const isConfirmed = await confirm({
+        message: "Are you sure you want to submit this review? It will become immutable and visible to the editors.",
+        trigger: e.currentTarget
+      });
+
+      if (isConfirmed) {
+        setLoading(true);
+        try {
+          const draftId = await mockBackend.saveReviewDraft({
+            ...reviewDraft,
+            manuscriptId: selectedArticle.id,
+            reviewerId: user.id
+          });
+          await mockBackend.submitReview(draftId);
+          
+          // Refresh
+          await loadAssignments();
+          setSelectedArticle(null);
+        } catch (err: any) {
+          alert("Failed to submit review: " + (err.message || err));
+        } finally {
+          setLoading(false);
+        }
+      }
+  };
+
   const handleSendMessage = async () => {
       if(!selectedArticle || !newMessage.trim() || !user) return;
       
@@ -58,14 +156,21 @@ const ReviewerDashboard: React.FC = () => {
       if(updatedArticle) setSelectedArticle(updatedArticle);
   };
 
-  const handleUpdateStatus = async (status: 'REVIEWED' | 'UNDER_REVIEW') => {
+  const handleUpdateStatus = async (status: 'REVIEWED' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED', e: React.MouseEvent) => {
       if(!selectedArticle || !user) return;
       
-      const confirmMsg = status === 'REVIEWED' 
-        ? "Mark as Reviewed? This indicates you have finished your evaluation." 
-        : "Mark as Under Review? This indicates you have started the process.";
+      let confirmMsg = "";
+      if (status === 'REVIEWED') confirmMsg = "Mark as Reviewed? This indicates you have finished your evaluation.";
+      else if (status === 'UNDER_REVIEW') confirmMsg = "Mark as Under Review? This indicates you have started the process.";
+      else if (status === 'ACCEPTED') confirmMsg = "Accept this article for review? You will be responsible for reviewing it.";
+      else if (status === 'REJECTED') confirmMsg = "Reject this article for review? You will not be reviewing it.";
 
-      if(confirm(confirmMsg)) {
+      const isConfirmed = await confirm({
+          message: confirmMsg,
+          trigger: e.currentTarget
+      });
+
+      if(isConfirmed) {
           // Updates individual assignment status AND potentially article global review_status
           await mockBackend.updateReviewStatus(selectedArticle.id, user.id, status);
           
@@ -99,13 +204,15 @@ const ReviewerDashboard: React.FC = () => {
                   <div className="flex items-center gap-4">
                       {/* Status Indicator */}
                       <div className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border flex items-center gap-2 ${
-                          myAssignment?.status === 'REVIEWED' ? 'bg-green-50 text-green-600 border-green-200' : 
+                          myAssignment?.status === 'REVIEWED' || myAssignment?.status === 'ACCEPTED' ? 'bg-green-50 text-green-600 border-green-200' : 
                           myAssignment?.status === 'UNDER_REVIEW' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                          myAssignment?.status === 'REJECTED' ? 'bg-red-50 text-red-600 border-red-200' :
                           'bg-amber-50 text-amber-600 border-amber-200'
                       }`}>
                           <span className={`w-2 h-2 rounded-full ${
-                              myAssignment?.status === 'REVIEWED' ? 'bg-green-500' : 
+                              myAssignment?.status === 'REVIEWED' || myAssignment?.status === 'ACCEPTED' ? 'bg-green-500' : 
                               myAssignment?.status === 'UNDER_REVIEW' ? 'bg-blue-500' :
+                              myAssignment?.status === 'REJECTED' ? 'bg-red-500' :
                               'bg-amber-500'
                           }`}></span>
                           {myAssignment?.status.replace('_', ' ')}
@@ -113,12 +220,22 @@ const ReviewerDashboard: React.FC = () => {
 
                       {/* Actions */}
                       {myAssignment?.status === 'PENDING' && (
-                          <button onClick={() => handleUpdateStatus('UNDER_REVIEW')} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 flex items-center gap-2">
+                          <div className="flex items-center gap-2">
+                              <button onClick={(e) => handleUpdateStatus('ACCEPTED', e)} className="bg-green-600 text-white px-6 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-green-700 transition-colors shadow-lg shadow-green-200 flex items-center gap-2">
+                                  <CheckCircle size={14} /> Accept Review
+                              </button>
+                              <button onClick={(e) => handleUpdateStatus('REJECTED', e)} className="bg-red-600 text-white px-6 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-red-700 transition-colors shadow-lg shadow-red-200 flex items-center gap-2">
+                                  <X size={14} /> Reject Review
+                              </button>
+                          </div>
+                      )}
+                      {myAssignment?.status === 'ACCEPTED' && (
+                          <button onClick={(e) => handleUpdateStatus('UNDER_REVIEW', e)} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 flex items-center gap-2">
                               <PlayCircle size={14} /> Start Review
                           </button>
                       )}
-                      {(myAssignment?.status === 'UNDER_REVIEW' || myAssignment?.status === 'PENDING') && (
-                          <button onClick={() => handleUpdateStatus('REVIEWED')} className="bg-agri-secondary text-white px-6 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-agri-primary transition-colors shadow-lg shadow-agri-secondary/20 flex items-center gap-2">
+                      {(myAssignment?.status === 'UNDER_REVIEW' || myAssignment?.status === 'ACCEPTED') && reviewDraft.status !== 'submitted' && (
+                          <button onClick={handleSubmitReview} className="bg-agri-secondary text-white px-6 py-2 rounded-lg font-bold text-[10px] uppercase tracking-widest hover:bg-agri-primary transition-colors shadow-lg shadow-agri-secondary/20 flex items-center gap-2">
                               <CheckCircle size={14} /> Submit Evaluation
                           </button>
                       )}
@@ -180,53 +297,127 @@ const ReviewerDashboard: React.FC = () => {
                       </div>
                   </div>
 
-                  {/* Right Column: Communication Console */}
+                  {/* Right Column: Communication Console & Evaluation Form */}
                   <div className="bg-stone-900 rounded-[2rem] border border-stone-800 flex flex-col shadow-2xl overflow-hidden">
-                      <div className="p-5 border-b border-white/10 bg-black/20">
-                          <h3 className="text-white font-bold text-sm flex items-center gap-2">
-                              <MessageCircle size={16} className="text-agri-secondary"/> 
+                      <div className="flex border-b border-white/10 bg-black/20">
+                          <button 
+                            onClick={() => setActiveTab('evaluation')}
+                            className={`flex-1 p-4 text-[10px] font-black uppercase tracking-widest transition-colors ${activeTab === 'evaluation' ? 'text-agri-secondary bg-white/5' : 'text-white/40 hover:text-white/60'}`}
+                          >
+                              Evaluation Form
+                          </button>
+                          <button 
+                            onClick={() => setActiveTab('protocol')}
+                            className={`flex-1 p-4 text-[10px] font-black uppercase tracking-widest transition-colors ${activeTab === 'protocol' ? 'text-agri-secondary bg-white/5' : 'text-white/40 hover:text-white/60'}`}
+                          >
                               Review Protocol
-                          </h3>
-                          <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">Internal Communication Channel</p>
+                          </button>
                       </div>
                       
-                      <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-stone-900/50">
-                          {selectedArticle.reviewThreads?.map((msg) => (
-                              <div key={msg.id} className={`p-4 rounded-2xl text-xs border relative ${msg.senderId === user?.id ? 'bg-agri-secondary/10 border-agri-secondary/20 ml-4' : 'bg-white/5 border-white/5 mr-4'}`}>
-                                  <div className="flex justify-between items-center mb-2 opacity-60">
-                                      <span className="font-bold text-[9px] uppercase tracking-wider text-agri-secondary">{msg.senderName}</span>
-                                      <span className="text-[9px] text-white/40">{new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                      {activeTab === 'protocol' ? (
+                        <>
+                          <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-stone-900/50">
+                              {selectedArticle.reviewThreads?.map((msg) => (
+                                  <div key={msg.id} className={`p-4 rounded-2xl text-xs border relative ${msg.senderId === user?.id ? 'bg-agri-secondary/10 border-agri-secondary/20 ml-4' : 'bg-white/5 border-white/5 mr-4'}`}>
+                                      <div className="flex justify-between items-center mb-2 opacity-60">
+                                          <span className="font-bold text-[9px] uppercase tracking-wider text-agri-secondary">{msg.senderName}</span>
+                                          <span className="text-[9px] text-white/40">{new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                      </div>
+                                      <p className="text-white/90 leading-relaxed font-medium">{msg.message}</p>
                                   </div>
-                                  <p className="text-white/90 leading-relaxed font-medium">{msg.message}</p>
-                              </div>
-                          ))}
-                          {(!selectedArticle.reviewThreads || selectedArticle.reviewThreads.length === 0) && (
-                              <div className="flex flex-col items-center justify-center h-full text-white/20 space-y-3">
-                                  <MessageCircle size={32} />
-                                  <p className="text-xs italic">No remarks recorded.</p>
-                              </div>
-                          )}
-                      </div>
+                              ))}
+                              {(!selectedArticle.reviewThreads || selectedArticle.reviewThreads.length === 0) && (
+                                  <div className="flex flex-col items-center justify-center h-full text-white/20 space-y-3">
+                                      <MessageCircle size={32} />
+                                      <p className="text-xs italic">No remarks recorded.</p>
+                                  </div>
+                              )}
+                          </div>
 
-                      <div className="p-5 border-t border-white/10 bg-black/30">
-                          <div className="relative">
-                              <textarea 
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-xs outline-none focus:border-agri-secondary/50 h-24 resize-none mb-3 transition-colors placeholder:text-white/20"
-                                placeholder="Type your suggestion, revision note, or acceptance remark..."
-                                value={newMessage}
-                                onChange={e => setNewMessage(e.target.value)}
-                              ></textarea>
-                              <div className="flex justify-end">
-                                <button 
-                                    onClick={handleSendMessage}
-                                    disabled={!newMessage.trim()}
-                                    className="bg-agri-secondary text-agri-primary px-6 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest disabled:opacity-50 hover:bg-white transition-all shadow-lg flex items-center gap-2"
-                                >
-                                    Add Remark <Send size={12} />
-                                </button>
+                          <div className="p-5 border-t border-white/10 bg-black/30">
+                              <div className="relative">
+                                  <textarea 
+                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-xs outline-none focus:border-agri-secondary/50 h-24 resize-none mb-3 transition-colors placeholder:text-white/20"
+                                    placeholder="Type your suggestion, revision note, or acceptance remark..."
+                                    value={newMessage}
+                                    onChange={e => setNewMessage(e.target.value)}
+                                  ></textarea>
+                                  <div className="flex justify-end">
+                                    <button 
+                                        onClick={handleSendMessage}
+                                        disabled={!newMessage.trim()}
+                                        className="bg-agri-secondary text-agri-primary px-6 py-2 rounded-xl font-bold text-[10px] uppercase tracking-widest disabled:opacity-50 hover:bg-white transition-all shadow-lg flex items-center gap-2"
+                                    >
+                                        Add Remark <Send size={12} />
+                                    </button>
+                                  </div>
                               </div>
                           </div>
-                      </div>
+                        </>
+                      ) : (
+                        <div className="flex-1 flex flex-col min-h-0 bg-stone-900/50">
+                            <div className="p-5 border-b border-white/5 flex items-center justify-between">
+                                <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Formal Evaluation</span>
+                                <div className="flex items-center gap-2">
+                                    <span className={`text-[9px] font-bold uppercase tracking-widest ${saveStatus === 'error' ? 'text-red-400' : 'text-white/30'}`}>
+                                        {saveStatus === 'saving' ? 'Saving...' : 
+                                         saveStatus === 'saved' ? `Saved at ${new Date(lastSaved || '').toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}` : 
+                                         saveStatus === 'error' ? 'Save Failed' : ''}
+                                    </span>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${saveStatus === 'saving' ? 'bg-amber-500 animate-pulse' : saveStatus === 'saved' ? 'bg-green-500' : saveStatus === 'error' ? 'bg-red-500' : 'bg-white/10'}`}></div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Recommendation</label>
+                                    <select 
+                                      disabled={reviewDraft.status === 'submitted'}
+                                      value={reviewDraft.recommendation || ''}
+                                      onChange={e => setReviewDraft({...reviewDraft, recommendation: e.target.value as Recommendation})}
+                                      className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white text-xs outline-none focus:border-agri-secondary/50 transition-colors appearance-none font-bold"
+                                    >
+                                        <option value="" className="bg-stone-900">Select Decision</option>
+                                        <option value="A" className="bg-stone-900">Accept Submission</option>
+                                        <option value="MR" className="bg-stone-900">Minor Revision</option>
+                                        <option value="MJ" className="bg-stone-900">Major Revision</option>
+                                        <option value="R" className="bg-stone-900">Reject Submission</option>
+                                    </select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Comments to Author</label>
+                                    <textarea 
+                                      disabled={reviewDraft.status === 'submitted'}
+                                      value={reviewDraft.commentsToAuthor}
+                                      onChange={e => setReviewDraft({...reviewDraft, commentsToAuthor: e.target.value})}
+                                      placeholder="Provide constructive feedback for the authors..."
+                                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-xs outline-none focus:border-agri-secondary/50 h-40 resize-none transition-colors placeholder:text-white/10"
+                                    ></textarea>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-white/40 uppercase tracking-widest ml-1">Confidential Comments to Editor</label>
+                                    <textarea 
+                                      disabled={reviewDraft.status === 'submitted'}
+                                      value={reviewDraft.commentsToEditor}
+                                      onChange={e => setReviewDraft({...reviewDraft, commentsToEditor: e.target.value})}
+                                      placeholder="Internal notes not visible to authors..."
+                                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white text-xs outline-none focus:border-agri-secondary/50 h-32 resize-none transition-colors placeholder:text-white/10"
+                                    ></textarea>
+                                </div>
+
+                                {reviewDraft.status === 'submitted' && (
+                                    <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl flex items-center gap-3">
+                                        <CheckCircle size={18} className="text-green-500 shrink-0" />
+                                        <p className="text-[10px] text-green-500 font-bold uppercase tracking-widest leading-relaxed">
+                                            This review has been submitted and is now locked for editing.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                      )}
                   </div>
               </div>
           </div>
@@ -236,6 +427,33 @@ const ReviewerDashboard: React.FC = () => {
   // Dashboard List View
   return (
     <div className="space-y-8">
+      {/* AgriFeed Banner */}
+      <div className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-[2.5rem] p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black opacity-10 rounded-full translate-y-1/2 -translate-x-1/4 blur-xl"></div>
+        
+        <div className="relative z-10 flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+              <MessageCircle size={24} className="text-white" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold font-serif">Join the AgriFeed Community</h2>
+          </div>
+          <p className="text-green-50 text-sm md:text-base max-w-2xl leading-relaxed">
+            Connect with researchers, share your findings, ask questions, and stay updated with the latest trends in agriculture.
+          </p>
+        </div>
+        
+        <div className="relative z-10 w-full md:w-auto">
+          <Link 
+            to="/agri-feed/dashboard" 
+            className="block w-full md:w-auto text-center bg-white text-green-700 px-8 py-3.5 rounded-xl font-bold hover:bg-green-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+          >
+            Access AgriFeed
+          </Link>
+        </div>
+      </div>
+
       {/* Welcome Banner */}
       <div className="bg-white rounded-[2.5rem] p-8 border border-stone-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
          <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-agri-secondary/5 to-transparent pointer-events-none"></div>
@@ -276,8 +494,9 @@ const ReviewerDashboard: React.FC = () => {
                          <div className="min-w-0">
                              <div className="flex items-center gap-3 mb-1">
                                 <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest border ${
-                                    assignment?.status === 'REVIEWED' ? 'bg-green-50 text-green-600 border-green-100' : 
+                                    assignment?.status === 'REVIEWED' || assignment?.status === 'ACCEPTED' ? 'bg-green-50 text-green-600 border-green-100' : 
                                     assignment?.status === 'UNDER_REVIEW' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                    assignment?.status === 'REJECTED' ? 'bg-red-50 text-red-600 border-red-100' :
                                     'bg-amber-50 text-amber-600 border-amber-100'
                                 }`}>
                                     {assignment?.status.replace('_', ' ')}

@@ -21,7 +21,7 @@ const InquiryManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl font-bold text-black">Contact Inquiries</h1>
         <div className="bg-white px-4 py-2 rounded-xl border border-stone-200 shadow-sm">
            <span className="text-agri-secondary font-black text-xs uppercase tracking-widest">{inquiries.filter(i => i.status === 'PENDING').length} PENDING_MSGS</span>

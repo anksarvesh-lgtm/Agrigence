@@ -79,7 +79,7 @@ const SEOSettings: React.FC = () => {
 
   return (
     <div className="space-y-8 max-w-7xl pb-20">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm sticky top-0 z-20">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm sticky top-0 z-20 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-black">SEO Control Center</h1>
           <p className="text-black text-xs mt-1 uppercase tracking-widest font-bold">Search engine governance & discoverability</p>
@@ -87,7 +87,7 @@ const SEOSettings: React.FC = () => {
         <button 
           onClick={handleSave} 
           disabled={isSaving}
-          className="bg-agri-secondary text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-agri-primary transition-all active:scale-95 disabled:opacity-50 shadow-lg"
+          className="bg-agri-secondary text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-agri-primary transition-all active:scale-95 disabled:opacity-50 shadow-lg w-full md:w-auto justify-center"
         >
            <Save size={18} /> {isSaving ? 'SYNCING...' : 'APPLY CONFIG'}
         </button>

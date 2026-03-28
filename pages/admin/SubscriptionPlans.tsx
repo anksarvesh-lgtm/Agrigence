@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
-import { SubscriptionPlan } from '../../types';
+import { SubscriptionPlan, Tool } from '../../types';
 import { Edit, Save, Plus, CheckCircle, Trash2, X } from 'lucide-react';
 import { useConfirm } from '../../components/ContextualConfirm';
 
 const SubscriptionPlans: React.FC = () => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [allTools, setAllTools] = useState<Tool[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<SubscriptionPlan>>({});
@@ -14,10 +15,15 @@ const SubscriptionPlans: React.FC = () => {
 
   useEffect(() => {
     loadPlans();
+    loadTools();
   }, []);
 
   const loadPlans = async () => {
     setPlans(await mockBackend.getPlans());
+  };
+
+  const loadTools = async () => {
+    setAllTools(await mockBackend.getAllTools());
   };
 
   const handleCreate = () => {
@@ -27,7 +33,8 @@ const SubscriptionPlans: React.FC = () => {
         isActive: true,
         durationMonths: 1,
         articleLimit: 1,
-        blogLimit: 0
+        blogLimit: 0,
+        allowedTools: []
     });
     setEditingId(null);
     setIsModalOpen(true);
@@ -35,8 +42,20 @@ const SubscriptionPlans: React.FC = () => {
 
   const handleEdit = (plan: SubscriptionPlan) => {
     setEditingId(plan.id);
-    setEditForm(plan);
+    setEditForm({
+      ...plan,
+      allowedTools: plan.allowedTools || []
+    });
     setIsModalOpen(true);
+  };
+
+  const toggleTool = (toolId: string) => {
+    const currentTools = editForm.allowedTools || [];
+    if (currentTools.includes(toolId)) {
+      setEditForm({ ...editForm, allowedTools: currentTools.filter(id => id !== toolId) });
+    } else {
+      setEditForm({ ...editForm, allowedTools: [...currentTools, toolId] });
+    }
   };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
@@ -71,7 +90,7 @@ const SubscriptionPlans: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Subscription Plans Manager</h1>
         <button 
           onClick={handleCreate}
@@ -87,7 +106,14 @@ const SubscriptionPlans: React.FC = () => {
             <div className="flex justify-between items-start mb-4">
                <div>
                   <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
-                  <p className="text-gray-500 text-xs uppercase tracking-wider mt-1">{plan.type.replace('_', ' ')}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-gray-500 text-xs uppercase tracking-wider">{plan.type.replace('_', ' ')}</p>
+                    {plan.is_research_enabled && (
+                      <span className="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        Research Enabled
+                      </span>
+                    )}
+                  </div>
                </div>
                <div className="flex gap-2">
                  <button 
@@ -208,7 +234,41 @@ const SubscriptionPlans: React.FC = () => {
                        <option value="ARTICLE_ACCESS">Article Access</option>
                        <option value="BLOG_ACCESS">Blog Access</option>
                        <option value="COMBO_ACCESS">Combo (Article + Blog)</option>
+                       <option value="TOOL_ACCESS">Tool Access</option>
                     </select>
+                 </div>
+
+                 <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <input 
+                      type="checkbox"
+                      id="is_research_enabled"
+                      className="w-5 h-5 text-agri-secondary rounded border-gray-300 focus:ring-agri-secondary"
+                      checked={!!editForm.is_research_enabled}
+                      onChange={e => setEditForm({...editForm, is_research_enabled: e.target.checked})}
+                    />
+                    <label htmlFor="is_research_enabled" className="text-sm font-bold text-gray-900 cursor-pointer">
+                      Enable Research Data Entry & Analysis Access
+                    </label>
+                 </div>
+
+                 <div className="p-4 bg-stone-50 border border-stone-200 rounded-2xl">
+                    <label className="text-xs text-stone-500 uppercase font-black tracking-widest block mb-4">Tools Access Control</label>
+                    <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                      {allTools.map(tool => (
+                        <label key={tool.id} className="flex items-center gap-3 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer border border-transparent hover:border-stone-100">
+                          <input 
+                            type="checkbox"
+                            className="w-4 h-4 text-agri-secondary rounded border-stone-300 focus:ring-agri-secondary"
+                            checked={editForm.allowedTools?.includes(tool.id)}
+                            onChange={() => toggleTool(tool.id)}
+                          />
+                          <div className="flex-1">
+                            <p className="text-xs font-bold text-stone-800">{tool.name}</p>
+                            <p className="text-[10px] text-stone-400 line-clamp-1">{tool.description}</p>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
                  </div>
 
                  <div>

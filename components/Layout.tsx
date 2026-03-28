@@ -5,12 +5,13 @@ import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
 import { 
   Menu, X, Search, User as UserIcon, LogOut, 
-  Facebook, Linkedin, Youtube, Twitter, Instagram, ArrowRight, Clock
+  Facebook, Linkedin, Youtube, Twitter, Instagram, ArrowRight, Clock, ChevronDown, Wrench, ChevronRight
 } from 'lucide-react';
 import Logo from './Logo';
 import { SiteSettings } from '../types';
 import { motion } from 'framer-motion';
 import { useConfirm } from './ContextualConfirm';
+import OptimizedImage from './OptimizedImage';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -19,6 +20,8 @@ const Header = () => {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isScrolled, setIsScrolled] = useState(false);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [toolSections, setToolSections] = useState<any[]>([]);
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { confirm } = useConfirm();
@@ -95,6 +98,12 @@ const Header = () => {
         }
     });
 
+    const loadTools = async () => {
+        const sections = await mockBackend.getToolSections();
+        setToolSections(sections);
+    };
+    loadTools();
+
     return () => {
         window.removeEventListener('scroll', handleScroll);
         unsubSettings();
@@ -141,16 +150,24 @@ const Header = () => {
     : [];
 
   const defaultItems = [
+    { label: 'Home', path: '/' },
     { label: 'Archive', path: '/journals' },
     { label: 'News', path: '/news' },
     { label: 'Blogs', path: '/blogs' },
     { label: 'Store', path: '/products' },
+    { label: 'Tools', path: '/tools' },
     { label: 'Author Guidelines', path: '/author-guidelines' },
     { label: 'Editorial Board', path: '/editorial-board' },
     { label: 'About', path: '/about-contact' },
   ];
 
-  const activeMenuItems = menuItems.length > 0 ? menuItems : defaultItems.map(i => ({ ...i, id: i.path, isExternal: false, order: 0, isEnabled: true }));
+  const rawMenuItems = menuItems.length > 0 ? menuItems : defaultItems.map(i => ({ ...i, id: i.path, isExternal: false, order: 0, isEnabled: true }));
+  
+  // Ensure Home is always present and first
+  const hasHome = rawMenuItems.some(i => i.path === '/' || i.label === 'Home');
+  const activeMenuItems = hasHome 
+      ? rawMenuItems 
+      : [{ label: 'Home', path: '/', id: 'home-auto', isExternal: false, order: -999, isEnabled: true }, ...rawMenuItems];
 
   return (
     <header 
@@ -200,42 +217,93 @@ const Header = () => {
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-3 group">
             {settings?.logoUrl ? (
-               <img src={settings.logoUrl} className={`w-auto object-contain transition-all duration-300 ${isScrolled ? "h-8" : "h-12"}`} alt="Agrigence" />
+               <OptimizedImage 
+                 src={settings.logoUrl} 
+                 className={`w-auto object-contain transition-all duration-300 ${isScrolled ? "h-10" : "h-14"}`} 
+                 alt="Agrigence" 
+                 priority={true}
+               />
             ) : (
-               <Logo className={isScrolled ? "h-8" : "h-10"} variant="dark" />
+               <Logo className={isScrolled ? "h-10" : "h-14"} variant="dark" showText={false} />
             )}
             
-            {/* Masthead Branding Block */}
-            <div className="flex flex-col items-start justify-center">
-              {/* 1. Title */}
-              <span className={`font-serif font-bold tracking-tight transition-all duration-300 ${isScrolled ? 'text-xl' : 'text-2xl'} text-agri-primary leading-none`}>
+            <div className="flex flex-col">
+              <span className={`font-serif font-bold text-agri-primary leading-none tracking-tight transition-all duration-300 ${isScrolled ? 'text-xl' : 'text-2xl'}`}>
                 Agrigence
               </span>
-              
-              {/* 2. ISSN - Correctly placed between title and tagline */}
-              <span className="text-[11px] md:text-xs text-[#222222] tracking-[0.22em] font-medium mt-1">
-                ISSN: {settings?.issn || 'XXXX-XXXX'}
-              </span>
-
-              {/* 3. Tagline - Preserved below ISSN */}
-              <span className={`text-[10px] text-agri-primary/80 font-serif italic mt-0.5 whitespace-nowrap transition-all duration-300 ${isScrolled ? 'hidden' : 'block'}`}>
+              <p className={`font-serif italic text-agri-secondary leading-tight transition-all duration-300 ${isScrolled ? 'text-[9px] mt-0.5' : 'text-[11px] mt-1'}`}>
                 Where Agri-Intelligence Meets Agricultural Generation
-              </span>
+              </p>
             </div>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
-            {activeMenuItems.map((item) => {
+            {activeMenuItems.map((item, index) => {
                // Fix legacy label/path issues locally to prevent flickering from API updates
                const targetPath = (item.path === '/board' || item.label === 'Board') ? '/editorial-board' : item.path;
                const displayLabel = (item.label === 'Board') ? 'Editorial Board' : item.label;
                
                const isActive = location.pathname === targetPath;
+
+               if (targetPath === '/tools') {
+                   return (
+                     <div 
+                        key={item.id ? `nav-${item.id}-${index}` : `nav-${index}`}
+                        className="relative group"
+                        onMouseEnter={() => setIsToolsOpen(true)}
+                        onMouseLeave={() => setIsToolsOpen(false)}
+                     >
+                        <Link 
+                          to="/tools" 
+                          className={`text-sm font-medium transition-all hover:text-agri-secondary flex items-center gap-1 ${
+                            isActive ? 'text-agri-primary font-bold' : 'text-stone-500'
+                          }`}
+                        >
+                          {displayLabel}
+                          <ChevronDown size={14} className={`transition-transform duration-300 ${isToolsOpen ? 'rotate-180' : ''}`} />
+                        </Link>
+                        <span className={`absolute -bottom-1 left-0 h-0.5 bg-agri-secondary transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+                        
+                        {/* Dropdown Menu */}
+                        <div className={`absolute top-full left-1/2 -translate-x-1/2 pt-4 transition-all duration-300 ${isToolsOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
+                            <div className="bg-white shadow-2xl rounded-2xl border border-stone-100 p-4 w-64 overflow-hidden">
+                                <div className="space-y-1">
+                                    {toolSections.map(section => (
+                                        <Link 
+                                            key={section.id} 
+                                            to="/tools" 
+                                            className="flex items-center justify-between p-3 hover:bg-stone-50 rounded-xl transition-colors group/item"
+                                            onClick={() => setIsToolsOpen(false)}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-agri-primary/5 rounded-lg flex items-center justify-center text-agri-secondary group-hover/item:bg-agri-secondary group-hover/item:text-white transition-colors">
+                                                    <Wrench size={14} />
+                                                </div>
+                                                <span className="text-xs font-bold text-agri-primary uppercase tracking-wider">{section.name}</span>
+                                            </div>
+                                            <ArrowRight size={12} className="text-stone-300 group-hover/item:text-agri-secondary transition-all" />
+                                        </Link>
+                                    ))}
+                                    <div className="pt-2 mt-2 border-t border-stone-100">
+                                        <Link 
+                                            to="/tools" 
+                                            className="block text-center py-2 text-[10px] font-black text-agri-secondary uppercase tracking-widest hover:text-agri-primary transition-colors"
+                                            onClick={() => setIsToolsOpen(false)}
+                                        >
+                                            View All Tools
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                     </div>
+                   );
+               }
                
                if (item.isExternal) {
                    return (
                      <a 
-                       key={item.id} 
+                       key={item.id ? `nav-${item.id}-${index}` : `nav-${index}`} 
                        href={targetPath} 
                        target="_blank"
                        rel="noopener noreferrer"
@@ -248,7 +316,7 @@ const Header = () => {
                }
                return (
                 <Link 
-                  key={item.id} 
+                  key={item.id ? `nav-${item.id}-${index}` : `nav-${index}`} 
                   to={targetPath} 
                   className={`text-sm font-medium transition-all hover:text-agri-secondary relative group ${
                     isActive ? 'text-agri-primary font-bold' : 'text-stone-500'
@@ -315,13 +383,59 @@ const Header = () => {
       </div>
       
       {isMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-agri-border p-6 space-y-4 shadow-xl relative z-20">
-           {activeMenuItems.map(item => {
+        <div className="lg:hidden bg-white border-t border-agri-border p-6 space-y-4 shadow-xl absolute w-full left-0 z-20 max-h-[calc(100vh-80px)] overflow-y-auto">
+           <div className="mb-6">
+             <div className="flex items-center bg-stone-50 rounded-xl px-4 py-3 border border-stone-200 focus-within:border-agri-secondary/50 focus-within:bg-white transition-all">
+               <Search size={18} className="text-stone-400" />
+               <input 
+                 type="text" 
+                 placeholder="Search articles..." 
+                 className="bg-transparent border-none focus:outline-none text-sm ml-3 w-full placeholder:text-stone-400 text-agri-primary"
+                 value={searchTerm}
+                 onChange={handleSearch}
+               />
+             </div>
+             {searchResults.length > 0 && (
+               <div className="mt-2 bg-white shadow-lg rounded-xl border border-stone-100 p-2 overflow-hidden">
+                 <div className="bg-stone-50 px-3 py-1 text-[9px] font-bold uppercase text-stone-400 tracking-widest border-b border-stone-100 mb-1">
+                    Public Registry
+                 </div>
+                 {searchResults.map(a => (
+                   <div key={a.id} onClick={() => { setSearchResults([]); setIsMenuOpen(false); navigate('/journals'); }} className="p-3 hover:bg-stone-50 rounded-lg cursor-pointer transition-colors group">
+                     <p className="font-serif font-bold text-sm text-agri-primary truncate group-hover:text-agri-secondary transition-colors">{a.title}</p>
+                     <p className="text-xs text-stone-500 mt-0.5">{a.authorName}</p>
+                   </div>
+                 ))}
+               </div>
+             )}
+           </div>
+
+           {activeMenuItems.map((item, index) => {
              const targetPath = (item.path === '/board' || item.label === 'Board') ? '/editorial-board' : item.path;
              const displayLabel = (item.label === 'Board') ? 'Editorial Board' : item.label;
+             if (targetPath === '/tools') {
+                 return (
+                   <div key={item.id ? `mobile-nav-${item.id}-${index}` : `mobile-nav-${index}`} className="space-y-2">
+                       <Link to="/tools" onClick={() => setIsMenuOpen(false)} className="block text-sm font-bold text-agri-primary">{displayLabel}</Link>
+                       <div className="pl-4 space-y-2 border-l border-stone-100">
+                           {toolSections.map(section => (
+                               <Link 
+                                   key={section.id} 
+                                   to="/tools" 
+                                   onClick={() => setIsMenuOpen(false)}
+                                   className="block text-xs font-bold text-stone-400 uppercase tracking-widest hover:text-agri-secondary"
+                               >
+                                   {section.name}
+                               </Link>
+                           ))}
+                       </div>
+                   </div>
+                 );
+             }
+
              return item.isExternal 
-               ? <a key={item.id} href={targetPath} target="_blank" className="block text-sm font-bold text-agri-primary">{displayLabel}</a>
-               : <Link key={item.id} to={targetPath} onClick={() => setIsMenuOpen(false)} className="block text-sm font-bold text-agri-primary">{displayLabel}</Link>
+               ? <a key={item.id ? `mobile-nav-${item.id}-${index}` : `mobile-nav-${index}`} href={targetPath} target="_blank" className="block text-sm font-bold text-agri-primary">{displayLabel}</a>
+               : <Link key={item.id ? `mobile-nav-${item.id}-${index}` : `mobile-nav-${index}`} to={targetPath} onClick={() => setIsMenuOpen(false)} className="block text-sm font-bold text-agri-primary">{displayLabel}</Link>
            })}
            <div className="pt-4 border-t border-stone-100">
              {user ? (
@@ -379,8 +493,8 @@ const Footer = () => {
                 count = await mockBackend.getVisitorCount();
             }
             setVisitorCount(count);
-        } catch (e) {
-            console.error("Visitor tracking failed", e);
+        } catch (e: any) {
+            console.error("Visitor tracking failed", e.message || e);
         }
     };
     trackVisitor();
@@ -392,156 +506,143 @@ const Footer = () => {
   }, []);
 
   const socials = [
-    { icon: Twitter, link: settings?.footerSocials.twitter },
-    { icon: Instagram, link: settings?.footerSocials.instagram },
-    { icon: Facebook, link: settings?.footerSocials.facebook },
-    { icon: Linkedin, link: settings?.footerSocials.linkedin },
-    { icon: Youtube, link: settings?.footerSocials.youtube },
+    { icon: Twitter, link: settings?.footerSocials.twitter, label: 'Twitter' },
+    { icon: Instagram, link: settings?.footerSocials.instagram, label: 'Instagram' },
+    { icon: Facebook, link: settings?.footerSocials.facebook, label: 'Facebook' },
+    { icon: Linkedin, link: settings?.footerSocials.linkedin, label: 'LinkedIn' },
+    { icon: Youtube, link: settings?.footerSocials.youtube, label: 'YouTube' },
   ];
 
   return (
-    <footer className="bg-agri-primary text-white pt-20 pb-0 relative overflow-hidden border-t-4 border-agri-secondary">
-      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#1a110d] via-[#2a1d15] to-[#3D2B1F] z-0">
-         <svg className="absolute bottom-0 left-0 w-full h-full opacity-30 text-[#8B5E34]" preserveAspectRatio="none">
-            <defs>
-               <pattern id="soilRoots" x="0" y="0" width="100" height="50" patternUnits="userSpaceOnUse">
-                  <path d="M50,0 C40,20 60,30 50,50 M20,0 C10,15 30,25 20,40 M80,0 C70,10 90,30 80,50" fill="none" stroke="currentColor" strokeWidth="0.5" />
-               </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#soilRoots)" />
-         </svg>
+    <footer className="bg-stone-950 text-white pt-5 pb-3 relative overflow-hidden border-t border-white/5">
+      {/* Agricultural Background Pattern */}
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
+        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="leafPattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+              <path d="M50 20c-10 0-20 10-20 20s10 20 20 20 20-10 20-20-10-20-20-20zm0 35c-8.3 0-15-6.7-15-15s6.7-15 15-15 15 6.7 15 15-6.7 15-15 15z" fill="currentColor" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#leafPattern)" />
+        </svg>
       </div>
 
-      <div className="absolute bottom-28 left-0 w-full h-full pointer-events-none z-0">
-         <motion.svg 
-           initial={{ height: 0 }}
-           whileInView={{ height: '100%' }}
-           viewport={{ once: true }}
-           transition={{ duration: 2 }}
-           className="absolute bottom-0 left-0 w-64 text-[#6A9955]/30" 
-           viewBox="0 0 100 200" 
-           preserveAspectRatio="none"
-         >
-            <path d="M10,200 Q40,150 20,100 T50,0" fill="none" stroke="currentColor" strokeWidth="2" />
-            <path d="M20,180 Q0,170 10,160 Q25,160 20,180" fill="currentColor" opacity="0.8" />
-            <path d="M30,130 Q10,120 20,110 Q35,115 30,130" fill="currentColor" opacity="0.8" />
-            <path d="M15,80 Q-5,70 5,60 Q20,65 15,80" fill="currentColor" opacity="0.8" />
-         </motion.svg>
-
-         <motion.svg 
-           initial={{ height: 0 }}
-           whileInView={{ height: '100%' }}
-           viewport={{ once: true }}
-           transition={{ duration: 2.5 }}
-           className="absolute bottom-0 right-0 w-64 text-[#6A9955]/30 transform -scale-x-100" 
-           viewBox="0 0 100 200" 
-           preserveAspectRatio="none"
-         >
-            <path d="M10,200 Q40,150 20,100 T50,0" fill="none" stroke="currentColor" strokeWidth="2" />
-            <path d="M20,180 Q0,170 10,160 Q25,160 20,180" fill="currentColor" opacity="0.8" />
-            <path d="M30,130 Q10,120 20,110 Q35,115 30,130" fill="currentColor" opacity="0.8" />
-            <path d="M15,80 Q-5,70 5,60 Q20,65 15,80" fill="currentColor" opacity="0.8" />
-         </motion.svg>
-      </div>
-
-      <div className="container mx-auto px-6 relative z-10 pb-12">
-        <div className="grid md:grid-cols-4 gap-8 mb-12">
+      <div className="container mx-auto px-6 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
           
+          {/* Column 1: Brand & Description */}
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-               {settings?.logoUrl ? (
-                  <img src={settings.logoUrl} className="h-8 w-auto object-contain brightness-0 invert" alt="Agrigence" />
-               ) : (
-                  <Logo className="h-6" variant="light" />
-               )}
-               <span className="font-serif font-bold text-xl tracking-tight">Agrigence</span>
+            <div className="flex items-start gap-3">
+              <Link to="/" className="shrink-0 mt-1">
+                 {settings?.logoUrl ? (
+                    <img src={settings.logoUrl} className="h-10 w-auto object-contain brightness-0 invert" alt="Agrigence" />
+                 ) : (
+                    <Logo className="h-10" variant="light" showText={false} />
+                 )}
+              </Link>
+              <div className="flex flex-col">
+                <span className="text-2xl font-serif font-bold text-white leading-none tracking-tight">Agrigence</span>
+                <p className="text-[11px] font-serif italic text-sky-400 mt-1.5 leading-tight">
+                  Where Agri-Intelligence Meets Agricultural Generation
+                </p>
+              </div>
             </div>
-            <p className="text-white/60 text-xs leading-relaxed">
-              A premier peer-reviewed journal dedicated to advancing agricultural sciences and connecting the research community.
+            <p className="text-stone-400 text-[10px] leading-relaxed font-serif italic">
+              Bridging the gap between scientific research and practical farming innovation through intelligent agricultural systems and expert academic resources.
             </p>
-            <div className="flex gap-3 pt-2">
+            <div className="pt-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock size={10} className="text-agri-secondary" />
+                <span className="text-[8px] font-black uppercase tracking-widest text-agri-secondary">Next Issue Countdown</span>
+              </div>
+              <div className="flex gap-2 text-center">
+                {[['d', timeLeft.d], ['h', timeLeft.h], ['m', timeLeft.m], ['s', timeLeft.s]].map(([unit, val]) => (
+                  <div key={unit as string} className="bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 min-w-[30px]">
+                    <span className="block text-[10px] font-bold text-white leading-none">{val}</span>
+                    <span className="text-[6px] text-stone-500 uppercase font-black">{unit}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2: Quick Links */}
+          <div>
+            <h4 className="text-white font-bold text-[10px] uppercase tracking-widest mb-2 flex items-center gap-2">
+              <span className="w-3 h-px bg-agri-secondary"></span>
+              Quick Links
+            </h4>
+            <ul className="space-y-1 text-[10px] text-stone-400">
+              <li><Link to="/" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Home</Link></li>
+              <li><Link to="/tools" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Agri-Tools</Link></li>
+              <li><Link to="/products" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Store</Link></li>
+              <li><Link to="/blogs" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Expert Blogs</Link></li>
+              <li><Link to="/news" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> News & Updates</Link></li>
+            </ul>
+          </div>
+
+          {/* Column 3: Resources */}
+          <div>
+            <h4 className="text-white font-bold text-[10px] uppercase tracking-widest mb-2 flex items-center gap-2">
+              <span className="w-3 h-px bg-agri-secondary"></span>
+              Resources
+            </h4>
+            <ul className="space-y-1 text-[10px] text-stone-400">
+              <li><Link to="/journals" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Research Archive</Link></li>
+              <li><Link to="/author-guidelines" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Author Guidelines</Link></li>
+              <li><Link to="/editorial-board" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Editorial Board</Link></li>
+              <li><Link to="/submission" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Submit Manuscript</Link></li>
+              <li><Link to="/about-contact" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> About & Contact</Link></li>
+            </ul>
+          </div>
+
+          {/* Column 4: Social Media */}
+          <div>
+            <h4 className="text-white font-bold text-[10px] uppercase tracking-widest mb-2 flex items-center gap-2">
+              <span className="w-3 h-px bg-agri-secondary"></span>
+              Connect
+            </h4>
+            <div className="grid grid-cols-5 gap-2 mb-3">
                 {socials.map((social, i) => (
                   <a 
                     key={i} 
                     href={social.link || '#'} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:bg-agri-secondary hover:text-white transition-all"
+                    className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center text-stone-400 hover:bg-agri-secondary hover:text-white transition-all border border-white/10 group"
+                    title={social.label}
                   >
-                    <social.icon size={12} />
+                    <social.icon size={12} className="group-hover:scale-110 transition-transform" />
                   </a>
                 ))}
             </div>
-          </div>
-
-          <div>
-            <h4 className="font-serif font-bold text-sm mb-4">Quick Links</h4>
-            <ul className="space-y-2 text-xs text-white/60">
-              <li><Link to="/journals" className="hover:text-agri-secondary transition-colors">Journal Archive</Link></li>
-              <li><Link to="/blogs" className="hover:text-agri-secondary transition-colors">Blogs</Link></li>
-              <li><Link to="/editorial-board" className="hover:text-agri-secondary transition-colors">Editorial Board</Link></li>
-              <li><Link to="/author-guidelines" className="hover:text-agri-secondary transition-colors">Author Guidelines</Link></li>
-              <li><Link to="/products" className="hover:text-agri-secondary transition-colors">Book Store</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="font-serif font-bold text-sm mb-4">Support</h4>
-            <ul className="space-y-2 text-xs text-white/60">
-              <li><Link to="/about-contact" className="hover:text-agri-secondary transition-colors">Contact Us</Link></li>
-              <li><Link to="/privacy" className="hover:text-agri-secondary transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-agri-secondary transition-colors">Terms of Service</Link></li>
-              <li><a href="mailto:agrigence@gmail.com" className="hover:text-agri-secondary transition-colors">Report an Issue</a></li>
-            </ul>
-          </div>
-
-          <div>
-             <h4 className="font-serif font-bold text-sm mb-4">Next Publication</h4>
-             <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-                <div className="flex items-center gap-2 mb-2 text-agri-secondary">
-                   <Clock size={14} className="animate-pulse" />
-                   <span className="text-xs font-bold uppercase tracking-wider">Releasing In</span>
-                </div>
-                <div className="flex justify-between text-center">
-                   <div>
-                      <span className="block text-lg font-serif font-bold">{timeLeft.d}</span>
-                      <span className="text-[10px] text-white/40">Days</span>
-                   </div>
-                   <div className="text-white/20 text-lg font-light">:</div>
-                   <div>
-                      <span className="block text-lg font-serif font-bold">{timeLeft.h}</span>
-                      <span className="text-[10px] text-white/40">Hrs</span>
-                   </div>
-                   <div className="text-white/20 text-lg font-light">:</div>
-                   <div>
-                      <span className="block text-lg font-serif font-bold">{timeLeft.m}</span>
-                      <span className="text-[10px] text-white/40">Mins</span>
-                   </div>
-                   <div className="text-white/20 text-lg font-light">:</div>
-                   <div>
-                      <span className="block text-lg font-serif font-bold">{timeLeft.s}</span>
-                      <span className="text-[10px] text-white/40">Secs</span>
-                   </div>
-                </div>
-                <Link to="/submission" className="mt-4 block text-center bg-white text-agri-primary py-2 rounded-lg text-[10px] font-bold hover:bg-agri-secondary hover:text-white transition-colors">
-                   Submit Manuscript
-                </Link>
-             </div>
+            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+              <p className="text-[8px] font-black uppercase tracking-widest text-stone-500 mb-0.5">Global Visitor Count</p>
+              <p className="text-lg font-serif font-bold text-agri-secondary">{visitorCount.toLocaleString()}</p>
+              <div className="mt-1 flex items-center gap-2">
+                <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></span>
+                <span className="text-[7px] font-bold text-white/60 uppercase tracking-wider">System Online</span>
+              </div>
+            </div>
           </div>
 
         </div>
-        
-        <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/40">
-           <div className="flex flex-col md:flex-row items-center gap-4">
-               <p>© {new Date().getFullYear()} Agrigence. All rights reserved.</p>
-               <span className="hidden md:inline text-white/20">|</span>
-               <span className="text-[10px] font-mono tracking-wider opacity-60">
-                   Visitor Count: {visitorCount.toLocaleString()}
-               </span>
-           </div>
-           <div className="flex gap-6">
-              <span>Peer-Reviewed Journal</span>
-           </div>
+
+        {/* Bottom Bar */}
+        <div className="pt-2 border-t border-white/5">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-2">
+            <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-600">
+              © {new Date().getFullYear()} AGRIGENCE INTELLECTUAL PROPERTY.
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-3 text-[8px] font-black uppercase tracking-widest text-stone-500">
+              <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+              <Link to="/sitemap" className="hover:text-white transition-colors">Sitemap</Link>
+              <button onClick={() => window.dispatchEvent(new Event('openCookieSettings'))} className="hover:text-white transition-colors uppercase tracking-widest">Cookie Settings</button>
+              <a href="mailto:agrigence@gmail.com" className="hover:text-white transition-colors">Support</a>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

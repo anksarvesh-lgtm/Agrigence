@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../App';
 import { mockBackend } from '../../services/mockBackend';
-import { SiteSettings, GatewayConfig } from '../../types';
+import { SiteSettings } from '../../types';
 import { 
   Save, Twitter, Instagram, Facebook, Linkedin, Youtube, 
   Smartphone, Mail, Globe, Hash, Upload, ShieldAlert, Palette, Type, Layout, Share2, Loader2, CreditCard, Eye, EyeOff
@@ -15,15 +15,7 @@ const Settings: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   
-  // Payment Config States
-  const [gatewayConfig, setGatewayConfig] = useState<GatewayConfig>({
-      provider_name: 'razorpay',
-      key_id: '',
-      key_secret: '',
-      is_live: false
-  });
-  const [showSecret, setShowSecret] = useState(false);
-  const [isSavingGateway, setIsSavingGateway] = useState(false);
+
 
   useEffect(() => {
     setSettings(mockBackend.getSettings());
@@ -45,18 +37,7 @@ const Settings: React.FC = () => {
     }, 1000);
   };
 
-  const handleSaveGateway = async () => {
-      if(!gatewayConfig.key_id || !gatewayConfig.key_secret) return alert("Key ID and Secret are required.");
-      setIsSavingGateway(true);
-      try {
-          await mockBackend.saveGatewayConfig(gatewayConfig);
-          alert("Gateway settings secured on cloud server.");
-      } catch(e: any) {
-          alert(`Failed: ${e.message}`);
-      } finally {
-          setIsSavingGateway(false);
-      }
-  };
+
 
   const handleFileUpload = (field: keyof SiteSettings) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -75,12 +56,12 @@ const Settings: React.FC = () => {
 
   return (
     <div className="space-y-8 max-w-5xl pb-20">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-gray-200 sticky top-0 z-10 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-gray-200 sticky top-0 z-10 shadow-sm gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Global Controls</h1>
           <p className="text-gray-500 text-xs mt-1 uppercase tracking-widest font-bold">System-wide configurations</p>
         </div>
-        <button onClick={handleSave} disabled={isSaving} className="bg-agri-secondary text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg hover:bg-agri-primary transition-all active:scale-95 disabled:opacity-50">
+        <button onClick={handleSave} disabled={isSaving} className="bg-agri-secondary text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg hover:bg-agri-primary transition-all active:scale-95 disabled:opacity-50 w-full md:w-auto justify-center">
            <Save size={18} /> {isSaving ? 'UPDATING...' : 'APPLY SETTINGS'}
         </button>
       </div>
@@ -165,70 +146,7 @@ const Settings: React.FC = () => {
         {/* Connections & Security */}
         <div className="space-y-8">
             
-            {/* SUPER_ADMIN Only: Gateway Config */}
-            {user?.role === 'SUPER_ADMIN' && (
-                <div className="bg-indigo-50 border border-indigo-200 rounded-3xl p-8 space-y-6 shadow-sm">
-                    <div className="flex justify-between items-start">
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-indigo-700 flex items-center gap-2 mb-4">
-                            <CreditCard size={16} /> Payment Gateway (Razorpay)
-                        </h3>
-                        <div className="flex items-center gap-2 bg-white px-3 py-1 rounded-lg border border-indigo-100 shadow-sm">
-                            <span className={`w-2 h-2 rounded-full ${gatewayConfig.is_live ? 'bg-green-500' : 'bg-amber-500'}`}></span>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{gatewayConfig.is_live ? 'LIVE MODE' : 'TEST MODE'}</span>
-                        </div>
-                    </div>
-                    
-                    <div className="grid gap-4">
-                        <div>
-                            <label className="text-[10px] uppercase font-bold text-indigo-800 mb-2 block tracking-widest">Key ID</label>
-                            <input 
-                                className="w-full bg-white border border-indigo-200 rounded-xl p-4 text-gray-900 outline-none focus:border-indigo-500 font-mono text-sm" 
-                                value={gatewayConfig.key_id}
-                                onChange={e => setGatewayConfig({...gatewayConfig, key_id: e.target.value})}
-                                placeholder="rzp_test_..."
-                            />
-                        </div>
-                        <div>
-                            <label className="text-[10px] uppercase font-bold text-indigo-800 mb-2 block tracking-widest">Key Secret</label>
-                            <div className="relative">
-                                <input 
-                                    type={showSecret ? "text" : "password"}
-                                    className="w-full bg-white border border-indigo-200 rounded-xl p-4 text-gray-900 outline-none focus:border-indigo-500 font-mono text-sm pr-10" 
-                                    value={gatewayConfig.key_secret}
-                                    onChange={e => setGatewayConfig({...gatewayConfig, key_secret: e.target.value})}
-                                    placeholder="Enter secret key..."
-                                />
-                                <button 
-                                    onClick={() => setShowSecret(!showSecret)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-indigo-300 hover:text-indigo-600"
-                                >
-                                    {showSecret ? <EyeOff size={16} /> : <Eye size={16} />}
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div className="flex items-center justify-between pt-2">
-                            <label className="flex items-center gap-2 cursor-pointer">
-                                <input 
-                                    type="checkbox" 
-                                    className="accent-indigo-600 w-4 h-4"
-                                    checked={gatewayConfig.is_live}
-                                    onChange={e => setGatewayConfig({...gatewayConfig, is_live: e.target.checked})}
-                                />
-                                <span className="text-xs font-bold text-indigo-900">Enable Live Transactions</span>
-                            </label>
-                            
-                            <button 
-                                onClick={handleSaveGateway}
-                                disabled={isSavingGateway}
-                                className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50"
-                            >
-                                {isSavingGateway ? 'Securing...' : 'Save Config'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+
 
             <div className="bg-white border border-gray-200 rounded-3xl p-8 space-y-6 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-widest text-agri-secondary flex items-center gap-2 mb-4">
@@ -238,6 +156,31 @@ const Settings: React.FC = () => {
                  <div>
                     <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block">Merchant UPI ID</label>
                     <input className="w-full bg-white border border-gray-300 rounded-xl p-4 text-gray-900 outline-none focus:border-agri-secondary font-mono" value={settings.upiId} onChange={e => setSettings({...settings, upiId: e.target.value})} />
+                 </div>
+                 
+                 <div>
+                    <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">UPI QR Code</label>
+                    <div className="flex items-center gap-6">
+                        <div className="w-24 h-24 rounded-2xl bg-gray-50 flex items-center justify-center border border-gray-200 p-2 overflow-hidden shrink-0 relative">
+                            {uploadingField === 'upiQrUrl' && (
+                                <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+                                    <Loader2 className="text-agri-secondary animate-spin" />
+                                </div>
+                            )}
+                            {settings.upiQrUrl ? (
+                                <img src={settings.upiQrUrl} className="max-h-full object-contain" alt="QR Code" />
+                            ) : (
+                                <div className="text-[9px] text-gray-400 font-black uppercase text-center leading-tight">No QR<br/>Code</div>
+                            )}
+                        </div>
+                        <div className="flex-1">
+                            <input type="file" id="qr-up" className="hidden" onChange={handleFileUpload('upiQrUrl')} disabled={!!uploadingField} />
+                            <label htmlFor="qr-up" className={`w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-4 text-[10px] font-black cursor-pointer transition-all flex items-center justify-center gap-2 text-gray-600 ${!!uploadingField ? 'opacity-50 pointer-events-none' : ''}`}>
+                                {uploadingField === 'upiQrUrl' ? <Loader2 size={14} className="animate-spin"/> : <Upload size={14} />} 
+                                {uploadingField === 'upiQrUrl' ? 'UPLOADING...' : 'REPLACE QR CODE'}
+                            </label>
+                        </div>
+                    </div>
                  </div>
                  
                  <div>

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { Notification, Role } from '../../types';
 import { Megaphone, Send, Bell, Calendar, User, CheckCircle, Trash2, X } from 'lucide-react';
+import { useConfirm } from '../../components/ContextualConfirm';
 
 const NotificationManager: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -13,6 +14,7 @@ const NotificationManager: React.FC = () => {
     type: 'DASHBOARD',
     targetRole: 'ALL'
   });
+  const { confirm } = useConfirm();
 
   useEffect(() => {
     const load = async () => {
@@ -30,8 +32,12 @@ const NotificationManager: React.FC = () => {
     alert("Broadcasting successful!");
   };
 
-  const handleDelete = async (id: string) => {
-      if(confirm("Delete this notification?")) {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+      const isConfirmed = await confirm({
+          message: "Delete this notification?",
+          trigger: e.currentTarget
+      });
+      if(isConfirmed) {
           await mockBackend.deleteNotification(id);
           setNotifications(await mockBackend.getNotifications());
       }
@@ -39,9 +45,9 @@ const NotificationManager: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl font-bold text-black">Notification Broadcast</h1>
-        <button onClick={() => setIsModalOpen(true)} className="bg-agri-secondary text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-xl text-xs uppercase tracking-widest hover:bg-agri-primary transition-colors">
+        <button onClick={() => setIsModalOpen(true)} className="bg-agri-secondary text-white px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xl text-xs uppercase tracking-widest hover:bg-agri-primary transition-colors w-full md:w-auto">
            <Megaphone size={18} /> INITIALIZE BROADCAST
         </button>
       </div>
@@ -60,7 +66,7 @@ const NotificationManager: React.FC = () => {
                 <h3 className="text-black font-bold text-xl mb-1">{note.title}</h3>
                 <p className="text-stone-600 text-sm leading-relaxed">{note.message}</p>
              </div>
-             <button onClick={() => handleDelete(note.id)} className="text-stone-400 hover:text-red-500 transition-colors p-2"><Trash2 size={20}/></button>
+             <button onClick={(e) => handleDelete(note.id, e)} className="text-stone-400 hover:text-red-500 transition-colors p-2"><Trash2 size={20}/></button>
           </div>
         ))}
         {notifications.length === 0 && <div className="text-center py-20 text-stone-400 italic">No historical broadcasts.</div>}

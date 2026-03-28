@@ -2,9 +2,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
-import { Article, PaymentRecord, ReviewMessage, ReviewStatus } from '../types';
+import { Article, PaymentRecord, ReviewMessage, ReviewStatus, ToolHistory } from '../types';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, FileText, Calendar, Clock, CheckCircle, AlertTriangle, Star, Send, MessageSquareHeart, ChevronRight, PenTool, Layers, LogOut, ShieldCheck, ShieldAlert, CreditCard, Activity, Camera, Lock, Smartphone, Globe, Mail, X, MessageCircle, Loader2 } from 'lucide-react';
+import { Plus, FileText, Calendar, Clock, CheckCircle, AlertTriangle, Star, Send, MessageSquareHeart, ChevronRight, PenTool, Layers, LogOut, ShieldCheck, ShieldAlert, CreditCard, Activity, Camera, Lock, Smartphone, Globe, Mail, X, MessageCircle, Loader2, Calculator, TrendingUp, Settings2, Wand2, LayoutGrid, Database } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Tracker from '../extensions/submission-tracking/Tracker';
 import { useConfirm } from '../components/ContextualConfirm';
@@ -14,6 +14,7 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [articles, setArticles] = useState<Article[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [toolHistory, setToolHistory] = useState<ToolHistory[]>([]);
   const { confirm } = useConfirm();
   
   // Feedback States
@@ -53,9 +54,15 @@ const Dashboard: React.FC = () => {
           setPayments(userPayments);
       });
 
+      // Setup realtime listener for tool history
+      const unsubToolHistory = mockBackend.subscribeToToolHistory(user.id, (history) => {
+          setToolHistory(history);
+      });
+
       return () => {
           unsubArticles();
           unsubPayments();
+          unsubToolHistory();
       };
     }
   }, [user]);
@@ -103,7 +110,7 @@ const Dashboard: React.FC = () => {
           const customName = `${user.id}.webp`; 
           const url = await mockBackend.uploadFile(file, 'users/profiles', customName);
           
-          await mockBackend.updateUser({ ...user, profilePhotoUrl: url });
+          await mockBackend.updateUser(user.id, { profilePhotoUrl: url });
           // Update local context
           login({ ...user, profilePhotoUrl: url });
       } catch (err: any) {
@@ -142,7 +149,7 @@ const Dashboard: React.FC = () => {
               setPwdSuccess('');
           }, 1500);
       } catch (err: any) {
-          console.error(err);
+          console.error(err.message || err);
           setPwdError(err.code === 'auth/wrong-password' ? "Current password is incorrect." : "Update failed. Please try again.");
       } finally {
           setIsPwdSubmitting(false);
@@ -171,8 +178,8 @@ const Dashboard: React.FC = () => {
         setRating(0);
         setComment('');
       }, 2000);
-    } catch (error) {
-      console.error(error);
+    } catch (error: any) {
+      console.error(error.message || error);
     } finally {
       setIsSubmittingFeedback(false);
     }
@@ -252,6 +259,33 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
+      {/* AgriFeed Banner */}
+      <div className="mb-8 bg-gradient-to-r from-green-600 to-emerald-700 rounded-2xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black opacity-10 rounded-full translate-y-1/2 -translate-x-1/4 blur-xl"></div>
+        
+        <div className="relative z-10 flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+              <MessageCircle size={24} className="text-white" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold font-serif">Join the AgriFeed Community</h2>
+          </div>
+          <p className="text-green-50 text-sm md:text-base max-w-2xl leading-relaxed">
+            Connect with researchers, share your findings, ask questions, and stay updated with the latest trends in agriculture.
+          </p>
+        </div>
+        
+        <div className="relative z-10 w-full md:w-auto">
+          <Link 
+            to="/agri-feed/dashboard" 
+            className="block w-full md:w-auto text-center bg-white text-green-700 px-8 py-3.5 rounded-xl font-bold hover:bg-green-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+          >
+            Access AgriFeed
+          </Link>
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
           <h1 className="text-3xl font-serif font-bold text-agri-primary">Researcher Dashboard</h1>
@@ -313,6 +347,10 @@ const Dashboard: React.FC = () => {
                     </p>
                  </div>
 
+                 <Link to="/dashboard/subscription" className="w-full py-3 bg-agri-primary/5 text-agri-primary hover:bg-agri-primary/10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border border-agri-primary/10 mb-2">
+                    <ShieldCheck size={14} /> My Subscription
+                 </Link>
+
                  <button 
                     onClick={() => setIsPasswordModalOpen(true)}
                     className="w-full py-2 bg-stone-100 text-stone-500 hover:bg-stone-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
@@ -353,12 +391,17 @@ const Dashboard: React.FC = () => {
                        <div className="space-y-2">
                           <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-white/60 mb-1">
                              <span className="flex items-center gap-1"><FileText size={10}/> Articles</span>
-                             <span>{user.articleUsage} / {user.articleLimit === 'UNLIMITED' ? '∞' : user.articleLimit}</span>
+                             <div className="text-right">
+                                <span className="block">{user.articleUsage} / {user.articleLimit === 'UNLIMITED' ? '∞' : (Number(user.articleLimit) || 0) + (user.adminArticleLimitAdjustment || 0)}</span>
+                                {user.adminArticleLimitAdjustment ? (
+                                    <span className="text-[8px] text-agri-secondary lowercase">({user.articleLimit} plan + {user.adminArticleLimitAdjustment} admin)</span>
+                                ) : null}
+                             </div>
                           </div>
                           <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
                              <div 
                                className="bg-agri-secondary h-full transition-all duration-1000" 
-                               style={{ width: user.articleLimit === 'UNLIMITED' ? '100%' : `${Math.min((user.articleUsage / (Number(user.articleLimit) || 1)) * 100, 100)}%` }}
+                               style={{ width: user.articleLimit === 'UNLIMITED' ? '100%' : `${Math.min((user.articleUsage / ((Number(user.articleLimit) || 0) + (user.adminArticleLimitAdjustment || 0) || 1)) * 100, 100)}%` }}
                              />
                           </div>
                        </div>
@@ -366,21 +409,80 @@ const Dashboard: React.FC = () => {
                        <div className="space-y-2">
                           <div className="flex justify-between text-[9px] font-black uppercase tracking-widest text-white/60 mb-1">
                              <span className="flex items-center gap-1"><PenTool size={10}/> Blogs</span>
-                             <span>{user.blogUsage} / {user.blogLimit === 'UNLIMITED' ? '∞' : user.blogLimit}</span>
+                             <div className="text-right">
+                                <span className="block">{user.blogUsage} / {user.blogLimit === 'UNLIMITED' ? '∞' : (Number(user.blogLimit) || 0) + (user.adminBlogLimitAdjustment || 0)}</span>
+                                {user.adminBlogLimitAdjustment ? (
+                                    <span className="text-[8px] text-agri-secondary lowercase">({user.blogLimit} plan + {user.adminBlogLimitAdjustment} admin)</span>
+                                ) : null}
+                             </div>
                           </div>
                           <div className="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
                              <div 
                                className="bg-agri-secondary h-full transition-all duration-1000" 
-                               style={{ width: user.blogLimit === 'UNLIMITED' ? '100%' : `${Math.min((user.blogUsage / (Number(user.blogLimit) || 1)) * 100, 100)}%` }}
+                               style={{ width: user.blogLimit === 'UNLIMITED' ? '100%' : `${Math.min((user.blogUsage / ((Number(user.blogLimit) || 0) + (user.adminBlogLimitAdjustment || 0) || 1)) * 100, 100)}%` }}
                              />
                           </div>
                        </div>
                     </div>
                   )}
                   <Link to="/subscription" className="mt-8 block text-center py-4 bg-agri-secondary text-agri-primary hover:bg-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-black/20">
-                     {isPlanActive ? 'Upgrade Protocol' : 'Sync Subscription'}
+                     {isPlanActive ? 'Upgrade Plan' : 'Buy Subscription'}
                   </Link>
                </div>
+            </div>
+
+            {/* Researcher Toolkit Navigation */}
+            <div className="bg-white p-8 rounded-[2rem] shadow-premium border border-stone-100 mt-8">
+              <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <Settings2 size={12} /> Researcher Toolkit
+              </h3>
+              <div className="space-y-3">
+                <Link 
+                  to="/agri-feed/feed" 
+                  className="w-full p-4 bg-stone-50 hover:bg-agri-primary hover:text-white rounded-2xl transition-all group flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg text-agri-primary group-hover:bg-agri-secondary group-hover:text-agri-primary transition-colors">
+                      <MessageCircle size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold">AgriFeed Social</p>
+                      <p className="text-[9px] opacity-60 font-medium">Connect with Researchers</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={14} className="opacity-40 group-hover:opacity-100" />
+                </Link>
+                <Link 
+                  to="/dashboard/tools" 
+                  className="w-full p-4 bg-stone-50 hover:bg-agri-primary hover:text-white rounded-2xl transition-all group flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg text-agri-primary group-hover:bg-agri-secondary group-hover:text-agri-primary transition-colors">
+                      <Wand2 size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold">My Tools & Analysis</p>
+                      <p className="text-[9px] opacity-60 font-medium">Statistical Engine v2.0</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={14} className="opacity-40 group-hover:opacity-100" />
+                </Link>
+                <Link 
+                  to="/tools" 
+                  className="w-full p-4 bg-stone-50 hover:bg-agri-primary hover:text-white rounded-2xl transition-all group flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white rounded-lg text-agri-primary group-hover:bg-agri-secondary group-hover:text-agri-primary transition-colors">
+                      <LayoutGrid size={16} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold">All Platform Tools</p>
+                      <p className="text-[9px] opacity-60 font-medium">Browse 20+ Agri-Tools</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={14} className="opacity-40 group-hover:opacity-100" />
+                </Link>
+              </div>
             </div>
         </div>
 
@@ -472,6 +574,149 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
+            {/* Tool History Section */}
+            <div className="bg-white rounded-[2.5rem] shadow-premium border border-stone-100 overflow-hidden">
+              <div className="px-8 py-6 border-b border-stone-100 flex justify-between items-center bg-stone-50/30">
+                <div className="flex items-center gap-3">
+                  <div className="bg-agri-secondary text-agri-primary p-2 rounded-lg">
+                    <Clock size={18} />
+                  </div>
+                  <h3 className="font-serif font-bold text-lg text-agri-primary">Tool History</h3>
+                </div>
+                <span className="text-[10px] font-black bg-stone-100 px-4 py-1.5 rounded-full text-stone-500 uppercase tracking-widest">
+                  {toolHistory.length} Sessions
+                </span>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-stone-50/50 text-[10px] uppercase font-black tracking-[0.2em] text-stone-400 border-b border-stone-100">
+                      <th className="px-8 py-5">Tool Name</th>
+                      <th className="px-8 py-5">Date & Time</th>
+                      <th className="px-8 py-5">Status</th>
+                      <th className="px-8 py-5 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-50">
+                    {toolHistory.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-8 py-10 text-center">
+                           <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">No tool history found</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      toolHistory.map(item => (
+                        <tr key={item.id} className="hover:bg-stone-50/80 transition-colors group">
+                          <td className="px-8 py-5">
+                            <span className="font-bold text-agri-primary text-sm">{item.toolName}</span>
+                          </td>
+                          <td className="px-8 py-5 text-xs font-medium text-stone-500">
+                            {new Date(item.timestamp).toLocaleString()}
+                          </td>
+                          <td className="px-8 py-5">
+                            <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${
+                              item.status === 'SUCCESS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                              {item.status}
+                            </span>
+                          </td>
+                          <td className="px-8 py-5 text-right">
+                            <button 
+                              onClick={() => navigate(`/dashboard/tool-history/${item.id}`)}
+                              className="p-2 bg-stone-100 text-stone-400 rounded-full hover:bg-agri-primary hover:text-white transition-all"
+                            >
+                              <ChevronRight size={16} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Analytical Tools Section */}
+            <div className="bg-white rounded-[2.5rem] shadow-premium border border-stone-100 overflow-hidden">
+              <div className="px-8 py-6 border-b border-stone-100 flex justify-between items-center bg-stone-50/30">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-600 text-white p-2 rounded-lg">
+                    <Activity size={18} />
+                  </div>
+                  <h3 className="font-serif font-bold text-lg text-agri-primary">Analytical Tools</h3>
+                </div>
+                <Link to="/tools" className="text-[10px] font-black text-agri-secondary uppercase tracking-widest hover:underline">
+                  View All Tools
+                </Link>
+              </div>
+              <div className="p-8 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Advanced Research Suite Card */}
+                <div className="bg-stone-50 rounded-3xl p-6 border border-stone-100 group hover:border-blue-200 transition-all">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="bg-blue-100 p-3 rounded-2xl text-blue-600">
+                      <Database size={24} />
+                    </div>
+                    <span className="text-[9px] font-black bg-blue-100 text-blue-700 px-3 py-1 rounded-full uppercase tracking-widest">
+                      New Module
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-agri-primary text-lg mb-2">Advanced Research Suite</h4>
+                  <p className="text-stone-500 text-sm mb-6 leading-relaxed">
+                    Excel-like data entry, custom datasets, and comprehensive statistical analysis (ANOVA, PCA, Regression).
+                  </p>
+                  <Link 
+                    to="/dashboard/advanced-research"
+                    className="w-full py-3 bg-white text-agri-primary border border-stone-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white hover:border-blue-600"
+                  >
+                    Open Research Suite <ChevronRight size={14} />
+                  </Link>
+                </div>
+
+                <div className="bg-stone-50 rounded-3xl p-6 border border-stone-100 group hover:border-emerald-200 transition-all">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="bg-emerald-100 p-3 rounded-2xl text-emerald-600">
+                      <Calculator size={24} />
+                    </div>
+                    <span className="text-[9px] font-black bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full uppercase tracking-widest">
+                      Research Ready
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-agri-primary text-lg mb-2">Statistical Analysis</h4>
+                  <p className="text-stone-500 text-sm mb-6 leading-relaxed">
+                    Run CRD/RBD ANOVA, Correlation, and Regression analysis with agricultural standard outputs and PDF reporting.
+                  </p>
+                  <Link 
+                    to="/tools/statistical-analysis"
+                    className="w-full py-3 bg-white text-agri-primary border border-stone-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 hover:bg-emerald-600 hover:text-white hover:border-emerald-600"
+                  >
+                    Launch Analysis Engine <ChevronRight size={14} />
+                  </Link>
+                </div>
+
+                <div className="bg-stone-50 rounded-3xl p-6 border border-stone-100 group hover:border-agri-secondary/30 transition-all">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="bg-agri-secondary/10 p-3 rounded-2xl text-agri-secondary">
+                      <TrendingUp size={24} />
+                    </div>
+                    <span className="text-[9px] font-black bg-agri-secondary/10 text-agri-secondary px-3 py-1 rounded-full uppercase tracking-widest">
+                      Visualizer
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-agri-primary text-lg mb-2">Graph Generator</h4>
+                  <p className="text-stone-500 text-sm mb-6 leading-relaxed">
+                    Transform your research data into publication-quality visualizations and charts instantly.
+                  </p>
+                  <Link 
+                    to="/tools/auto-graph"
+                    className="w-full py-3 bg-white text-agri-primary border border-stone-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 hover:bg-agri-secondary hover:text-white hover:border-agri-secondary"
+                  >
+                    Open Visualizer <ChevronRight size={14} />
+                  </Link>
+                </div>
+              </div>
+            </div>
+
             {/* EXTENSION: Metadata Tracker Widget */}
             <Tracker articles={articles} />
 
@@ -514,7 +759,7 @@ const Dashboard: React.FC = () => {
                                         </td>
                                         <td className="px-8 py-5">
                                             <span className="font-bold text-agri-primary text-sm">{payment.planName}</span>
-                                            <span className="block text-[9px] text-stone-400 font-mono mt-0.5">{payment.upiTxnId || payment.razorpayPaymentId || 'N/A'}</span>
+                                            <span className="block text-[9px] text-stone-400 font-mono mt-0.5">{payment.upiTxnId || 'N/A'}</span>
                                         </td>
                                         <td className="px-8 py-5 font-bold text-agri-primary text-sm">
                                             ₹{payment.amount}

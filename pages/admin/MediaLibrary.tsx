@@ -38,7 +38,7 @@ const MediaLibrary: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl font-bold text-white">Central Media Storage</h1>
         <div className="flex items-center gap-4 bg-white/5 p-2 rounded-xl border border-white/5">
            <Filter size={16} className="text-white/20 ml-2" />

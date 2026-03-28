@@ -44,7 +44,7 @@ const LayoutManager: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-black">Homepage Layout</h1>
           <p className="text-black text-xs mt-1 uppercase tracking-widest font-bold">Priority ordering & visibility</p>
@@ -52,7 +52,7 @@ const LayoutManager: React.FC = () => {
         <button 
           onClick={handleSave} 
           disabled={isSaving}
-          className="bg-stone-200 text-black border border-stone-300 px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-stone-300 transition-all active:scale-95 disabled:opacity-50"
+          className="bg-stone-200 text-black border border-stone-300 px-10 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-stone-300 transition-all active:scale-95 disabled:opacity-50 w-full md:w-auto"
         >
            <Save size={18} /> {isSaving ? 'SYNCING...' : 'SAVE LAYOUT'}
         </button>

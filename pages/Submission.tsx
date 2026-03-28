@@ -6,6 +6,8 @@ import { mockBackend } from '../services/mockBackend';
 import { UploadCloud, AlertTriangle, Lock, FileText, CheckCircle, PenTool, Type } from 'lucide-react';
 import { createMetaFile } from '../extensions/submission-tracking/meta-handler';
 import { sendNotification } from '../extensions/notifications/service';
+import OptimizedImage from '../components/OptimizedImage';
+import SEO from '../components/SEO';
 
 const Submission: React.FC = () => {
   const { user, login } = useAuth();
@@ -17,6 +19,7 @@ const Submission: React.FC = () => {
   const [authorName, setAuthorName] = useState(user?.name || '');
   const [file, setFile] = useState<File | null>(null);
   const [textContent, setTextContent] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -24,7 +27,13 @@ const Submission: React.FC = () => {
   const isPlanActive = user?.subscriptionExpiry && new Date(user.subscriptionExpiry) > new Date();
   
   // 2. Check Submission Limit
-  const isLimitReached = user && user.articleLimit !== 'UNLIMITED' && (user.articleLimit === undefined || user.articleUsage >= user.articleLimit);
+  const totalArticleLimit = user?.articleLimit === 'UNLIMITED' ? 'UNLIMITED' : (Number(user?.articleLimit) || 0) + (user?.adminArticleLimitAdjustment || 0);
+  const totalBlogLimit = user?.blogLimit === 'UNLIMITED' ? 'UNLIMITED' : (Number(user?.blogLimit) || 0) + (user?.adminBlogLimitAdjustment || 0);
+  
+  const currentLimit = contentType === 'ARTICLE' ? totalArticleLimit : totalBlogLimit;
+  const currentUsage = contentType === 'ARTICLE' ? user?.articleUsage || 0 : user?.blogUsage || 0;
+  
+  const isLimitReached = user && currentLimit !== 'UNLIMITED' && (currentUsage >= currentLimit);
   
   // Combine checks
   const canSubmit = user && isPlanActive && !isLimitReached;
@@ -69,6 +78,7 @@ const Submission: React.FC = () => {
     
     if (submissionMode === 'FILE' && !file) return setErrorMsg("Please upload your file (.docx)");
     if (submissionMode === 'TEXT' && !textContent.trim()) return setErrorMsg("Please write your content.");
+    if (!acceptedTerms) return setErrorMsg("You must accept the terms and conditions before submitting.");
 
     setIsSubmitting(true);
     setErrorMsg('');
@@ -84,11 +94,11 @@ const Submission: React.FC = () => {
         title,
         authorId: user!.id,
         authorName: authorName,
-        status: 'PENDING',
+        status: 'Pending',
         type: contentType,
         submissionDate: new Date().toISOString(),
         fileUrl: fileUrl,
-        content: submissionMode === 'TEXT' ? textContent : undefined
+        content: submissionMode === 'TEXT' ? textContent : ''
       });
       
       if (result) {
@@ -104,13 +114,20 @@ const Submission: React.FC = () => {
              id: result.id
            });
 
-        } catch(e) {
-           console.warn("Meta file creation warning", e);
+        } catch(e: any) {
+           console.warn("Meta file creation warning", e.message || e);
         }
 
-        if(user && typeof user.articleLimit === 'number') {
-            const updatedUser = { ...user, articleUsage: user.articleUsage + 1 };
-            // Update local state, though page reload will fetch fresh from backend
+        if(user) {
+            const isArticle = contentType === 'ARTICLE';
+            const updatedUser = { 
+                ...user, 
+                articleUsage: isArticle ? (user.articleUsage || 0) + 1 : (user.articleUsage || 0),
+                blogUsage: !isArticle ? (user.blogUsage || 0) + 1 : (user.blogUsage || 0)
+            };
+            // Persist to backend
+            await mockBackend.updateUser(updatedUser.id, updatedUser);
+            // Update local state
             login(updatedUser); 
         }
         alert(`${contentType === 'BLOG' ? 'Blog' : 'Article'} submitted successfully! Plagiarism check initiated.`);
@@ -180,6 +197,10 @@ const Submission: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
+      <SEO 
+        title="Submit Content | Agrigence"
+        description="Submit your agricultural research articles, blogs, and insights to the Agrigence platform."
+      />
       <div className="max-w-xl mx-auto bg-white p-8 md:p-10 rounded-[2.5rem] shadow-premium border border-stone-100">
         <div className="flex items-center gap-4 mb-8">
            <div className="bg-agri-secondary/10 p-3 rounded-2xl text-agri-secondary">
@@ -311,8 +332,21 @@ const Submission: React.FC = () => {
                 <span className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Protocol Verified</span>
              </div>
              <span className="text-[10px] font-black text-agri-primary uppercase tracking-widest">
-                {user?.articleLimit === 'UNLIMITED' ? 'UNLIMITED_TX' : `REM: ${user!.articleLimit! - user!.articleUsage}_TX`}
+                {currentLimit === 'UNLIMITED' ? 'UNLIMITED_TX' : `REM: ${Number(currentLimit) - currentUsage}_TX`}
              </span>
+          </div>
+
+          <div className="flex items-start gap-3 bg-stone-50 rounded-2xl p-4 border border-stone-200">
+             <input 
+               type="checkbox" 
+               id="terms" 
+               checked={acceptedTerms}
+               onChange={(e) => setAcceptedTerms(e.target.checked)}
+               className="mt-1 w-4 h-4 text-agri-secondary border-stone-300 rounded focus:ring-agri-secondary"
+             />
+             <label htmlFor="terms" className="text-xs text-stone-600 leading-relaxed">
+               I have read and agree to the <a href="/terms" target="_blank" className="text-agri-secondary font-bold hover:underline">Terms and Conditions</a> and confirm that this submission is my original work.
+             </label>
           </div>
 
           <button 

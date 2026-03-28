@@ -38,7 +38,7 @@ const NavigationManager: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl font-bold text-black">Menu Navigation</h1>
         <button onClick={() => { setEditingItem({}); setIsModalOpen(true); }} className="bg-stone-200 text-black border border-stone-300 px-8 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-xl shadow-stone-200/20 flex items-center gap-2 hover:bg-stone-300 transition-colors">
            <Plus size={16} /> ADD_LINK

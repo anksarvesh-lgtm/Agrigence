@@ -1,89 +1,64 @@
-
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowRight, Calendar, User, 
   ChevronRight, Bookmark, Star, Quote,
-  Megaphone, ShoppingBag, BookOpen, FileText, PenTool, ExternalLink
+  Megaphone, ShoppingBag, BookOpen, FileText, PenTool, ExternalLink, Wrench,
+  Calculator, Droplets, Leaf, Activity, CheckCircle, Shield, Newspaper, Store, Info, MessageSquare
 } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
 import { NewsItem, Article, Magazine, Product, Feedback, SiteSettings, HomepageSection } from '../types';
 import PDFAction from '../components/PDFAction';
+import OptimizedImage from '../components/OptimizedImage';
+import SEO from '../components/SEO';
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
   const [settings, setSettings] = useState<SiteSettings | null>(null);
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [articles, setArticles] = useState<Article[]>([]);
   const [blogs, setBlogs] = useState<Article[]>([]);
-  const [books, setBooks] = useState<Product[]>([]);
-  const [magazine, setMagazine] = useState<Magazine | null>(null);
-  const [reviews, setReviews] = useState<Feedback[]>([]);
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [magazines, setMagazines] = useState<Magazine[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
 
   useEffect(() => {
-    // Load Settings
-    const s = mockBackend.getSettings();
-    setSettings(s);
+    const unsubSettings = mockBackend.subscribeToSettings(setSettings);
 
-    // Real-time listeners
-    const unsubNews = mockBackend.subscribeToNews((data) => setNews(data)); 
-    
     const unsubArticles = mockBackend.subscribeToArticles(async (data) => {
-        // --- Access Control Filtering ---
-        // 1. Fetch Users to identify Admins
-        // Use getPublicAdmins to securely fetch only permitted profiles (Admins)
         const users = await mockBackend.getPublicAdmins();
         const adminIds = new Set(users.map(u => u.id));
 
         const publicContent = data.filter(a => {
-            // Must be published/approved
             if (a.status !== 'PUBLISHED' && a.status !== 'APPROVED') return false;
-            
-            // Check authorship: Public if no authorId (System) or author is Admin
             if (!a.authorId) return true; 
             return adminIds.has(a.authorId); 
         });
 
-        setArticles(publicContent.filter(a => a.type === 'ARTICLE'));
-        setBlogs(publicContent.filter(a => a.type === 'BLOG'));
+        setBlogs(publicContent.filter(a => a.type === 'BLOG').slice(0, 3));
     });
 
-    const unsubProducts = mockBackend.subscribeToProducts((data) => {
-        setBooks(data.filter(p => p.category === 'Book' || p.category === 'Store'));
-    });
-
-    const unsubMags = mockBackend.subscribeToMagazines((data) => {
-        // Sort manually
-        const sorted = data.sort((a,b) => (b.year - a.year) || (new Date(`${b.month} 1`).getTime() - new Date(`${a.month} 1`).getTime()));
-        setMagazine(sorted.length > 0 ? sorted[0] : null);
-    });
-
-    const unsubReviews = mockBackend.subscribeToFeedback((data) => {
-        setReviews(data);
-    });
+    const unsubNews = mockBackend.subscribeToNews(data => setNews(data.slice(0, 4)));
+    const unsubMagazines = mockBackend.subscribeToMagazines(data => setMagazines(data.slice(0, 3)));
+    const unsubProducts = mockBackend.subscribeToProducts(data => setProducts(data.slice(0, 4)));
+    const unsubFeedback = mockBackend.subscribeToFeedback(data => setFeedbacks(data.filter(f => f.status === 'APPROVED').slice(0, 3)));
 
     return () => {
-        unsubNews();
+        unsubSettings();
         unsubArticles();
+        unsubNews();
+        unsubMagazines();
         unsubProducts();
-        unsubMags();
-        unsubReviews();
+        unsubFeedback();
     };
   }, []);
 
-  // --- UI COMPONENTS ---
-
-  const SectionHeader = ({ title, link, linkText = "View All", isExternal = false }: { title: string; link: string; linkText?: string; isExternal?: boolean }) => (
+  const SectionHeader = ({ title, link, linkText = "View All" }: { title: string; link?: string; linkText?: string }) => (
     <div className="flex justify-between items-end mb-8 relative">
       <h2 className="text-3xl font-serif font-bold text-agri-primary">
         {title}
       </h2>
-      {isExternal ? (
-        <a href={link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-agri-secondary hover:text-agri-primary transition-all">
-            {linkText} <ExternalLink size={14} />
-        </a>
-      ) : (
+      {link && (
         <Link to={link} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-agri-secondary hover:text-agri-primary transition-all">
             {linkText} <ChevronRight size={14} />
         </Link>
@@ -93,281 +68,449 @@ const Home: React.FC = () => {
 
   const GlassCard: React.FC<{ children: React.ReactNode; onClick?: () => void; className?: string }> = ({ children, onClick, className = "" }) => (
     <motion.div
-      whileHover={{ y: -5, shadow: "0 25px 50px -12px rgba(61, 43, 31, 0.15)" }}
+      whileHover={{ y: -5, shadow: "0 25px 50px -12px rgba(31, 38, 135, 0.15)" }}
       onClick={onClick}
-      className={`bg-white/40 backdrop-blur-md border border-white/20 rounded-[2rem] shadow-premium cursor-pointer transition-all overflow-hidden p-6 ${className}`}
+      className={`bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] hover:bg-white/50 cursor-pointer transition-all overflow-hidden p-6 ${className}`}
     >
       {children}
     </motion.div>
   );
 
-  // --- DYNAMIC SECTION RENDERER ---
-  const renderSection = (section: HomepageSection) => {
-    if (!section.isEnabled) return null;
-
-    switch (section.id) {
-        case 'news':
-            return (
-            <section key={section.id} className="container mx-auto px-6 mb-20">
-                <SectionHeader title={section.label || "News & Updates"} link="/news" />
-                <div className="grid lg:grid-cols-3 gap-8">
-                {news.length > 0 && (
-                    <motion.div 
-                    onClick={() => navigate(`/news`)}
-                    className="lg:col-span-1 bg-agri-primary rounded-[2.5rem] p-10 text-white relative overflow-hidden group cursor-pointer shadow-2xl"
-                    >
-                    <div className="absolute top-0 right-0 p-10 text-white/5">
-                        <Megaphone size={120} className="group-hover:rotate-12 transition-transform duration-700" />
-                    </div>
-                    <div className="relative z-10">
-                        <span className="bg-agri-secondary text-agri-primary px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest mb-6 inline-block">FEATURED_POST</span>
-                        <h3 className="text-3xl font-serif font-bold mb-4 leading-tight group-hover:text-agri-secondary transition-colors">{news[0].title}</h3>
-                        <p className="text-white/60 text-sm leading-relaxed mb-10 line-clamp-4">{news[0].description}</p>
-                        <div className="flex items-center gap-2 text-[10px] font-black text-white/40 uppercase tracking-widest border-t border-white/10 pt-6">
-                        <Calendar size={14}/> {news[0].date}
-                        </div>
-                    </div>
-                    </motion.div>
-                )}
-                <div className="lg:col-span-2 grid md:grid-cols-2 gap-8">
-                    {news.slice(1, section.itemsToShow).map((item) => (
-                    <GlassCard key={item.id} onClick={() => navigate(`/news`)}>
-                        <div className="flex items-center gap-2 text-[10px] font-black text-agri-secondary uppercase tracking-widest mb-4">
-                        <Calendar size={12} /> {item.date}
-                        </div>
-                        <h4 className="text-xl font-serif font-bold text-agri-primary mb-3 line-clamp-2">{item.title}</h4>
-                        <p className="text-stone-500 text-xs leading-relaxed line-clamp-2 mb-6">{item.description}</p>
-                        <div className="text-[10px] font-black text-agri-primary uppercase tracking-widest flex items-center gap-1 opacity-40 group-hover:opacity-100">
-                        Protocol Details <ArrowRight size={10} />
-                        </div>
-                    </GlassCard>
-                    ))}
-                </div>
-                </div>
-            </section>
-            );
-
-        case 'magazine':
-            if (!magazine) return null;
-            return (
-            <section key={section.id} className="px-6 mb-20">
-                <div className="container mx-auto">
-                    <motion.div 
-                    whileHover={{ y: -10 }}
-                    className="bg-agri-primary rounded-[3rem] overflow-hidden shadow-2xl flex flex-col lg:flex-row group"
-                    >
-                    <div className="lg:w-1/3 aspect-[3/4] overflow-hidden cursor-pointer" onClick={() => navigate('/journals')}>
-                        <img src={magazine.coverImage} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" alt="" />
-                    </div>
-                    <div className="lg:w-2/3 p-12 md:p-20 flex flex-col justify-center text-white relative">
-                        <div className="relative z-10">
-                            <div className="flex items-center gap-4 mb-8">
-                                <span className="bg-agri-secondary text-agri-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest">CURRENT_RELEASE</span>
-                                <span className="text-agri-secondary/60 text-xs font-serif italic">Vol {magazine.volume} • Issue {magazine.issueNumber}</span>
-                            </div>
-                            <h2 className="text-4xl md:text-6xl font-serif font-bold mb-6 group-hover:text-agri-secondary transition-colors cursor-pointer" onClick={() => navigate('/journals')}>{magazine.title}</h2>
-                            <p className="text-lg text-white/50 font-light leading-relaxed mb-12 max-w-2xl">{magazine.description}</p>
-                            <div className="flex gap-4">
-                                <PDFAction 
-                                    title={magazine.title}
-                                    type="MAGAZINE"
-                                    accessLevel={magazine.downloadAccess}
-                                    fileUrl={magazine.pdfUrl}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                    </motion.div>
-                </div>
-            </section>
-            );
-
-        case 'blogs':
-            return (
-            <section key={section.id} className="container mx-auto px-6 mb-20">
-                <SectionHeader title={section.label || "Expert Insights & Blogs"} link="/blogs" />
-                {blogs.length > 0 ? (
-                <div className="grid md:grid-cols-3 gap-8">
-                    {blogs.slice(0, section.itemsToShow).map((blog, i) => (
-                    <GlassCard key={blog.id} onClick={() => navigate(`/blog/${blog.id}`)}>
-                        <div className="h-48 rounded-2xl overflow-hidden mb-6 relative">
-                            <img src={blog.featuredImage || `https://images.unsplash.com/photo-1592419044706-39796d40f98c?auto=format&fit=crop&q=80&w=500&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D`} className="w-full h-full object-cover" alt="" />
-                            <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest text-agri-primary">
-                            BLOG_POST
-                            </div>
-                        </div>
-                        <h4 className="text-xl font-serif font-bold text-agri-primary mb-3 line-clamp-2 leading-tight">{blog.title}</h4>
-                        <div className="flex items-center gap-2 mb-4">
-                            <div className="w-6 h-6 rounded-full bg-agri-secondary/20 flex items-center justify-center text-agri-secondary text-xs">
-                            <User size={12} />
-                            </div>
-                            <span className="text-xs text-stone-500 font-bold">{blog.authorName}</span>
-                        </div>
-                        <p className="text-stone-500 text-xs leading-relaxed line-clamp-3 mb-6">
-                            {blog.excerpt || blog.content.substring(0, 100)}...
-                        </p>
-                        <div className="text-[10px] font-black text-agri-secondary uppercase tracking-widest flex items-center gap-2">
-                            READ ARTICLE <ArrowRight size={12} />
-                        </div>
-                    </GlassCard>
-                    ))}
-                </div>
-                ) : (
-                <div className="bg-stone-50 border border-stone-100 rounded-[2rem] p-12 text-center">
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 text-stone-300 shadow-sm">
-                        <PenTool size={32} />
-                    </div>
-                    <h3 className="text-lg font-serif font-bold text-agri-primary">Insights Loading...</h3>
-                    <p className="text-stone-400 text-xs mt-2 max-w-md mx-auto">Our experts are currently curating new blog content. Check back soon for fresh agricultural insights.</p>
-                </div>
-                )}
-            </section>
-            );
-
-        case 'books':
-            if (books.length === 0) return null;
-            return (
-            <section key={section.id} className="container mx-auto px-6 mb-20">
-                <SectionHeader title={section.label || "Agri-Store & Resources"} link="/products" />
-                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {books.slice(0, section.itemsToShow).map((book) => (
-                    <motion.div 
-                        key={book.id}
-                        whileHover={{ y: -5 }}
-                        className="bg-white rounded-2xl p-4 shadow-sm border border-stone-100 group cursor-pointer relative z-10"
-                        onClick={() => navigate('/products')}
-                    >
-                        <div className="aspect-[3/4] rounded-xl overflow-hidden bg-stone-100 mb-4 relative">
-                            <img src={book.imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={book.name} />
-                            <div className="absolute top-2 right-2 bg-agri-secondary text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-lg">
-                                ₹{book.price}
-                            </div>
-                        </div>
-                        <h4 className="font-serif font-bold text-agri-primary text-sm mb-1 line-clamp-1">{book.name}</h4>
-                        <p className="text-xs text-stone-400 mb-3 line-clamp-1">{book.description}</p>
-                        <button className="w-full py-2 rounded-lg border border-agri-secondary/30 text-agri-secondary text-[10px] font-black uppercase tracking-widest hover:bg-agri-secondary hover:text-white transition-all flex items-center justify-center gap-2">
-                            <ShoppingBag size={12} /> View Details
-                        </button>
-                    </motion.div>
-                    ))}
-                </div>
-            </section>
-            );
-
-        case 'reviews':
-            if (reviews.length === 0) return null;
-            return (
-            <section key={section.id} className="py-20 bg-stone-50 mb-20">
-                <div className="container mx-auto px-6">
-                    <div className="text-center mb-12">
-                    <h2 className="text-3xl font-serif font-bold text-agri-primary mb-3">{section.label || "Community Voices"}</h2>
-                    <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Feedback from our network</p>
-                    </div>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {reviews.slice(0, section.itemsToShow).map((review) => (
-                        <div key={review.id} className="bg-white p-8 rounded-[2rem] shadow-sm border border-stone-100 relative">
-                            <div className="text-agri-secondary mb-4 opacity-20"><Quote size={40} /></div>
-                            <p className="text-stone-600 text-sm leading-relaxed mb-6 italic">"{review.comment}"</p>
-                            <div className="flex items-center gap-3 border-t border-stone-100 pt-4">
-                                <div className="w-10 h-10 rounded-full bg-agri-primary text-white flex items-center justify-center font-serif font-bold">
-                                {review.userName[0]}
-                                </div>
-                                <div>
-                                <p className="text-xs font-bold text-agri-primary">{review.userName}</p>
-                                <div className="flex text-agri-secondary">
-                                    {[...Array(review.rating)].map((_, i) => <Star key={i} size={10} fill="currentColor" />)}
-                                </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                    </div>
-                </div>
-            </section>
-            );
-
-        case 'mission':
-            return (
-            <section key={section.id} className="container mx-auto px-6 relative mb-20">
-                <div className="bg-agri-primary rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden">
-                    <div className="relative z-10 max-w-4xl mx-auto">
-                    <div className="w-16 h-16 bg-agri-secondary text-agri-primary rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl">
-                        <BookOpen size={32} />
-                    </div>
-                    <h2 className="text-4xl md:text-5xl font-serif font-bold text-white mb-8">{section.label || "Our Mission"}</h2>
-                    <p className="text-lg md:text-xl text-white/70 font-light leading-relaxed mb-10">
-                        {settings?.missionText || "To create a seamless bridge between agricultural research and practical application, empowering the next generation of farmers and scientists with verified knowledge."}
-                    </p>
-                    <Link to="/about-contact" className="inline-flex items-center gap-2 bg-white text-agri-primary px-8 py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-agri-secondary hover:text-white transition-all">
-                        Read Our Story <ArrowRight size={16} />
-                    </Link>
-                    </div>
-                </div>
-            </section>
-            );
-
-        default:
-            return null;
-    }
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is soil fertility?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Soil fertility is the ability of soil to sustain agricultural plant growth, providing essential plant nutrients and favorable chemical, physical, and biological characteristics as a habitat for plant growth."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How to calculate fertilizer requirement?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Fertilizer requirement is calculated based on soil test results, crop type, and target yield. It involves determining the existing nutrient levels in the soil and supplementing the deficit with appropriate fertilizers."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why is soil testing important?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Soil testing is crucial because it helps farmers understand the exact nutrient status of their land, allowing for precise fertilizer application, reducing costs, and minimizing environmental impact."
+        }
+      }
+    ]
   };
 
-  // Get active layout from settings, or fallback to default order
-  let layout = settings?.homepageLayout 
-    ? [...settings.homepageLayout].sort((a,b) => a.order - b.order) 
-    : [];
-
   return (
-    <div className="bg-agri-bg min-h-screen">
+    <div className="min-h-screen relative bg-[#f8f9fa] overflow-hidden">
+      {/* Decorative background blobs for glass effect to show over */}
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-agri-primary/10 blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-agri-secondary/10 blur-[120px] pointer-events-none" />
+      <div className="fixed top-[40%] left-[60%] w-[30%] h-[30%] rounded-full bg-emerald-500/5 blur-[100px] pointer-events-none" />
+
+      <SEO 
+        title="Agricultural Intelligence & Education Platform | Agrigence"
+        description="Smart agricultural tools, academic resources, and research insights for farmers and students. Optimize your farming and studies with data-driven decisions."
+        schema={faqSchema}
+      />
       
-      {/* --- HERO SECTION (Static / Always Top) --- */}
-      <section className="relative h-[85vh] flex items-center bg-agri-primary text-white overflow-hidden mb-24">
-        
-        {/* Background Layer */}
+      {/* 1. HERO SECTION */}
+      <section className="relative min-h-[600px] flex items-center justify-center overflow-hidden rounded-b-[3rem] mx-2 mt-2 shadow-sm">
         <div className="absolute inset-0">
-           {/* Original Image */}
-           <img 
-             src="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=2070&auto=format&fit=crop" 
-             alt="Modern Agriculture Drone Technology" 
+           <OptimizedImage 
+             src="https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=2000&auto=format&fit=crop" 
+             alt="Agriculture innovation and technology" 
              className="w-full h-full object-cover"
+             priority={true}
            />
-           {/* Gradient Fade: Left High (Dark) -> Right Low (Transparent) */}
-           <div className="absolute inset-0 bg-gradient-to-r from-agri-primary via-agri-primary/80 to-transparent z-10"></div>
+           <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] z-10"></div>
         </div>
 
-        <div className="container mx-auto px-6 relative z-30">
+        <div className="container mx-auto px-6 relative z-30 flex flex-col items-center text-center">
           <motion.div 
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="max-w-3xl"
+            className="max-w-4xl"
           >
-            <div className="flex items-center gap-3 mb-6">
-              <span className="h-px w-12 bg-agri-secondary"></span>
-              <span className="text-[10px] font-black uppercase tracking-[0.4em] text-agri-secondary">Verified Academic Excellence</span>
+            <div className="mb-6 flex flex-col items-center">
+              <div className="flex items-center gap-3">
+                <span className="h-px w-12 bg-agri-secondary"></span>
+                <span className="text-[11px] font-black uppercase tracking-[0.4em] text-agri-secondary">Agriculture & Education Hub</span>
+                <span className="h-px w-12 bg-agri-secondary"></span>
+              </div>
             </div>
-            <h1 className="text-5xl md:text-7xl font-serif font-bold mb-8 leading-[1.1] text-white">
-              Advancing <span className="text-agri-secondary italic">Indian Agriculture</span> Through Peer-Review
+            <h1 className="text-4xl md:text-7xl font-serif font-bold mb-6 leading-[1.1] text-white">
+              Pioneering the Future of <span className="text-agri-secondary">Agri-Education</span>
             </h1>
-            <p className="text-lg text-white/80 font-light leading-relaxed mb-12 max-w-xl">
-              Building a Trusted Digital Agriculture Magazine and Research Publishing Platform for Knowledge Sharing and Innovation in Modern Farming.
+            <p className="text-lg md:text-xl text-white/90 font-light leading-relaxed mb-10 max-w-3xl mx-auto">
+              Empowering farmers, students, researchers, and innovators with smart agricultural tools, expert research insights, and a global academic community.
             </p>
-            <div className="flex flex-wrap gap-6">
-               <Link to="/submission" className="bg-agri-secondary text-agri-primary px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-2xl">
-                 Initialize Submission
+            <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 md:gap-6 w-full px-4 sm:px-0">
+               <Link to="/tools" className="w-full sm:w-auto justify-center bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white/30 transition-all shadow-lg flex items-center gap-2">
+                 <Wrench size={18} /> EXPLORE TOOLS
                </Link>
-               <Link to="/journals" className="bg-white/10 backdrop-blur-md border border-white/20 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-all flex items-center gap-3 text-white">
-                 Explore Archive <ArrowRight size={16}/>
+               <Link to="/blogs" className="w-full sm:w-auto justify-center bg-black/30 backdrop-blur-md border border-white/10 text-white px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black/50 transition-all shadow-lg flex items-center gap-2">
+                 <BookOpen size={18} /> READ BLOGS
+               </Link>
+               <Link to="/products" className="w-full sm:w-auto justify-center bg-white/80 backdrop-blur-md border border-white/50 text-agri-primary px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-lg flex items-center gap-2">
+                 <ShoppingBag size={18} /> VISIT STORE
                </Link>
             </div>
           </motion.div>
         </div>
+        
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 animate-bounce hidden md:block">
+          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
+            <div className="w-1 h-2 bg-white rounded-full"></div>
+          </div>
+        </div>
       </section>
 
-      {/* --- DYNAMIC SECTIONS --- */}
-      <div className="pb-24">
-        {layout.map((section) => renderSection(section))}
-      </div>
+      {/* 3. NEWS & UPDATES */}
+      <section className="py-24 relative z-10">
+        <div className="container mx-auto px-6">
+          <SectionHeader title="News & Updates" link="/news" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {news.length > 0 ? news.map((item, i) => (
+              <GlassCard key={i} onClick={() => navigate(`/news/${item.id}`)} className="flex flex-col h-full">
+                <div className="text-[10px] font-black text-agri-secondary uppercase tracking-widest mb-3 flex items-center gap-2">
+                   <Calendar size={12} /> {item.date}
+                </div>
+                <h4 className="font-bold text-agri-primary mb-3 line-clamp-2 flex-grow">{item.title}</h4>
+                <p className="text-stone-700 text-xs line-clamp-3 mb-4 font-medium">{item.content}</p>
+                <div className="text-[10px] font-black text-agri-primary uppercase tracking-widest flex items-center gap-2 mt-auto">
+                  READ MORE <ChevronRight size={12} />
+                </div>
+              </GlassCard>
+            )) : (
+              <div className="col-span-full text-center py-12 text-stone-400 italic">No recent news updates available.</div>
+            )}
+          </div>
+        </div>
+      </section>
 
+      {/* 4. BLOGS & EXPERT INSIGHTS */}
+      <section className="py-24 relative z-10">
+        <div className="container mx-auto px-6">
+          <SectionHeader title="Blogs & Expert Insights" link="/blogs" />
+          <div className="grid md:grid-cols-3 gap-8">
+            {blogs.length > 0 ? blogs.map((blog, i) => (
+              <motion.div 
+                key={i}
+                whileHover={{ y: -10 }}
+                onClick={() => navigate(`/blog/${blog.id}`)}
+                className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] overflow-hidden border border-white/60 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] hover:bg-white/50 transition-all cursor-pointer group flex flex-col"
+              >
+                <div className="h-56 relative overflow-hidden">
+                  <OptimizedImage 
+                    src={blog.featuredImage || blog.fileUrl || `https://images.unsplash.com/photo-1586771107445-d3af22d1031c?q=80&w=800&auto=format&fit=crop&sig=${i}`} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    alt={blog.title} 
+                  />
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-black text-agri-primary uppercase tracking-widest">
+                    {blog.categoryId || 'Agriculture'}
+                  </div>
+                </div>
+                <div className="p-8">
+                  <div className="flex items-center gap-4 mb-4 text-[10px] font-black text-stone-600 uppercase tracking-widest">
+                    <span className="flex items-center gap-1"><User size={12} /> {blog.authorName}</span>
+                    <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(blog.submissionDate).toLocaleDateString()}</span>
+                  </div>
+                  <h4 className="text-xl font-serif font-bold text-agri-primary mb-4 group-hover:text-agri-secondary transition-colors line-clamp-2">{blog.title}</h4>
+                  <p className="text-stone-700 text-sm mb-6 line-clamp-3 leading-relaxed font-medium">{blog.excerpt || blog.content?.substring(0, 150)}...</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-agri-secondary uppercase tracking-widest flex items-center gap-2">
+                      READ ARTICLE <ArrowRight size={12} />
+                    </span>
+                    <Bookmark size={16} className="text-stone-300 hover:text-agri-secondary transition-colors" />
+                  </div>
+                </div>
+              </motion.div>
+            )) : (
+              <div className="col-span-full text-center py-12 text-stone-400 italic">No recent blog posts available.</div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 5. MAGAZINE SECTION */}
+      <section className="py-24 relative overflow-hidden z-10 mx-4 rounded-[3rem] my-12 shadow-xl">
+        <div className="absolute inset-0 bg-[#F5F5DC]/90 backdrop-blur-2xl"></div>
+        <div className="absolute top-0 right-0 w-1/3 h-full opacity-20 pointer-events-none">
+           <svg viewBox="0 0 100 100" className="w-full h-full fill-current text-[#3D2B1F]">
+              <path d="M0,0 L100,0 L100,100 L0,100 Z" />
+           </svg>
+        </div>
+        <div className="container mx-auto px-6 relative z-10 text-[#3D2B1F]">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+            <div className="max-w-xl">
+              <h2 className="text-4xl font-serif font-bold mb-4">Agriculture Magazines</h2>
+              <p className="text-[#3D2B1F]/90 font-medium">Explore our featured publications, research journals, and monthly agriculture digests.</p>
+            </div>
+            <Link to="/journals" className="text-[10px] font-black uppercase tracking-widest text-agri-secondary hover:text-agri-primary transition-all flex items-center gap-2">
+              VIEW ALL ISSUES <ChevronRight size={14} />
+            </Link>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {magazines.length > 0 ? magazines.map((mag, i) => (
+              <div key={i} className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2.5rem] p-8 flex flex-col items-center text-center group hover:bg-white/60 hover:border-white/80 transition-all shadow-[0_8px_32px_0_rgba(31,38,135,0.07)]">
+                <div className="w-48 h-64 bg-stone-200 rounded-xl mb-8 shadow-xl overflow-hidden relative group-hover:-translate-y-2 transition-transform duration-500">
+                  <OptimizedImage 
+                    src={mag.coverImage || `https://images.unsplash.com/photo-1500937386664-56d1dfef3854?q=80&w=400&auto=format&fit=crop`} 
+                    className="w-full h-full object-cover" 
+                    alt={mag.title} 
+                  />
+                  <div className="absolute inset-0 bg-white/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <BookOpen size={48} className="text-[#3D2B1F]" />
+                  </div>
+                </div>
+                <h4 className="text-xl font-serif font-bold mb-2 text-[#3D2B1F]">{mag.title}</h4>
+                <p className="text-[#3D2B1F]/80 text-xs mb-6 uppercase tracking-widest font-black">Issue {mag.issueNumber} • {mag.year}</p>
+                <div className="flex gap-4 mt-auto">
+                   <PDFAction 
+                     fileUrl={mag.pdfUrl} 
+                     title={mag.title} 
+                   />
+                </div>
+              </div>
+            )) : (
+              <div className="col-span-full text-center py-12 text-[#3D2B1F]/50 italic">No magazines available at the moment.</div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 6. STORE SECTION */}
+      <section className="py-24 relative z-10">
+        <div className="container mx-auto px-6">
+          <SectionHeader title="Store" link="/products" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {products.length > 0 ? products.map((prod, i) => (
+              <motion.div 
+                key={i}
+                whileHover={{ y: -10 }}
+                className="bg-white/40 backdrop-blur-xl rounded-[2rem] border border-white/60 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] hover:bg-white/50 transition-all group overflow-hidden flex flex-col"
+              >
+                <div className="h-64 relative bg-white/50 overflow-hidden">
+                  <OptimizedImage 
+                    src={prod.imageUrl || `https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=500&auto=format&fit=crop`} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                    alt={prod.name} 
+                  />
+                </div>
+                <div className="p-6">
+                  <h4 className="font-bold text-agri-primary mb-2 truncate">{prod.name}</h4>
+                  <p className="text-stone-700 text-xs mb-4 line-clamp-1 font-medium">{prod.description}</p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-serif font-bold text-agri-secondary">₹{prod.price}</span>
+                    <Link to="/products" className="w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center text-agri-primary hover:bg-agri-primary hover:text-white transition-all">
+                      <ShoppingBag size={18} />
+                    </Link>
+                  </div>
+                </div>
+              </motion.div>
+            )) : (
+              <div className="col-span-full text-center py-12 text-stone-400 italic">Store items are being updated.</div>
+            )}
+          </div>
+        </div>
+      </section>
+
+
+      {/* 8. REVIEWS & TESTIMONIALS */}
+      <section className="py-24 relative overflow-hidden z-10">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-serif font-bold text-agri-primary mb-4">Community Feedback</h2>
+            <p className="text-stone-700 font-medium">What farmers, researchers, and students say about Agrigence.</p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {feedbacks.length > 0 ? feedbacks.map((fb, i) => (
+              <div key={i} className="bg-white/40 backdrop-blur-xl p-10 rounded-[3rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] border border-white/60 relative hover:bg-white/50 transition-all">
+                <Quote size={48} className="absolute top-8 right-8 text-agri-secondary/10" />
+                <div className="flex gap-1 mb-6">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} size={14} className={j < (fb.rating || 5) ? "fill-agri-secondary text-agri-secondary" : "text-stone-200"} />
+                  ))}
+                </div>
+                <p className="text-stone-800 font-medium italic mb-8 leading-relaxed">"{fb.comment}"</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-agri-primary/10 rounded-full flex items-center justify-center text-agri-primary font-bold">
+                    {fb.userName[0]}
+                  </div>
+                  <div>
+                    <h5 className="font-bold text-agri-primary text-sm">{fb.userName}</h5>
+                    <p className="text-[10px] text-stone-600 uppercase tracking-widest font-black">{fb.userOccupation || 'Verified User'}</p>
+                  </div>
+                </div>
+              </div>
+            )) : (
+              <div className="col-span-full text-center py-12 text-stone-400 italic">No testimonials available yet.</div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* 8. OUR MISSION */}
+      <section className="py-24 relative z-10">
+        <div className="container mx-auto px-6">
+          <div className="bg-agri-primary/90 backdrop-blur-2xl rounded-[4rem] overflow-hidden relative shadow-xl border border-white/20">
+            <div className="absolute inset-0 opacity-20">
+               <OptimizedImage 
+                 src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop" 
+                 className="w-full h-full object-cover" 
+                 alt="Agriculture Mission" 
+               />
+            </div>
+            <div className="relative z-10 p-12 md:p-24 flex flex-col md:flex-row items-center gap-12">
+              <div className="md:w-1/2 text-white">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="h-px w-12 bg-agri-secondary"></span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.4em] text-agri-secondary">Our Purpose</span>
+                </div>
+                <h2 className="text-4xl md:text-5xl font-serif font-bold mb-8">Empowering Farmers, Students, and Researchers</h2>
+                <p className="text-lg text-white leading-relaxed mb-8 font-medium">
+                  {settings?.missionText || "Agrigence is dedicated to building a trusted digital ecosystem for agricultural knowledge, research publishing, and academic excellence. We bridge the gap between scientific research, student learning, and field application."}
+                </p>
+                <div className="grid grid-cols-2 gap-8">
+                  <div>
+                    <h4 className="text-3xl font-serif font-bold text-agri-secondary mb-1">10k+</h4>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/90">Active Users</p>
+                  </div>
+                  <div>
+                    <h4 className="text-3xl font-serif font-bold text-agri-secondary mb-1">500+</h4>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/90">Research Papers</p>
+                  </div>
+                </div>
+              </div>
+              <div className="md:w-1/2">
+                <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-[3rem] text-white shadow-[0_8px_32px_0_rgba(0,0,0,0.2)]">
+                  <h3 className="text-xl font-serif font-bold mb-6">How we help:</h3>
+                  <ul className="space-y-4">
+                    {[
+                      { icon: <CheckCircle size={18} />, text: "Providing high-precision agricultural calculators" },
+                      { icon: <CheckCircle size={18} />, text: "Publishing peer-reviewed research journals" },
+                      { icon: <CheckCircle size={18} />, text: "Academic resources and study materials for students" },
+                      { icon: <CheckCircle size={18} />, text: "Connecting farmers with expert insights" }
+                    ].map((item, i) => (
+                      <li key={i} className="flex items-start gap-3">
+                        <span className="text-agri-secondary mt-1">{item.icon}</span>
+                        <span className="text-sm text-white font-medium">{item.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to="/about-contact" className="mt-10 block text-center bg-white/20 backdrop-blur-md border border-white/30 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/30 transition-all shadow-lg">
+                    LEARN MORE ABOUT US
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. FAQ (AI SEO) */}
+      <section className="py-24 relative z-10">
+        <div className="container mx-auto px-6">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-serif font-bold text-agri-primary mb-4">Frequently Asked Questions</h2>
+              <p className="text-stone-700 font-medium">Common questions about agricultural intelligence and our platform.</p>
+            </div>
+            <div className="space-y-4">
+              {[
+                { q: "What is Agrigence?", a: "Agrigence is an international platform for agricultural research, innovation, and scholarly publication connecting students, farmers, and institutions worldwide." },
+                { q: "How can students benefit from this platform?", a: "Students can access a vast archive of research journals, use precision calculators for their studies, and stay updated with the latest agricultural innovations." },
+                { q: "How do I submit a research paper?", a: "Login to your account and visit the 'Submission' page. Ensure your manuscript follows our Author Guidelines." },
+                { q: "Are the calculators accurate?", a: "Yes, our calculators are built using scientifically validated formulas from organizations like ICAR and FAO." }
+              ].map((faq, i) => (
+                <div key={i} className="bg-white/40 backdrop-blur-xl p-8 rounded-3xl border border-white/60 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] hover:bg-white/50 transition-all">
+                  <h3 className="font-bold text-lg text-agri-primary mb-4 flex items-start gap-3">
+                    <span className="text-agri-secondary mt-1"><CheckCircle size={18} /></span>
+                    {faq.q}
+                  </h3>
+                  <p className="text-stone-800 pl-7 leading-relaxed font-medium">{faq.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. QUICK TOOLS SECTION */}
+      <section className="py-32 relative overflow-hidden z-10">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-20">
+            <h2 className="text-5xl md:text-6xl font-serif font-bold text-[#3D2B1F] mb-6">Quick Access Tools</h2>
+            <p className="text-stone-700 text-lg max-w-3xl mx-auto font-medium">High-precision calculators and academic resources for modern farming and agricultural studies.</p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { title: "Soil Health", desc: "Analyze soil parameters instantly.", link: "/tools/nutrient-req", icon: <Leaf size={24} />, color: "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20" },
+              { title: "Water Req", desc: "Precision irrigation scheduling.", link: "/tools/water-req", icon: <Droplets size={24} />, color: "bg-blue-500/10 text-blue-600 border border-blue-500/20" },
+              { title: "Yield Estimator", desc: "Predict your harvest accurately.", link: "/tools/yield-estimator", icon: <Activity size={24} />, color: "bg-amber-500/10 text-amber-600 border border-amber-500/20" },
+              { title: "Economics", desc: "Farm profitability analysis.", link: "/tools/economics", icon: <Calculator size={24} />, color: "bg-purple-500/10 text-purple-600 border border-purple-500/20" }
+            ].map((tool, i) => (
+              <motion.div 
+                key={i}
+                whileHover={{ y: -10 }}
+                className="bg-white/40 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] border border-white/60 hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] hover:bg-white/50 transition-all group"
+              >
+                <div className={`w-16 h-16 ${tool.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+                  {tool.icon}
+                </div>
+                <h3 className="font-bold text-xl text-agri-primary mb-3">{tool.title}</h3>
+                <p className="text-stone-700 text-sm mb-6 leading-relaxed font-medium">{tool.desc}</p>
+                <Link to={tool.link} className="text-[10px] font-black text-agri-secondary uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
+                  OPEN TOOL <ArrowRight size={12} />
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+          <div className="mt-12 text-center">
+            <Link to="/tools" className="inline-flex items-center gap-2 text-agri-primary font-bold hover:text-agri-secondary transition-colors">
+              View All 20+ Agriculture Tools <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* 10. TRUST SIGNALS */}
+      <section className="relative z-10 mx-4 mb-4 rounded-[3rem] overflow-hidden shadow-xl">
+        <div className="absolute inset-0 bg-stone-900/90 backdrop-blur-2xl"></div>
+        <div className="container mx-auto px-6 text-center py-24 relative z-10 text-white">
+          <Shield size={64} className="text-agri-secondary mx-auto mb-8" />
+          <h2 className="text-4xl font-serif font-bold mb-16">Trusted by Farmers, Students, and Researchers</h2>
+          
+          <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+            <div className="bg-white/5 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:bg-white/10 transition-all">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-300 mb-8">Agriculture Data Sources</h3>
+              <div className="flex flex-wrap justify-center gap-4">
+                {['ICAR', 'FAO', 'Agricultural Universities', 'Research Centers', 'Govt. Portals'].map((source, i) => (
+                  <span key={i} className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-xl font-bold text-xs border border-white/20 hover:bg-agri-secondary/30 transition-colors shadow-sm">{source}</span>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white/5 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:bg-white/10 transition-all">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-stone-300 mb-8">Author & Research</h3>
+              <div className="bg-agri-secondary/20 backdrop-blur-md border border-agri-secondary/30 px-8 py-8 rounded-[2rem] inline-block shadow-lg">
+                <p className="font-serif text-2xl font-bold text-agri-secondary">Agrigence Research Team</p>
+                <p className="text-sm text-white/90 mt-2 font-medium">Dedicated to advancing agricultural science through digital innovation.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

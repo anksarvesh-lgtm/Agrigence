@@ -47,11 +47,11 @@ const Coupons: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <h1 className="text-2xl font-bold text-black">Promotional Coupons</h1>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-stone-200 text-black border border-stone-300 px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-xl shadow-stone-200/20 text-xs hover:bg-stone-300 transition-colors"
+          className="bg-stone-200 text-black border border-stone-300 px-8 py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-xl shadow-stone-200/20 text-xs hover:bg-stone-300 transition-colors w-full md:w-auto"
         >
           <Plus size={18} /> CREATE COUPON
         </button>

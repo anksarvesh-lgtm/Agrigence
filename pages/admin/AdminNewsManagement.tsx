@@ -57,7 +57,7 @@ const AdminNewsManagement: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-4">
         {news.map(item => (
-          <div key={item.id} className="bg-white border border-stone-200 rounded-2xl p-6 group hover:shadow-lg transition-all flex items-center gap-6">
+          <div key={item.id} className="bg-white border border-stone-200 rounded-2xl p-6 group hover:shadow-lg transition-all flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6 relative">
              <div className="w-20 h-20 bg-stone-100 rounded-xl overflow-hidden shrink-0 border border-stone-200">
                 {item.thumbnail ? (
                    <img src={item.thumbnail} className="w-full h-full object-cover" />
@@ -88,12 +88,12 @@ const AdminNewsManagement: React.FC = () => {
                 )}
              </div>
 
-             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={() => { setEditingNews(item); setIsModalOpen(true); }} className="p-3 bg-stone-100 rounded-xl text-stone-600 hover:text-agri-secondary hover:bg-white border border-transparent hover:border-stone-200 transition-all">
-                   <Edit size={18}/>
+             <div className="flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity absolute top-4 right-4 md:static">
+                <button onClick={() => { setEditingNews(item); setIsModalOpen(true); }} className="p-2 md:p-3 bg-stone-100 rounded-xl text-stone-600 hover:text-agri-secondary hover:bg-white border border-transparent hover:border-stone-200 transition-all">
+                   <Edit size={16} className="md:w-[18px] md:h-[18px]"/>
                 </button>
-                <button onClick={(e) => handleDelete(item.id, e)} className="p-3 bg-stone-100 rounded-xl text-stone-600 hover:text-red-500 hover:bg-white border border-transparent hover:border-stone-200 transition-all">
-                   <Trash2 size={18}/>
+                <button onClick={(e) => handleDelete(item.id, e)} className="p-2 md:p-3 bg-stone-100 rounded-xl text-stone-600 hover:text-red-500 hover:bg-white border border-transparent hover:border-stone-200 transition-all">
+                   <Trash2 size={16} className="md:w-[18px] md:h-[18px]"/>
                 </button>
              </div>
           </div>

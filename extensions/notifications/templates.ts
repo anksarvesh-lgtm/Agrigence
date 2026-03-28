@@ -35,7 +35,7 @@ export const EMAIL_TEMPLATES = {
 
         <div style="text-align: center; margin-top: 40px; color: #999; font-size: 12px;">
             <p>© ${new Date().getFullYear()} Agrigence Journal. All rights reserved.</p>
-            <p>Zura Haradhan, Chandauli, Uttar Pradesh, 221115</p>
+            <p>H.N.130, JUDAHARADHAN BHAG-1, Juda haradhan, P.S.-Baluwa, Tahshil-Sakaldiha, Dist.- Chandauli, Uttar Pradesh, India , 221115</p>
         </div>
       </div>
     `

@@ -83,12 +83,12 @@ const LeadershipManagement: React.FC = () => {
 
   return (
     <div className="space-y-8 max-w-5xl pb-24">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-stone-200 shadow-sm gap-4">
         <div>
           <h1 className="text-2xl font-bold text-black">Founding Leadership</h1>
           <p className="text-stone-500 text-xs mt-1 uppercase tracking-widest font-bold">Manage profiles shown on About page</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
             <button 
             onClick={handleAddProfile} 
             className="bg-stone-100 text-stone-600 px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-stone-200 transition-transform active:scale-95 text-xs uppercase tracking-widest"

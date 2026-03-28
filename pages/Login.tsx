@@ -15,6 +15,7 @@ const Login: React.FC = () => {
   // New Fields
   const [country, setCountry] = useState('IN');
   const [mobile, setMobile] = useState('');
+  const [userType, setUserType] = useState<'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION'>('INDIVIDUAL');
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   
   const [error, setError] = useState('');
@@ -91,6 +92,7 @@ const Login: React.FC = () => {
       if (isLogin) {
         const user = await mockBackend.login(email, password);
         if (user) {
+          login(user); // Update context immediately
           handleRoleRedirect(user.role);
         }
       } else {
@@ -111,8 +113,8 @@ const Login: React.FC = () => {
             setIsPhotoUploading(true);
             try {
                 photoUrl = await mockBackend.uploadFile(profilePhoto, 'users/profiles/initial'); 
-            } catch (err) {
-                console.error("Photo Upload Failed", err);
+            } catch (err: any) {
+                console.error("Photo Upload Failed", err.message || err);
             } finally {
                 setIsPhotoUploading(false);
             }
@@ -128,6 +130,7 @@ const Login: React.FC = () => {
           profilePhotoUrl: photoUrl,
           country: country,
           mobileNumber: fullMobile,
+          userType: userType,
           // @ts-ignore
           password: password 
         });
@@ -261,6 +264,23 @@ const Login: React.FC = () => {
                           />
                         </div>
                       </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Account Type</label>
+                    <div className="relative">
+                       <Users size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" />
+                       <select 
+                        className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm appearance-none font-medium"
+                        value={userType}
+                        onChange={e => setUserType(e.target.value as any)}
+                        required
+                      >
+                        <option value="INDIVIDUAL">Individual</option>
+                        <option value="INSTITUTE">Institute</option>
+                        <option value="ORGANISATION">Organisation</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div className="space-y-1">

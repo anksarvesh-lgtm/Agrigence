@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Users, FileText, ShoppingBag, TrendingUp, DollarSign, Rss, Newspaper, 
-  ShieldCheck, Megaphone, Terminal, Hash, Activity, BookOpen, CreditCard, Tag 
+  ShieldCheck, Megaphone, Terminal, Hash, Activity, BookOpen, CreditCard, Tag, MessageCircle 
 } from 'lucide-react';
 import { mockBackend } from '../../services/mockBackend';
 import { User, Article, Product, PaymentRecord, NewsItem, SiteSettings, Magazine, Coupon } from '../../types';
@@ -27,6 +28,20 @@ const Dashboard: React.FC = () => {
     
     mockBackend.getCoupons().then(setCoupons);
     setSettings(mockBackend.getSettings());
+
+    // Auto backup every 3 days logic
+    const lastBackup = localStorage.getItem('last_auto_backup');
+    const now = new Date();
+    if (!lastBackup) {
+      mockBackend.backupSite(true);
+    } else {
+      const lastBackupDate = new Date(lastBackup);
+      const diffTime = Math.abs(now.getTime() - lastBackupDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+      if (diffDays >= 3) {
+        mockBackend.backupSite(true);
+      }
+    }
 
     return () => {
         unsubUsers();
@@ -67,6 +82,33 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-10">
+      {/* AgriFeed Banner */}
+      <div className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-[2.5rem] p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl"></div>
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black opacity-10 rounded-full translate-y-1/2 -translate-x-1/4 blur-xl"></div>
+        
+        <div className="relative z-10 flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+              <MessageCircle size={24} className="text-white" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold font-serif">Join the AgriFeed Community</h2>
+          </div>
+          <p className="text-green-50 text-sm md:text-base max-w-2xl leading-relaxed">
+            Connect with researchers, share your findings, ask questions, and stay updated with the latest trends in agriculture.
+          </p>
+        </div>
+        
+        <div className="relative z-10 w-full md:w-auto">
+          <Link 
+            to="/agri-feed/dashboard" 
+            className="block w-full md:w-auto text-center bg-white text-green-700 px-8 py-3.5 rounded-xl font-bold hover:bg-green-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+          >
+            Access AgriFeed
+          </Link>
+        </div>
+      </div>
+
       {/* Welcome Banner */}
       <div className="bg-white border border-gray-200 rounded-[2rem] p-10 relative overflow-hidden group shadow-sm">
          <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-agri-secondary/5 to-transparent"></div>
@@ -149,7 +191,10 @@ const Dashboard: React.FC = () => {
                <button className="w-full bg-agri-secondary text-white py-4 rounded-xl font-bold shadow-lg shadow-agri-secondary/20 hover:scale-105 transition-all text-xs uppercase tracking-widest">
                   Quick Publication
                </button>
-               <button className="w-full bg-white border border-gray-300 py-4 rounded-xl font-bold hover:bg-gray-50 transition-all text-xs uppercase tracking-widest text-gray-600">
+               <button 
+                  onClick={() => mockBackend.backupSite(false)}
+                  className="w-full bg-white border border-gray-300 py-4 rounded-xl font-bold hover:bg-gray-50 transition-all text-xs uppercase tracking-widest text-gray-600"
+               >
                   Site Backup
                </button>
             </div>

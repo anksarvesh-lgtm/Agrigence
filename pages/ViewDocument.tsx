@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
 import { useAuth } from '../App';
-import { Loader2, AlertCircle, FileText, ArrowLeft, Shield, ShieldAlert, ShieldCheck, AlertTriangle, Activity } from 'lucide-react';
+import { Loader2, AlertCircle, FileText, ArrowLeft, Shield, ShieldAlert, ShieldCheck, AlertTriangle, Activity, Home } from 'lucide-react';
 import { Article } from '../types';
 
 const ViewDocument: React.FC = () => {
@@ -64,8 +64,8 @@ const ViewDocument: React.FC = () => {
         
         setLoading(false);
 
-      } catch (err) {
-        console.error(err);
+      } catch (err: any) {
+        console.error(err.message || err);
         setError("Secure Gateway Error: Unable to verify document protocols.");
         setLoading(false);
       }
@@ -109,6 +109,9 @@ const ViewDocument: React.FC = () => {
        {/* Viewer Toolbar */}
        <div className="bg-[#1C1510] text-white p-4 flex justify-between items-center border-b border-white/10 shrink-0 z-50 shadow-lg">
           <div className="flex items-center gap-4">
+              <button onClick={() => navigate('/')} className="p-2 hover:bg-white/10 rounded-full transition-colors" title="Go Home">
+                 <Home size={20} />
+              </button>
              <button onClick={() => navigate(-1)} className="p-2 hover:bg-white/10 rounded-full transition-colors">
                 <ArrowLeft size={20} />
              </button>
@@ -195,7 +198,7 @@ const ViewDocument: React.FC = () => {
                                     <p className="text-[10px] font-bold text-stone-400 uppercase mb-2">Flagged Segments</p>
                                     <ul className="list-disc pl-4 space-y-1">
                                         {meta.plagiarismReport.flagged_sections.map((sec, i) => (
-                                            <li key={i} className="text-xs text-stone-600 italic">"{sec.substring(0, 100)}..."</li>
+                                            <li key={i} className="text-xs text-stone-600 italic">"{sec.text.substring(0, 100)}..."</li>
                                         ))}
                                     </ul>
                                 </div>
@@ -204,7 +207,7 @@ const ViewDocument: React.FC = () => {
                     )}
 
                     <div 
-                    className="prose prose-stone prose-lg max-w-none font-serif text-stone-700 leading-relaxed whitespace-pre-wrap"
+                    className="prose prose-stone prose-lg max-w-none font-serif text-stone-700 leading-relaxed"
                     dangerouslySetInnerHTML={{ __html: meta?.content || '' }}
                     />
                 </div>
