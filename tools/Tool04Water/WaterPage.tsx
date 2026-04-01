@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import { isPlanExpired } from '../../utils/planAccess';
 import { mockBackend } from '../../services/mockBackend';
 import { useAuth } from '../../App';
@@ -60,6 +61,17 @@ const WaterPage: React.FC = () => {
   const [result, setResult] = useState<WaterResult | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.restoreData) {
+      const data = location.state.restoreData;
+      if (data.weather !== undefined) setWeather(data.weather);
+      if (data.crop !== undefined) setCrop(data.crop);
+      if (data.soil !== undefined) setSoil(data.soil);
+      if (data.irrigationSystem !== undefined) setIrrigationSystem(data.irrigationSystem);
+    }
+  }, [location.state]);
+
   const handleWeatherChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setWeather(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
@@ -119,7 +131,7 @@ const WaterPage: React.FC = () => {
         mockBackend.saveToolHistory({
           userId: user.id,
           toolName: 'Water Requirement Calculator',
-          inputData: { timestamp: new Date().toISOString() },
+          inputData: { weather, crop, soil, irrigationSystem },
           outputData: { status: 'Generated' },
           status: 'SUCCESS',
           timestamp: new Date().toISOString()

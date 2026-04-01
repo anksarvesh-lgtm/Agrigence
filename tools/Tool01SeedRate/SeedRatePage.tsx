@@ -1,5 +1,6 @@
+import { useLocation } from 'react-router-dom';
 
-import React, { useState } from 'react';
+import React, { useState , useEffect} from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calculator, 
@@ -41,6 +42,14 @@ const SeedRatePage: React.FC = () => {
   const [result, setResult] = useState<SeedRateResult | null>(null);
   const [showFormulas, setShowFormulas] = useState(false);
   const [showRules, setShowRules] = useState(false);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.restoreData) {
+      const data = location.state.restoreData;
+      setInput(data);
+    }
+  }, [location.state]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

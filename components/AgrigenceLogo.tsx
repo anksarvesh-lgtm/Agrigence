@@ -1,6 +1,6 @@
 import React from 'react';
 
-interface AgriFeedLogoProps {
+interface AgrigenceLogoProps {
   className?: string;
   size?: number;
   showText?: boolean;
@@ -8,7 +8,7 @@ interface AgriFeedLogoProps {
   variant?: 'dark' | 'light';
 }
 
-const AgriFeedLogo: React.FC<AgriFeedLogoProps> = ({ 
+const AgrigenceLogo: React.FC<AgrigenceLogoProps> = ({ 
   className = "", 
   size = 40, 
   showText = true, 
@@ -78,4 +78,4 @@ const AgriFeedLogo: React.FC<AgriFeedLogoProps> = ({
   );
 };
 
-export default AgriFeedLogo;
+export default AgrigenceLogo;

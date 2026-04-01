@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -50,6 +51,16 @@ const NutrientPage: React.FC = () => {
   const [result, setResult] = useState<NutrientResult | null>(null);
   const [showFormulas, setShowFormulas] = useState(false);
   const [showRules, setShowRules] = useState(false);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.restoreData) {
+      const data = location.state.restoreData;
+      if (data.soilData !== undefined) setSoilData(data.soilData);
+      if (data.cropTarget !== undefined) setCropTarget(data.cropTarget);
+      if (data.selectedMaterials !== undefined) setSelectedMaterials(data.selectedMaterials);
+    }
+  }, [location.state]);
 
   const handleSoilChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;

@@ -1,5 +1,5 @@
 
-import { Video, VideoSource, Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, ReviewStatus, Tool, ToolCategory, ToolSection, Review, ActivityLog, Recommendation, UserFieldData, WebsiteVisitor, AgriPost, AgriComment, AgriConnection, AgriConversation, AgriMessage, AgriTopic, AgriNotification, AgriFeedStats, ToolHistory, Keyword, KeywordCluster, KeywordPerformance, TrendingKeyword, CookieSettings, CookiePreferences, CookieCategory, CookieScript } from '../types';
+import { Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, ReviewStatus, Tool, ToolCategory, ToolSection, Review, ActivityLog, Recommendation, UserFieldData, WebsiteVisitor, ToolHistory, Keyword, KeywordCluster, KeywordPerformance, TrendingKeyword, CookieSettings, CookiePreferences, CookieCategory, CookieScript } from '../types';
 import { db, auth, storage } from '../src/firebase';
 import { 
   createUserWithEmailAndPassword, 
@@ -112,7 +112,6 @@ const DEFAULT_SETTINGS: SiteSettings = {
     { id: '4', label: 'Blogs', path: '/blogs', isExternal: false, order: 3, isEnabled: true },
     { id: '5', label: 'Store', path: '/products', isExternal: false, order: 4, isEnabled: true },
     { id: 'sub-nav', label: 'Subscription', path: '/subscription', isExternal: false, order: 4.1, isEnabled: true },
-    { id: 'agri-feed-nav', label: 'AgriFeed', path: '/agri-feed', isExternal: false, order: 4.2, isEnabled: true },
     { id: 'tools-nav', label: 'Tools', path: '/tools', isExternal: false, order: 4.5, isEnabled: true },
     { id: '6', label: 'Editorial Board', path: '/editorial-board', isExternal: false, order: 5, isEnabled: true },
     { id: '7', label: 'Author Guidelines', path: '/author-guidelines', isExternal: false, order: 6, isEnabled: true },
@@ -199,7 +198,7 @@ class FirebaseBackendService {
     
     // Check seed data on load if admin
     onAuthStateChanged(auth, (user) => {
-        if (user && (user.email === 'agrigence@gmail.com' || user.email === 'admin@agrigence.com' || user.email === 'anksarvesh@gmail.com')) {
+        if (user && (user.email === 'agrigence@gmail.com' || user.email === 'admin@agrigence.com')) {
             this.checkAndSeedData();
         }
     });
@@ -275,50 +274,7 @@ class FirebaseBackendService {
   }
 
   async checkAndSeedData() {
-    console.log("Checking and seeding data for admin:", auth.currentUser?.email);
     try {
-        const settings = await getDoc(doc(this.db, 'site_identity', 'global'));
-        if (!settings.exists()) {
-            console.log("Seeding site settings...");
-            await setDoc(doc(this.db, 'site_identity', 'global'), DEFAULT_SETTINGS);
-        }
-
-        const articles = await this.getArticles();
-        if (articles.length === 0) {
-            console.log("Seeding articles...");
-            const defaultArticles: Article[] = [
-                {
-                    id: '1',
-                    title: 'The Future of Sustainable Agriculture',
-                    excerpt: 'Exploring new methods to ensure food security while protecting our planet.',
-                    content: '<p>Sustainable agriculture is more than just a buzzword...</p>',
-                    authorId: 'admin',
-                    authorName: 'Agrigence Team',
-                    category: 'Sustainability',
-                    submissionDate: new Date().toISOString(),
-                    status: 'PUBLISHED',
-                    type: 'BLOG',
-                    featuredImage: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=800'
-                },
-                {
-                    id: '2',
-                    title: 'AI in Precision Farming',
-                    excerpt: 'How artificial intelligence is revolutionizing the way we farm.',
-                    content: '<p>Precision farming uses AI to optimize crop yields...</p>',
-                    authorId: 'admin',
-                    authorName: 'Agrigence Team',
-                    category: 'Technology',
-                    submissionDate: new Date().toISOString(),
-                    status: 'PUBLISHED',
-                    type: 'BLOG',
-                    featuredImage: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800'
-                }
-            ];
-            for (const a of defaultArticles) {
-                await setDoc(doc(this.db, 'articles', a.id), a);
-            }
-        }
-
         const plans = await this.getPlans();
         if (plans.length === 0) {
             const defaultPlans: SubscriptionPlan[] = [
@@ -328,20 +284,6 @@ class FirebaseBackendService {
             for (const p of defaultPlans) {
                 await setDoc(doc(this.db, 'subscription_plans', p.id), p);
             }
-        }
-
-        const topics = await this.getAgriTopics();
-        if (topics.length === 0) {
-          const defaultTopics = [
-            { name: '#SoilHealth', postCount: 120 },
-            { name: '#PrecisionFarming', postCount: 85 },
-            { name: '#AgriAI', postCount: 64 },
-            { name: '#OrganicFarming', postCount: 92 },
-            { name: '#WaterManagement', postCount: 77 }
-          ];
-          for (const t of defaultTopics) {
-            await addDoc(collection(this.db, 'agri_topics'), t);
-          }
         }
 
         const keywords = await this.getKeywords();
@@ -401,88 +343,30 @@ class FirebaseBackendService {
             await addDoc(collection(this.db, 'keyword_performance'), { ...perf, keywordId: `kw_${Math.random().toString(36).substring(2, 9)}` });
           }
         }
-
-        const videos = await this.getVideos();
-        if (videos.length === 0) {
-          const defaultVideos: Video[] = [
-            {
-              id: '1',
-              youtubeId: 'dQw4w9WgXcQ',
-              title: 'Sustainable Farming Techniques for 2026',
-              description: 'Learn about the latest in sustainable agriculture and how to implement it on your farm.',
-              thumbnail: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=800',
-              channelTitle: 'AgriTech Official',
-              publishedAt: new Date().toISOString(),
-              duration: '12:45',
-              viewCount: '1.2K',
-              category: 'Farming',
-              status: 'PUBLISHED'
-            },
-            {
-              id: '2',
-              youtubeId: 'dQw4w9WgXcQ',
-              title: 'The Future of AgTech: AI and Robotics',
-              description: 'Exploring how artificial intelligence and robotics are transforming the agricultural landscape.',
-              thumbnail: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&q=80&w=800',
-              channelTitle: 'Future Farming',
-              publishedAt: new Date().toISOString(),
-              duration: '15:20',
-              viewCount: '3.5K',
-              category: 'Technology',
-              status: 'PUBLISHED'
-            }
-          ];
-          for (const v of defaultVideos) {
-            await setDoc(doc(this.db, 'videos', v.id), v);
-          }
-        }
-
-        const sources = await this.getVideoSources();
-        if (sources.length === 0) {
-          const defaultSources: VideoSource[] = [
-            {
-              id: '1',
-              type: 'CHANNEL',
-              url: 'UC_x5XG1OV2P6uZZ5FSM9Ttw',
-              name: 'Agrigence TV',
-              isEnabled: true,
-              autoSync: true,
-              lastSync: new Date().toISOString()
-            }
-          ];
-          for (const s of defaultSources) {
-            await setDoc(doc(this.db, 'video_sources', s.id), s);
-          }
-        }
     } catch (e) {
         console.error("Seeding failed (likely offline):", e instanceof Error ? e.message : e);
     }
   }
 
   private async getCollectionData<T>(collectionName: string, orderByField?: string, silent: boolean = false): Promise<T[]> {
-    console.log(`Fetching collection: ${collectionName}`);
     try {
         const colRef = collection(this.db, collectionName);
         const q = orderByField ? query(colRef, orderBy(orderByField, 'desc')) : query(colRef);
         const snapshot = await getDocs(q);
-        console.log(`Fetched ${snapshot.docs.length} documents from ${collectionName}`);
         // Corrected mapping: Spread data first, then overwrite id with doc.id to ensure we use the Document ID
         return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as unknown as T[];
     } catch (e) {
-        console.error(`Error fetching collection ${collectionName}:`, e);
         if (!silent) {
-            // ...
+            console.error(`Error fetching collection ${collectionName}:`, e instanceof Error ? e.message : e);
         }
         return [];
     }
   }
 
   private subscribeToCollection<T>(collectionName: string, cb: (data: T[]) => void, orderByField?: string): () => void {
-    console.log(`Subscribing to collection: ${collectionName}`);
     const colRef = collection(this.db, collectionName);
     const q = orderByField ? query(colRef, orderBy(orderByField, 'desc')) : query(colRef);
     return onSnapshot(q, (snapshot) => {
-      console.log(`Received ${snapshot.docs.length} documents from ${collectionName} snapshot`);
       // Corrected mapping: Spread data first, then overwrite id with doc.id
       const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as unknown as T[];
       cb(data);
@@ -692,18 +576,6 @@ class FirebaseBackendService {
       userType: data.userType || 'INDIVIDUAL'
     });
   }
-
-  async getVideos() { return this.getCollectionData<Video>('videos', 'publishedAt'); }
-  subscribeToVideos(cb: (v: Video[]) => void) { return this.subscribeToCollection('videos', cb, 'publishedAt'); }
-  async addVideo(video: Partial<Video>) { await addDoc(collection(this.db, 'videos'), { ...video, publishedAt: video.publishedAt || new Date().toISOString() }); }
-  async updateVideo(id: string, data: Partial<Video>) { await updateDoc(doc(this.db, 'videos', id), data); }
-  async deleteVideo(id: string) { await deleteDoc(doc(this.db, 'videos', id)); }
-
-  async getVideoSources() { return this.getCollectionData<VideoSource>('video_sources', 'name'); }
-  subscribeToVideoSources(cb: (s: VideoSource[]) => void) { return this.subscribeToCollection('video_sources', cb, 'name'); }
-  async addVideoSource(source: Partial<VideoSource>) { await addDoc(collection(this.db, 'video_sources'), { ...source, isEnabled: true, autoSync: true }); }
-  async updateVideoSource(id: string, data: Partial<VideoSource>) { await updateDoc(doc(this.db, 'video_sources', id), data); }
-  async deleteVideoSource(id: string) { await deleteDoc(doc(this.db, 'video_sources', id)); }
 
   async deleteUser(id: string) { await deleteDoc(doc(this.db, 'users', id)); }
   
@@ -1684,404 +1556,6 @@ class FirebaseBackendService {
     }
   }
 
-  // --- AGRIFEED METHODS ---
-
-  async getAgriPosts(): Promise<AgriPost[]> {
-    return this.getCollectionData<AgriPost>('agri_posts', 'timestamp');
-  }
-
-  async searchAgriPosts(query: string): Promise<AgriPost[]> {
-    const posts = await this.getAgriPosts();
-    const q = query.toLowerCase();
-    return posts.filter(p => 
-      p.content.toLowerCase().includes(q) || 
-      p.authorName.toLowerCase().includes(q) ||
-      (p.authorField && p.authorField.toLowerCase().includes(q))
-    );
-  }
-
-  async addAgriPost(post: Partial<AgriPost>) {
-    // Content Moderation: Greeting detection
-    const greetings = ['hello', 'hi', 'good morning', 'good afternoon', 'good evening', 'hey'];
-    const content = post.content?.toLowerCase().trim() || '';
-    const isGreetingOnly = greetings.some(g => content === g);
-    
-    if (isGreetingOnly) {
-      console.warn("Greeting-only post detected");
-    }
-
-    // Image validation is handled in the UI before calling this, 
-    // but we can add a placeholder check here if needed.
-
-    const postId = `post_${Date.now()}`;
-    const newPost = {
-      ...post,
-      id: postId,
-      timestamp: new Date().toISOString(),
-      likes: [],
-      reposts: [],
-      upvotes: [],
-      sharesCount: 0,
-      replies: [],
-      type: post.type || 'POST',
-      authorVerified: post.authorVerified || false
-    };
-    await setDoc(doc(this.db, 'agri_posts', postId), this.cleanObject(newPost));
-  }
-
-  async upvoteAgriPost(postId: string, userId: string) {
-    const postRef = doc(this.db, 'agri_posts', postId);
-    const postSnap = await getDoc(postRef);
-    if (postSnap.exists()) {
-      const post = postSnap.data() as AgriPost;
-      const upvotes = post.upvotes || [];
-      if (upvotes.includes(userId)) {
-        await updateDoc(postRef, { upvotes: upvotes.filter(id => id !== userId) });
-      } else {
-        await updateDoc(postRef, { upvotes: [...upvotes, userId] });
-      }
-    }
-  }
-
-  async deleteAgriPost(postId: string, userId: string, userRole?: string) {
-    const postRef = doc(this.db, 'agri_posts', postId);
-    const postSnap = await getDoc(postRef);
-    
-    if (postSnap.exists()) {
-      const post = postSnap.data() as AgriPost;
-      const isAuthor = post.authorId === userId;
-      const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userId === 'admin';
-      
-      if (isAuthor || isAdmin) {
-        await deleteDoc(postRef);
-      } else {
-        throw new Error("Unauthorized: You do not have permission to delete this post.");
-      }
-    } else {
-      // Fallback: try to find by the 'id' field in case document ID is different
-      const q = query(collection(this.db, 'agri_posts'), where('id', '==', postId));
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        const docRef = querySnapshot.docs[0].ref;
-        const post = querySnapshot.docs[0].data() as AgriPost;
-        const isAuthor = post.authorId === userId;
-        const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userId === 'admin';
-        
-        if (isAuthor || isAdmin) {
-          await deleteDoc(docRef);
-        } else {
-          throw new Error("Unauthorized: You do not have permission to delete this post.");
-        }
-      } else {
-        throw new Error("Post not found.");
-      }
-    }
-  }
-
-  async likeAgriPost(postId: string, userId: string) {
-    const postRef = doc(this.db, 'agri_posts', postId);
-    const postSnap = await getDoc(postRef);
-    if (postSnap.exists()) {
-      const post = postSnap.data() as AgriPost;
-      const likes = post.likes || [];
-      if (likes.includes(userId)) {
-        await updateDoc(postRef, { likes: likes.filter(id => id !== userId) });
-      } else {
-        await updateDoc(postRef, { likes: [...likes, userId] });
-        // Notify author
-        if (post.authorId !== userId) {
-          await this.addAgriNotification({
-            userId: post.authorId,
-            type: 'LIKE',
-            actorId: userId,
-            actorName: 'Someone', // Should fetch real name
-            postId: postId
-          });
-        }
-      }
-    }
-  }
-
-  async updateAgriPost(postId: string, content: string, userId: string, userRole?: string) {
-    const postRef = doc(this.db, 'agri_posts', postId);
-    const postSnap = await getDoc(postRef);
-    
-    if (postSnap.exists()) {
-      const post = postSnap.data() as AgriPost;
-      const isAuthor = post.authorId === userId;
-      const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN' || userId === 'admin';
-      
-      if (isAuthor || isAdmin) {
-        await updateDoc(postRef, { content, updatedAt: new Date().toISOString() });
-      } else {
-        throw new Error("Unauthorized: You do not have permission to edit this post.");
-      }
-    } else {
-      throw new Error("Post not found.");
-    }
-  }
-
-  async addAgriComment(postId: string, comment: Partial<AgriComment>) {
-    const postRef = doc(this.db, 'agri_posts', postId);
-    const postSnap = await getDoc(postRef);
-    if (postSnap.exists()) {
-      const post = postSnap.data() as AgriPost;
-      const newComment = this.cleanObject({
-        ...comment,
-        id: `comment_${Date.now()}`,
-        postId,
-        timestamp: new Date().toISOString(),
-        likes: []
-      });
-      await updateDoc(postRef, { replies: [...(post.replies || []), newComment] });
-      
-      // Notify author
-      if (post.authorId !== comment.authorId) {
-        await this.addAgriNotification({
-          userId: post.authorId,
-          type: 'REPLY',
-          actorId: comment.authorId!,
-          actorName: comment.authorName || 'Someone',
-          postId: postId
-        });
-      }
-    }
-  }
-
-  async repostAgriPost(postId: string, userId: string) {
-    const postRef = doc(this.db, 'agri_posts', postId);
-    const postSnap = await getDoc(postRef);
-    if (postSnap.exists()) {
-      const post = postSnap.data() as AgriPost;
-      const reposts = post.reposts || [];
-      if (reposts.includes(userId)) {
-        await updateDoc(postRef, { reposts: reposts.filter(id => id !== userId) });
-      } else {
-        await updateDoc(postRef, { reposts: [...reposts, userId] });
-      }
-    }
-  }
-
-  async shareAgriPost(postId: string) {
-    const postRef = doc(this.db, 'agri_posts', postId);
-    const postSnap = await getDoc(postRef);
-    if (postSnap.exists()) {
-      const post = postSnap.data() as AgriPost;
-      await updateDoc(postRef, { sharesCount: (post.sharesCount || 0) + 1 });
-    }
-  }
-
-  async getAgriConnections(userId: string): Promise<AgriConnection[]> {
-    const q = query(
-      collection(this.db, 'agri_connections'),
-      where('senderId', '==', userId)
-    );
-    const q2 = query(
-      collection(this.db, 'agri_connections'),
-      where('receiverId', '==', userId)
-    );
-    const [snap1, snap2] = await Promise.all([getDocs(q), getDocs(q2)]);
-    const connections = [
-      ...snap1.docs.map(d => ({ ...d.data(), id: d.id })),
-      ...snap2.docs.map(d => ({ ...d.data(), id: d.id }))
-    ] as AgriConnection[];
-    return connections;
-  }
-
-  async subscribeToConnections(userId: string, callback: (connections: AgriConnection[]) => void): Promise<() => void> {
-    const q1 = query(collection(this.db, 'agri_connections'), where('senderId', '==', userId));
-    const q2 = query(collection(this.db, 'agri_connections'), where('receiverId', '==', userId));
-
-    let connections1: AgriConnection[] = [];
-    let connections2: AgriConnection[] = [];
-
-    const update = () => {
-      callback([...connections1, ...connections2]);
-    };
-
-    const unsub1 = onSnapshot(q1, (snap) => {
-      connections1 = snap.docs.map(d => ({ ...d.data(), id: d.id })) as AgriConnection[];
-      update();
-    });
-
-    const unsub2 = onSnapshot(q2, (snap) => {
-      connections2 = snap.docs.map(d => ({ ...d.data(), id: d.id })) as AgriConnection[];
-      update();
-    });
-
-    return () => {
-      unsub1();
-      unsub2();
-    };
-  }
-
-  async sendConnectionRequest(senderId: string, receiverId: string) {
-    const newConnection = {
-      senderId,
-      receiverId,
-      status: 'PENDING',
-      createdAt: new Date().toISOString()
-    };
-    await addDoc(collection(this.db, 'agri_connections'), newConnection);
-    
-    await this.addAgriNotification({
-      userId: receiverId,
-      type: 'CONNECTION_REQUEST',
-      actorId: senderId,
-      actorName: 'Someone'
-    });
-  }
-
-  async updateConnectionStatus(connectionId: string, status: 'ACCEPTED' | 'REJECTED' | 'BLOCKED') {
-    const connRef = doc(this.db, 'agri_connections', connectionId);
-    await updateDoc(connRef, { status });
-    
-    if (status === 'ACCEPTED') {
-      const snap = await getDoc(connRef);
-      if (snap.exists()) {
-        const conn = snap.data() as AgriConnection;
-        await this.addAgriNotification({
-          userId: conn.senderId,
-          type: 'CONNECTION_ACCEPTED',
-          actorId: conn.receiverId,
-          actorName: 'Someone'
-        });
-      }
-    }
-  }
-
-  async createAgriConversation(participants: string[]): Promise<string> {
-    const q = query(
-      collection(this.db, 'agri_conversations'),
-      where('participants', 'array-contains-any', participants)
-    );
-    const snap = await getDocs(q);
-    
-    // Check if conversation already exists
-    const existing = snap.docs.find(d => {
-      const p = d.data().participants;
-      return p.length === participants.length && participants.every(id => p.includes(id));
-    });
-
-    if (existing) return existing.id;
-
-    const convRef = await addDoc(collection(this.db, 'agri_conversations'), {
-      participants,
-      lastMessage: '',
-      lastTimestamp: new Date().toISOString(),
-      unreadCount: participants.reduce((acc, id) => ({ ...acc, [id]: 0 }), {})
-    });
-    
-    return convRef.id;
-  }
-
-  async sendAgriMessage(conversationId: string, senderId: string, receiverId: string, text: string, attachments?: { url: string; type: string; name: string; }[]): Promise<string> {
-    const messageData: any = {
-      conversationId,
-      senderId,
-      receiverId,
-      text: text || '',
-      timestamp: new Date().toISOString(),
-      readStatus: false,
-    };
-    if (attachments && attachments.length > 0) {
-      messageData.attachments = attachments;
-    }
-
-    const messageRef = await addDoc(collection(this.db, 'agri_messages'), this.cleanObject(messageData));
-    
-    // Update conversation last message
-    const convRef = doc(this.db, 'agri_conversations', conversationId);
-    await updateDoc(convRef, {
-      lastMessage: text || 'Attachment',
-      lastTimestamp: new Date().toISOString()
-    });
-    
-    return messageRef.id;
-  }
-
-  async markAgriMessageRead(messageId: string): Promise<void> {
-    const msgRef = doc(this.db, 'agri_messages', messageId);
-    await updateDoc(msgRef, { readStatus: true });
-  }
-
-  async getAgriConversations(userId: string): Promise<AgriConversation[]> {
-    const q = query(
-      collection(this.db, 'agri_conversations'),
-      where('participants', 'array-contains', userId)
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map(d => ({ ...d.data(), id: d.id })) as AgriConversation[];
-  }
-
-  async getAgriMessages(conversationId: string): Promise<AgriMessage[]> {
-    const q = query(
-      collection(this.db, 'agri_messages'),
-      where('conversationId', '==', conversationId)
-    );
-    const snap = await getDocs(q);
-    const messages = snap.docs.map(d => ({ ...d.data(), id: d.id })) as AgriMessage[];
-    // Sort client-side to avoid composite index requirement
-    return messages.sort((a, b) => {
-      const timeA = new Date(a.timestamp).getTime();
-      const timeB = new Date(b.timestamp).getTime();
-      return timeA - timeB;
-    });
-  }
-
-  async getAgriTopics(): Promise<AgriTopic[]> {
-    const posts = await this.getAgriPosts();
-    const topicsMap: Record<string, AgriTopic> = {};
-
-    posts.forEach(post => {
-      const tags = post.content.match(/#\w+/g) || [];
-      tags.forEach(tag => {
-        if (!topicsMap[tag]) {
-          topicsMap[tag] = { id: tag, name: tag, postCount: 0, likesCount: 0, commentsCount: 0, sharesCount: 0, score: 0 };
-        }
-        topicsMap[tag].postCount++;
-        topicsMap[tag].likesCount! += post.likes?.length || 0;
-        topicsMap[tag].commentsCount! += post.replies?.length || 0;
-        topicsMap[tag].sharesCount! += post.sharesCount || 0;
-      });
-    });
-
-    const topics = Object.values(topicsMap).map(topic => {
-      // Scoring formula: (posts * 10) + (likes * 2) + (comments * 5) + (shares * 8)
-      topic.score = (topic.postCount * 10) + (topic.likesCount! * 2) + (topic.commentsCount! * 5) + (topic.sharesCount! * 8);
-      return topic;
-    });
-
-    return topics.sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 10);
-  }
-
-  async verifyUser(userId: string, isVerified: boolean) {
-    const userRef = doc(this.db, 'users', userId);
-    await updateDoc(userRef, { isVerified });
-  }
-
-  async getAgriNotifications(userId: string): Promise<AgriNotification[]> {
-    const q = query(
-      collection(this.db, 'agri_notifications'),
-      where('userId', '==', userId)
-    );
-    const snapshot = await getDocs(q);
-    const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AgriNotification));
-    // Sort client-side to avoid composite index requirement
-    return notifications.sort((a, b) => {
-      const timeA = typeof a.timestamp === 'number' ? a.timestamp : new Date(a.timestamp).getTime();
-      const timeB = typeof b.timestamp === 'number' ? b.timestamp : new Date(b.timestamp).getTime();
-      return timeB - timeA; // Descending
-    });
-  }
-
-  async addAgriNotification(notification: Partial<AgriNotification>): Promise<void> {
-    await addDoc(collection(this.db, 'agri_notifications'), {
-      ...notification,
-      timestamp: Date.now(),
-      read: false
-    });
-  }
 
   async markNotificationRead(notificationId: string): Promise<void> {
     const docRef = doc(this.db, 'agri_notifications', notificationId);
@@ -2093,82 +1567,6 @@ class FirebaseBackendService {
     await updateDoc(docRef, { status: 'BLOCKED' });
   }
 
-  async getAgriStats(): Promise<AgriFeedStats> {
-    const users = await this.getUsers();
-    const posts = await this.getAgriPosts();
-    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-    const postsThisWeek = posts.filter(p => {
-      try {
-        if (!p.timestamp) return false;
-        const date = new Date(p.timestamp);
-        return !isNaN(date.getTime()) && date.getTime() > oneWeekAgo;
-      } catch (e) {
-        return false;
-      }
-    }).length;
-
-    return {
-      totalResearchers: users.length,
-      activeDiscussions: posts.length,
-      postsThisWeek: postsThisWeek,
-      trendingTopics: 5
-    };
-  }
-
-  async getAgriFeed(): Promise<AgriPost[]> {
-    const [userPosts, blogs, news, magazines] = await Promise.all([
-      this.getAgriPosts(),
-      this.getArticles(), // Assuming type 'ARTICLE' can be treated as blog
-      this.getNews(),
-      this.getMagazines()
-    ]);
-
-    const blogPosts: AgriPost[] = blogs.filter(b => b.type === 'BLOG').map(b => ({
-      id: b.id,
-      authorId: b.authorId,
-      authorName: b.authorName,
-      content: b.excerpt || b.title,
-      timestamp: b.submissionDate,
-      likes: [],
-      reposts: [],
-      replies: [],
-      type: 'BLOG',
-      label: 'Blog',
-      authorVerified: true
-    }));
-
-    const newsPosts: AgriPost[] = news.map(n => ({
-      id: n.id,
-      authorId: 'admin',
-      authorName: 'Agrigence News',
-      content: n.description,
-      timestamp: n.date,
-      likes: [],
-      reposts: [],
-      replies: [],
-      type: 'NEWS',
-      label: 'AgriNews',
-      authorVerified: true
-    }));
-
-    const magazinePosts: AgriPost[] = magazines.map(m => ({
-      id: m.id,
-      authorId: 'admin',
-      authorName: 'Agrigence Magazine',
-      content: m.description,
-      timestamp: m.publishDate,
-      likes: [],
-      reposts: [],
-      replies: [],
-      type: 'MAGAZINE',
-      label: 'Magazine',
-      authorVerified: true
-    }));
-
-    return [...userPosts, ...blogPosts, ...newsPosts, ...magazinePosts].sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
-  }
 
   // --- BACKUP ---
   async backupSite(isAuto = false) {
@@ -2190,8 +1588,6 @@ class FirebaseBackendService {
         notifications: await this.getNotifications(),
         trash: await this.getTrash(),
         tools: await this.getAllTools(),
-        agriPosts: await this.getAgriPosts(),
-        agriTopics: await this.getAgriTopics(),
         settings: this.getSettings(),
         timestamp: new Date().toISOString()
       };

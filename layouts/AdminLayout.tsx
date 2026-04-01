@@ -62,6 +62,7 @@ const AdminLayout: React.FC = () => {
       { label: 'Magazines', path: '/admin/magazines', icon: BookOpen },
       { label: 'News', path: '/admin/news', icon: Newspaper },
       { label: 'Inquiries', path: '/admin/inquiries', icon: MessageSquare },
+      { label: 'Web Services', path: '/admin/services', icon: Globe },
       { label: 'Notifications', path: '/admin/broadcast', icon: Megaphone },
       { label: 'Coupons', path: '/admin/coupons', icon: Tag },
       { label: 'Store Products', path: '/admin/products', icon: ShoppingBag },
@@ -87,6 +88,7 @@ const AdminLayout: React.FC = () => {
       { label: 'Submissions', path: '/admin/submissions', icon: FolderOpen }, // Verify & Assign
       { label: 'Payments', path: '/admin/payments', icon: ShieldCheck }, // Approve Payments
       { label: 'Inquiries', path: '/admin/inquiries', icon: MessageSquare }, // Reply to messages
+      { label: 'Web Services', path: '/admin/services', icon: Globe }, // Manage web services
       { label: 'News', path: '/admin/news', icon: Newspaper }, // Publish News
       { label: 'Blogs', path: '/admin/blogs', icon: Rss }, // Publish Blogs
       { label: 'Leadership', path: '/admin/leadership', icon: Crown }, // Manage Leadership

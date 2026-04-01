@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import React, { useState, useMemo , useEffect} from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   CloudSun, 
@@ -51,6 +52,20 @@ export default function ClimatePage() {
   const [weatherData, setWeatherData] = useState<DailyWeatherData[]>([]);
   const [analysisResult, setAnalysisResult] = useState<ClimateAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.restoreData) {
+      const data = location.state.restoreData;
+      if (data.crop !== undefined) setCrop(data.crop);
+      if (data.plantingDate !== undefined) setPlantingDate(data.plantingDate);
+      if (data.tbase !== undefined) setTbase(data.tbase);
+      if (data.yieldKg !== undefined) setYieldKg(data.yieldKg);
+      if (data.csvContent !== undefined) setCsvContent(data.csvContent);
+      if (data.weatherData !== undefined) setWeatherData(data.weatherData);
+      if (data.analysisResult !== undefined) setAnalysisResult(data.analysisResult);
+    }
+  }, [location.state]);
 
   const handleCropChange = (newCrop: string) => {
     setCrop(newCrop);

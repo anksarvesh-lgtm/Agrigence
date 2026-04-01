@@ -259,33 +259,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      {/* AgriFeed Banner */}
-      <div className="mb-8 bg-gradient-to-r from-green-600 to-emerald-700 rounded-2xl p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black opacity-10 rounded-full translate-y-1/2 -translate-x-1/4 blur-xl"></div>
-        
-        <div className="relative z-10 flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
-              <MessageCircle size={24} className="text-white" />
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold font-serif">Join the AgriFeed Community</h2>
-          </div>
-          <p className="text-green-50 text-sm md:text-base max-w-2xl leading-relaxed">
-            Connect with researchers, share your findings, ask questions, and stay updated with the latest trends in agriculture.
-          </p>
-        </div>
-        
-        <div className="relative z-10 w-full md:w-auto">
-          <Link 
-            to="/agri-feed/dashboard" 
-            className="block w-full md:w-auto text-center bg-white text-green-700 px-8 py-3.5 rounded-xl font-bold hover:bg-green-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-          >
-            Access AgriFeed
-          </Link>
-        </div>
-      </div>
-
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
           <h1 className="text-3xl font-serif font-bold text-agri-primary">Researcher Dashboard</h1>
@@ -437,21 +410,6 @@ const Dashboard: React.FC = () => {
                 <Settings2 size={12} /> Researcher Toolkit
               </h3>
               <div className="space-y-3">
-                <Link 
-                  to="/agri-feed/feed" 
-                  className="w-full p-4 bg-stone-50 hover:bg-agri-primary hover:text-white rounded-2xl transition-all group flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white rounded-lg text-agri-primary group-hover:bg-agri-secondary group-hover:text-agri-primary transition-colors">
-                      <MessageCircle size={16} />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold">AgriFeed Social</p>
-                      <p className="text-[9px] opacity-60 font-medium">Connect with Researchers</p>
-                    </div>
-                  </div>
-                  <ChevronRight size={14} className="opacity-40 group-hover:opacity-100" />
-                </Link>
                 <Link 
                   to="/dashboard/tools" 
                   className="w-full p-4 bg-stone-50 hover:bg-agri-primary hover:text-white rounded-2xl transition-all group flex items-center justify-between"

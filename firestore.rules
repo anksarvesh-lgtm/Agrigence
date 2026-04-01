@@ -21,14 +21,6 @@
 //   - role: string (required, enum: SUPER_ADMIN, ADMIN, EDITORIAL_MEMBER, USER)
 //   - bio: string (optional, max 500 chars)
 //
-// Collection: agri_posts
-// Document ID: {postId}
-// Fields:
-//   - authorId: string (required, immutable)
-//   - content: string (required, 1-2000 chars)
-//   - likes: number (required, >= 0)
-//   - createdAt: string (required, ISO 8601, immutable)
-//
 // ===============================================================
 
 // ===============================================================
@@ -124,14 +116,6 @@ service cloud.firestore {
              (!('bio' in data) || (data.bio is string && data.bio.size() <= 500));
     }
 
-    function isValidPost(data) {
-      return hasRequiredFields(['authorId', 'content', 'likes', 'createdAt']) &&
-             data.authorId is string &&
-             data.content is string && data.content.size() > 0 && data.content.size() <= 2000 &&
-             data.likes is number && data.likes >= 0 &&
-             isValidDateString(data.createdAt);
-    }
-
     // --- SYSTEM CONFIGURATION (SUPER_ADMIN ONLY) ---
     
     match /site_identity/{docId} {
@@ -207,60 +191,6 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // --- CONTENT REPOSITORY ---
-    match /articles/{articleId} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if isSuperAdmin() || (
-        isAdmin() && 
-        (request.resource.data.status != 'PUBLISHED' || resource.data.status == 'PUBLISHED')
-      ) || (
-        isEditorialMember() && 
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewAssignments', 'reviewThreads', 'status', 'review_status'])
-      );
-      allow delete: if isSuperAdmin();
-    }
-
-    match /magazines/{magId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /news/{newsId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /products/{prodId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /editorial_board/{memberId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /subscription_plans/{planId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /static_pages/{pageId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /coupons/{couponId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-
-    match /site_identity/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
     // --- USER MANAGEMENT ---
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
@@ -310,68 +240,6 @@ service cloud.firestore {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid && isValidToolHistory(request.resource.data);
       allow update: if isAdmin() && isValidToolHistory(request.resource.data);
       allow delete: if isSuperAdmin();
-    }
-
-    // --- AGRIFEED ---
-    match /agri_posts/{postId} {
-      allow get: if isSignedIn() && (resource == null || true);
-      allow list: if true;
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.authorId && isValidPost(request.resource.data);
-      allow update: if isSignedIn() && (
-        (request.auth.uid == resource.data.authorId && isValidPost(request.resource.data) && fieldUnchanged('authorId') && fieldUnchanged('createdAt')) || 
-        isAdmin() || 
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'reposts', 'replies']) && 
-         math.abs(request.resource.data.likes - resource.data.likes) <= 1)
-      );
-      allow delete: if isSignedIn() && (request.auth.uid == resource.data.authorId || isAdmin());
-    }
-
-    match /agri_topics/{topicId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /agri_comments/{commentId} {
-      allow get: if isSignedIn() && (resource == null || true);
-      allow list: if true;
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && (request.auth.uid == resource.data.authorId || isAdmin());
-      allow delete: if isSignedIn() && (request.auth.uid == resource.data.authorId || isAdmin());
-    }
-
-    match /agri_connections/{connId} {
-      allow get: if isSignedIn() && (resource == null || request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || isAdmin());
-      allow list: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
-      allow update: if isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || isAdmin());
-      allow delete: if isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || isAdmin());
-    }
-
-    match /agri_conversations/{convId} {
-      allow get: if isSignedIn() && (resource == null || request.auth.uid in resource.data.participants || isAdmin());
-      allow list: if isSignedIn() && (request.auth.uid in resource.data.participants || isAdmin());
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && (request.auth.uid in resource.data.participants || isAdmin());
-      allow delete: if isAdmin();
-    }
-
-    match /agri_messages/{msgId} {
-      allow get: if isSignedIn() && (resource == null || request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || isAdmin());
-      allow list: if isSignedIn() && (
-        isAdmin() || 
-        request.auth.uid in get(/databases/$(database)/documents/agri_conversations/$(resource.data.conversationId)).data.participants
-      );
-      allow create: if isSignedIn() && request.auth.uid == request.resource.data.senderId;
-      allow update: if isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || isAdmin());
-      allow delete: if isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId || isAdmin());
-    }
-
-    match /agri_notifications/{docId} {
-      allow get: if isSignedIn() && (resource == null || isOwner(resource.data.userId));
-      allow list: if isOwner(resource.data.userId);
-      allow create: if isSignedIn();
-      allow update: if isOwner(resource.data.userId);
-      allow delete: if isOwner(resource.data.userId);
     }
 
     // --- NEW APP FEATURES ---
@@ -441,38 +309,6 @@ service cloud.firestore {
     match /site_stats/{docId} {
       allow read: if true;
       allow write: if true;
-    }
-
-    // --- KEYWORD INTELLIGENCE ---
-    match /keywords/{keywordId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-    match /trending_keywords/{keywordId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-    match /keyword_clusters/{clusterId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-    match /keyword_performance/{perfId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-
-    // --- VIDEO CONTENT ---
-    match /videos/{videoId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    match /video_sources/{sourceId} {
-      allow read, write: if isAdmin();
-    }
-
-    // --- USER DATA ---
-    match /bookmarks/{bookmarkId} {
-      allow read, write: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid);
     }
 
     // --- DEFAULT DENY ---

@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { BookOpen, Plus, Search, Filter, Download, Trash2, AlertTriangle, FileText } from 'lucide-react';
 import { Paper, savePapers, loadPapers } from './literatureStore';
@@ -26,6 +27,20 @@ export default function ReviewPage() {
     doi: '', crop: '', theme: '', findings: '', method: '', location: ''
   });
   const [formErrors, setFormErrors] = useState<string[]>([]);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.restoreData) {
+      const data = location.state.restoreData;
+      if (data.papers !== undefined) setPapers(data.papers);
+      if (data.isAdding !== undefined) setIsAdding(data.isAdding);
+      if (data.themeFilter !== undefined) setThemeFilter(data.themeFilter);
+      if (data.cropFilter !== undefined) setCropFilter(data.cropFilter);
+      if (data.searchQuery !== undefined) setSearchQuery(data.searchQuery);
+      if (data.formData !== undefined) setFormData(data.formData);
+      if (data.formErrors !== undefined) setFormErrors(data.formErrors);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     setPapers(loadPapers());

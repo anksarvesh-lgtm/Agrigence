@@ -42,6 +42,24 @@
         "lastSync": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "type", "url"]
+    },
+    "WebServiceRequest": {
+      "title": "Web Service Request",
+      "description": "On-demand web service request from a user",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phoneNumber": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "fileUrl": { "type": "string" },
+        "deadline": { "type": "string" },
+        "budgetRange": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "In Progress", "Completed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fullName", "email", "phoneNumber", "category", "description", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -56,6 +74,10 @@
     "/video_sources/{sourceId}": {
       "schema": "VideoSource",
       "description": "Collection of YouTube video sources"
+    },
+    "/web_service_requests/{requestId}": {
+      "schema": "WebServiceRequest",
+      "description": "Collection of web service requests"
     }
   }
 }

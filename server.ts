@@ -9,9 +9,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // --- SEO Helper Functions ---
+const FIREBASE_API_KEY = "AIzaSyAtJrLiAnhN5A4umArJKtqhnWmoXXf27K8"; // From firebase-applet-config.json
+
 async function fetchArticles() {
   try {
-    const response = await fetch('https://firestore.googleapis.com/v1/projects/gen-lang-client-0276037966/databases/(default)/documents/articles');
+    const response = await fetch(`https://firestore.googleapis.com/v1/projects/gen-lang-client-0276037966/databases/ai-studio-3e16a161-237b-431f-b594-a3f4635b9cc5/documents/articles?key=${FIREBASE_API_KEY}`);
     if (!response.ok) return [];
     const data = await response.json();
     return data.documents || [];
@@ -23,7 +25,7 @@ async function fetchArticles() {
 
 async function fetchArticle(slug: string) {
   try {
-    const response = await fetch(`https://firestore.googleapis.com/v1/projects/gen-lang-client-0276037966/databases/(default)/documents/articles/${slug}`);
+    const response = await fetch(`https://firestore.googleapis.com/v1/projects/gen-lang-client-0276037966/databases/ai-studio-3e16a161-237b-431f-b594-a3f4635b9cc5/documents/articles/${slug}?key=${FIREBASE_API_KEY}`);
     if (!response.ok) return null;
     const data = await response.json();
     return data;
@@ -35,7 +37,7 @@ async function fetchArticle(slug: string) {
 
 async function fetchSiteIdentity() {
   try {
-    const response = await fetch('https://firestore.googleapis.com/v1/projects/gen-lang-client-0276037966/databases/(default)/documents/site_identity/global');
+    const response = await fetch(`https://firestore.googleapis.com/v1/projects/gen-lang-client-0276037966/databases/ai-studio-3e16a161-237b-431f-b594-a3f4635b9cc5/documents/site_identity/global?key=${FIREBASE_API_KEY}`);
     if (!response.ok) return null;
     const data = await response.json();
     return data;

@@ -1,5 +1,5 @@
 import React from 'react';
-import AgriFeedLogo from './AgriFeed/AgriFeedLogo';
+import { Leaf } from 'lucide-react';
 
 interface LogoProps {
   className?: string;
@@ -8,17 +8,11 @@ interface LogoProps {
 }
 
 const Logo: React.FC<LogoProps> = ({ className = "h-12 w-auto", variant = 'dark', showText = false }) => {
-  // Extract height from className if possible to set size
-  const heightMatch = className.match(/h-(\d+)/);
-  const size = heightMatch ? parseInt(heightMatch[1]) * 4 : 40;
-
   return (
-    <AgriFeedLogo 
-      className={className} 
-      size={size} 
-      showText={showText} 
-      variant={variant} 
-    />
+    <div className={`flex items-center gap-2 ${className} ${variant === 'light' ? 'text-white' : 'text-agri-primary'}`}>
+      <Leaf size={24} />
+      {showText && <span className="font-serif font-bold text-xl tracking-tight">Agrigence</span>}
+    </div>
   );
 };
 

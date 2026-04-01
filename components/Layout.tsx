@@ -156,6 +156,7 @@ const Header = () => {
     { label: 'Blogs', path: '/blogs' },
     { label: 'Store', path: '/products' },
     { label: 'Tools', path: '/tools' },
+    { label: 'Web Services', path: '/services' },
     { label: 'Author Guidelines', path: '/author-guidelines' },
     { label: 'Editorial Board', path: '/editorial-board' },
     { label: 'About', path: '/about-contact' },

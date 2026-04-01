@@ -46,19 +46,6 @@ import ToolHistoryDetail from './pages/ToolHistoryDetail';
 import ToolsPage from './pages/ToolsPage';
 import Sitemap from './pages/Sitemap';
 
-// AgriFeed Pages
-import AgriFeedLayout from './components/AgriFeed/AgriFeedLayout';
-import AgriFeedFeed from './pages/AgriFeed/Feed';
-import AgriFeedExplore from './pages/AgriFeed/Explore';
-import AgriFeedTrending from './pages/AgriFeed/Trending';
-import AgriFeedNotifications from './pages/AgriFeed/Notifications';
-import AgriFeedResearchers from './pages/AgriFeed/Researchers';
-import AgriFeedInbox from './pages/AgriFeed/Inbox';
-import AgriFeedSaved from './pages/AgriFeed/Saved';
-import AgriFeedProfile from './pages/AgriFeed/Profile';
-import AgriFeedDashboard from './pages/AgriFeed/Dashboard';
-import AgriFeedAdmin from './pages/AgriFeed/Admin';
-
 // Lazy loaded tools
 const SeedRatePage = React.lazy(() => import('./tools/Tool01SeedRate/SeedRatePage'));
 const NutrientPage = React.lazy(() => import('./tools/Tool02Nutrient/NutrientPage'));
@@ -293,21 +280,6 @@ const App: React.FC = () => {
               <Route path="dashboard/tool-history/:id" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><ToolHistoryDetail /></ProtectedRoute>} />
               <Route path="submission" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Submission /></ProtectedRoute>} />
               <Route path="subscription" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Subscription /></ProtectedRoute>} />
-            </Route>
-
-            {/* AGRIFEED PLATFORM */}
-            <Route path="/agri-feed" element={<AgriFeedLayout />}>
-              <Route index element={<Navigate to="feed" replace />} />
-              <Route path="feed" element={<AgriFeedFeed />} />
-              <Route path="explore" element={<AgriFeedExplore />} />
-              <Route path="trending" element={<AgriFeedTrending />} />
-              <Route path="researchers" element={<AgriFeedResearchers />} />
-              <Route path="inbox" element={<AgriFeedInbox />} />
-              <Route path="saved" element={<AgriFeedSaved />} />
-              <Route path="notifications" element={<AgriFeedNotifications />} />
-              <Route path="profile/:id" element={<AgriFeedProfile />} />
-              <Route path="dashboard" element={<AgriFeedDashboard />} />
-              <Route path="admin" element={<AgriFeedAdmin />} />
             </Route>
 
             {/* REVIEWER DASHBOARD (Strict Isolation) */}

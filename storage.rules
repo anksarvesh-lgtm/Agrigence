@@ -98,17 +98,6 @@ service firebase.storage {
       allow write: if isSignedIn();
     }
 
-    // --- AGRIFEED ---
-    match /agri_posts/{allPaths=**} {
-      allow read: if true;
-      allow write: if isSignedIn() && (request.resource == null || request.resource.size <= 5 * 1024 * 1024); // 5MB limit
-    }
-
-    match /agri_messages/{allPaths=**} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && (request.resource == null || request.resource.size <= 5 * 1024 * 1024); // 5MB limit
-    }
-
     match /posts/{allPaths=**} {
       allow read: if true;
       allow write: if isSignedIn() && (request.resource == null || request.resource.size <= 5 * 1024 * 1024);

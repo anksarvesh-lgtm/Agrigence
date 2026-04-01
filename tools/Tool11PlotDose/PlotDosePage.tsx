@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -49,6 +50,19 @@ export default function PlotDosePage() {
   
   const [results, setResults] = useState<DoseResult[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.restoreData) {
+      const data = location.state.restoreData;
+      if (data.plotLength !== undefined) setPlotLength(data.plotLength);
+      if (data.plotWidth !== undefined) setPlotWidth(data.plotWidth);
+      if (data.numPlots !== undefined) setNumPlots(data.numPlots);
+      if (data.sprayVolume !== undefined) setSprayVolume(data.sprayVolume);
+      if (data.treatments !== undefined) setTreatments(data.treatments);
+      if (data.warnings !== undefined) setWarnings(data.warnings);
+    }
+  }, [location.state]);
   
   const plotArea = plotLength * plotWidth;
 

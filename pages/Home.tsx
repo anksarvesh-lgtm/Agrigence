@@ -175,73 +175,62 @@ const Home: React.FC = () => {
       </section>
 
       {/* 3. NEWS & UPDATES */}
-      <section className="py-24 relative z-10 bg-stone-50">
+      <section className="py-24 relative z-10">
         <div className="container mx-auto px-6">
           <SectionHeader title="News & Updates" link="/news" />
-          
-          <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border border-stone-100 overflow-hidden relative" style={{ height: '400px' }}>
-            {/* Gradient masks for smooth fade in/out */}
-            <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none"></div>
-            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none"></div>
-            
-            {news.length > 0 ? (
-              <div className="h-full overflow-hidden relative group">
-                <style>{`
-                  @keyframes scrollUp {
-                    0% { transform: translateY(100%); }
-                    100% { transform: translateY(-100%); }
-                  }
-                  .news-ticker {
-                    animation: scrollUp 20s linear infinite;
-                  }
-                  .group:hover .news-ticker {
-                    animation-play-state: paused;
-                  }
-                `}</style>
-                <div className="news-ticker absolute w-full px-8 md:px-12">
-                  <ul className="space-y-8 pb-8">
-                    {news.map((item, i) => (
-                      <li key={i} className="relative pl-8 cursor-pointer group/item" onClick={() => navigate(`/news/${item.id}`)}>
-                        <div className="absolute left-0 top-2 w-3 h-3 rounded-full bg-agri-secondary group-hover/item:scale-150 transition-transform"></div>
-                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-2">
-                          <span className="text-xs font-black text-agri-secondary uppercase tracking-widest flex items-center gap-1">
-                            <Calendar size={12} /> {item.date}
-                          </span>
-                          {item.isBreaking && (
-                            <span className="bg-red-50 text-red-600 px-2 py-0.5 rounded text-[10px] font-black uppercase flex items-center gap-1 animate-pulse w-max">
-                              BREAKING
-                            </span>
-                          )}
-                        </div>
-                        <h4 className="text-xl font-serif font-bold text-agri-primary mb-2 group-hover/item:text-agri-secondary transition-colors">{item.title}</h4>
-                        <p className="text-stone-600 text-sm line-clamp-2 mb-2">{item.description || item.content}</p>
-                        
-                        {item.highlights && item.highlights.length > 0 && (
-                          <ul className="list-disc list-inside text-xs text-stone-500 mb-3 ml-2 space-y-1">
-                            {item.highlights.slice(0, 2).map((highlight, hIdx) => (
-                              <li key={hIdx} className="line-clamp-1">{highlight}</li>
-                            ))}
-                          </ul>
-                        )}
-
-                        {item.tags && item.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {item.tags.slice(0, 3).map((tag, tIdx) => (
-                              <span key={tIdx} className="bg-stone-100 text-stone-500 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider">
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </li>
-                    ))}
-                    {/* Duplicate for seamless looping if needed, but simple scroll is fine for now */}
-                  </ul>
+          <div className="h-[400px] overflow-hidden relative group rounded-2xl">
+            <style>{`
+              @keyframes scrollUp {
+                0% { transform: translateY(0); }
+                100% { transform: translateY(-50%); }
+              }
+              .animate-scroll-up {
+                animation: scrollUp 30s linear infinite;
+              }
+              .animate-scroll-up:hover {
+                animation-play-state: paused;
+              }
+            `}</style>
+            <div className="animate-scroll-up flex flex-col">
+              <div className="pb-6">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {news.length > 0 ? news.map((item, i) => (
+                    <GlassCard key={i} onClick={() => navigate(`/news/${item.id}`)} className="flex flex-col h-[250px]">
+                      <div className="text-[10px] font-black text-agri-secondary uppercase tracking-widest mb-3 flex items-center gap-2">
+                         <Calendar size={12} /> {item.date}
+                      </div>
+                      <h4 className="font-bold text-agri-primary mb-3 line-clamp-2 flex-grow">{item.title}</h4>
+                      <p className="text-stone-700 text-xs line-clamp-3 mb-4 font-medium">{item.content}</p>
+                      <div className="text-[10px] font-black text-agri-primary uppercase tracking-widest flex items-center gap-2 mt-auto">
+                        READ MORE <ChevronRight size={12} />
+                      </div>
+                    </GlassCard>
+                  )) : (
+                    <div className="col-span-full text-center py-12 text-stone-400 italic">No recent news updates available.</div>
+                  )}
                 </div>
               </div>
-            ) : (
-              <div className="h-full flex items-center justify-center text-stone-400 italic">No recent news updates available.</div>
-            )}
+              {/* Duplicate for seamless scrolling */}
+              <div className="pb-6" aria-hidden="true">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {news.length > 0 ? news.map((item, i) => (
+                    <GlassCard key={`dup-${i}`} onClick={() => navigate(`/news/${item.id}`)} className="flex flex-col h-[250px]">
+                      <div className="text-[10px] font-black text-agri-secondary uppercase tracking-widest mb-3 flex items-center gap-2">
+                         <Calendar size={12} /> {item.date}
+                      </div>
+                      <h4 className="font-bold text-agri-primary mb-3 line-clamp-2 flex-grow">{item.title}</h4>
+                      <p className="text-stone-700 text-xs line-clamp-3 mb-4 font-medium">{item.content}</p>
+                      <div className="text-[10px] font-black text-agri-primary uppercase tracking-widest flex items-center gap-2 mt-auto">
+                        READ MORE <ChevronRight size={12} />
+                      </div>
+                    </GlassCard>
+                  )) : null}
+                </div>
+              </div>
+            </div>
+            {/* Gradient masks for smooth fade in/out */}
+            <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-agri-bg to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-agri-bg to-transparent z-10 pointer-events-none"></div>
           </div>
         </div>
       </section>

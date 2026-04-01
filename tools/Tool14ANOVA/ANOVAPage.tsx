@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import React, { useState , useEffect} from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BarChart2, 
@@ -29,6 +30,16 @@ export default function ANOVAPage() {
   
   const [result, setResult] = useState<AnovaSummary | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.restoreData) {
+      const data = location.state.restoreData;
+      if (data.design !== undefined) setDesign(data.design);
+      if (data.data !== undefined) setData(data.data);
+      if (data.warnings !== undefined) setWarnings(data.warnings);
+    }
+  }, [location.state]);
 
   const addRow = () => {
     setData([...data, { id: `obs-${Date.now()}`, replication: 'R1', treatment: 'T1', value: 0 }]);

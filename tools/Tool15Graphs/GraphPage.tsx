@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -45,6 +46,19 @@ export default function GraphPage() {
   const [xAxisLabel, setXAxisLabel] = useState('Treatments');
   const [svgContent, setSvgContent] = useState<string>('');
   const [warnings, setWarnings] = useState<string[]>([]);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.restoreData) {
+      const data = location.state.restoreData;
+      if (data.graphType !== undefined) setGraphType(data.graphType);
+      if (data.data !== undefined) setData(data.data);
+      if (data.yAxisLabel !== undefined) setYAxisLabel(data.yAxisLabel);
+      if (data.xAxisLabel !== undefined) setXAxisLabel(data.xAxisLabel);
+      if (data.svgContent !== undefined) setSvgContent(data.svgContent);
+      if (data.warnings !== undefined) setWarnings(data.warnings);
+    }
+  }, [location.state]);
   
   const svgRef = useRef<SVGSVGElement>(null);
 

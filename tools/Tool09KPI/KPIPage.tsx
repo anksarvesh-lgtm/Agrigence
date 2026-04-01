@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 
 import React, { useState, useEffect } from 'react';
 import { evaluateKPIs, overallIndex, KPIInputs, KPIResult } from './KPI_FRAMEWORK';
@@ -69,6 +70,15 @@ export default function KPIPage() {
   const [inputs, setInputs] = useState<KPIInputs | null>(null);
   const [results, setResults] = useState<KPIResult[]>([]);
   const [overall, setOverall] = useState(0);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.restoreData) {
+      const data = location.state.restoreData;
+      if (data.inputs !== undefined) setInputs(data.inputs);
+      if (data.overall !== undefined) setOverall(data.overall);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     // In a real app, this would fetch from a global store or context

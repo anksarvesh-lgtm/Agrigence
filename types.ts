@@ -465,8 +465,6 @@ export interface NewsItem {
   relevantLink?: string;
   isBreaking?: boolean;
   publishDate?: string;
-  tags?: string[];
-  highlights?: string[];
 }
 
 export interface EditorialMember {
@@ -565,100 +563,6 @@ export interface Coupon {
   usageCount: number;
 }
 
-// AgriFeed Types
-export interface AgriPost {
-  id: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar?: string;
-  authorField?: string;
-  authorVerified?: boolean;
-  content: string;
-  attachments?: {
-    url: string;
-    type: 'IMAGE' | 'PDF' | 'DOC' | 'DATA';
-    name: string;
-  }[];
-  timestamp: string;
-  likes: string[]; // Array of user IDs
-  reposts: string[]; // Array of user IDs
-  upvotes?: string[]; // Array of user IDs for research questions
-  sharesCount?: number;
-  replies: AgriComment[];
-  type: 'POST' | 'DISCUSSION' | 'BLOG' | 'NEWS' | 'MAGAZINE' | 'POLL' | 'RESEARCH_QUESTION' | 'FARMER_PROBLEM';
-  label?: string; // e.g., "Blog", "AgriNews", "Magazine"
-  pollOptions?: { id: string; text: string; votes: string[] }[];
-}
-
-export interface AgriComment {
-  id: string;
-  postId: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar?: string;
-  content: string;
-  timestamp: string;
-  likes: string[];
-}
-
-export interface AgriConnection {
-  id: string;
-  senderId: string;
-  receiverId: string;
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'BLOCKED';
-  createdAt: string;
-}
-
-export interface AgriConversation {
-  id: string;
-  participants: string[]; // User IDs
-  lastMessage?: string;
-  lastTimestamp?: string;
-  unreadCount: Record<string, number>; // userId -> count
-}
-
-export interface AgriMessage {
-  id: string;
-  conversationId: string;
-  senderId: string;
-  receiverId: string;
-  text: string;
-  timestamp: string;
-  readStatus: boolean;
-  attachments?: {
-    url: string;
-    type: string;
-    name: string;
-  }[];
-}
-
-export interface AgriTopic {
-  id: string;
-  name: string;
-  postCount: number;
-  likesCount?: number;
-  commentsCount?: number;
-  sharesCount?: number;
-  score?: number; // Calculated trending score
-}
-
-export interface AgriNotification {
-  id: string;
-  userId: string;
-  type: 'LIKE' | 'REPOST' | 'REPLY' | 'CONNECTION_REQUEST' | 'CONNECTION_ACCEPTED' | 'MESSAGE';
-  actorId: string;
-  actorName: string;
-  postId?: string;
-  timestamp: string | number;
-  read: boolean;
-}
-
-export interface AgriFeedStats {
-  totalResearchers: number;
-  postsThisWeek: number;
-  activeDiscussions: number;
-  trendingTopics: number;
-}
 
 export interface AdminLog {
   id: string;

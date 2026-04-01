@@ -427,33 +427,6 @@ const ReviewerDashboard: React.FC = () => {
   // Dashboard List View
   return (
     <div className="space-y-8">
-      {/* AgriFeed Banner */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-[2.5rem] p-6 md:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/3 blur-2xl"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-black opacity-10 rounded-full translate-y-1/2 -translate-x-1/4 blur-xl"></div>
-        
-        <div className="relative z-10 flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
-              <MessageCircle size={24} className="text-white" />
-            </div>
-            <h2 className="text-2xl md:text-3xl font-bold font-serif">Join the AgriFeed Community</h2>
-          </div>
-          <p className="text-green-50 text-sm md:text-base max-w-2xl leading-relaxed">
-            Connect with researchers, share your findings, ask questions, and stay updated with the latest trends in agriculture.
-          </p>
-        </div>
-        
-        <div className="relative z-10 w-full md:w-auto">
-          <Link 
-            to="/agri-feed/dashboard" 
-            className="block w-full md:w-auto text-center bg-white text-green-700 px-8 py-3.5 rounded-xl font-bold hover:bg-green-50 transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
-          >
-            Access AgriFeed
-          </Link>
-        </div>
-      </div>
-
       {/* Welcome Banner */}
       <div className="bg-white rounded-[2.5rem] p-8 border border-stone-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
          <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-agri-secondary/5 to-transparent pointer-events-none"></div>

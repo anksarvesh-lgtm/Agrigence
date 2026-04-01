@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import React, { useState , useEffect} from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FileText, 
@@ -44,6 +45,20 @@ export default function WritingPage() {
   const [warnings, setWarnings] = useState<string[]>([]);
   const [isAiEnabled, setIsAiEnabled] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.restoreData) {
+      const data = location.state.restoreData;
+      if (data.reportType !== undefined) setReportType(data.reportType);
+      if (data.data !== undefined) setData(data.data);
+      if (data.customNotes !== undefined) setCustomNotes(data.customNotes);
+      if (data.sections !== undefined) setSections(data.sections);
+      if (data.warnings !== undefined) setWarnings(data.warnings);
+      if (data.isAiEnabled !== undefined) setIsAiEnabled(data.isAiEnabled);
+      if (data.isGenerating !== undefined) setIsGenerating(data.isGenerating);
+    }
+  }, [location.state]);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
