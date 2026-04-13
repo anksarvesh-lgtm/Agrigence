@@ -5,13 +5,14 @@ import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
 import { 
   Menu, X, Search, User as UserIcon, LogOut, 
-  Facebook, Linkedin, Youtube, Twitter, Instagram, ArrowRight, Clock, ChevronDown, Wrench, ChevronRight
+  Facebook, Linkedin, Youtube, Twitter, Instagram, ArrowRight, Clock, ChevronDown, Wrench, ChevronRight, ArrowLeft
 } from 'lucide-react';
 import Logo from './Logo';
 import { SiteSettings } from '../types';
 import { motion } from 'framer-motion';
 import { useConfirm } from './ContextualConfirm';
 import OptimizedImage from './OptimizedImage';
+import ThemeToggle from './ThemeToggle';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -156,7 +157,9 @@ const Header = () => {
     { label: 'Blogs', path: '/blogs' },
     { label: 'Store', path: '/products' },
     { label: 'Tools', path: '/tools' },
-    { label: 'Web Services', path: '/services' },
+    { label: 'Analytics', path: '/analytics' },
+    { label: 'Pipeline Builder', path: '/analytics/pipeline' },
+    { label: 'ANOVA Engine', path: '/analytics/anova' },
     { label: 'Author Guidelines', path: '/author-guidelines' },
     { label: 'Editorial Board', path: '/editorial-board' },
     { label: 'About', path: '/about-contact' },
@@ -164,6 +167,19 @@ const Header = () => {
 
   const rawMenuItems = menuItems.length > 0 ? menuItems : defaultItems.map(i => ({ ...i, id: i.path, isExternal: false, order: 0, isEnabled: true }));
   
+  // Ensure Analytics tools are present
+  const analyticsTools = [
+    { label: 'Analytics', path: '/analytics', id: 'analytics', isExternal: false, order: 5, isEnabled: true },
+    { label: 'Pipeline Builder', path: '/analytics/pipeline', id: 'pipeline', isExternal: false, order: 6, isEnabled: true },
+    { label: 'ANOVA Engine', path: '/analytics/anova', id: 'anova', isExternal: false, order: 7, isEnabled: true },
+  ];
+
+  analyticsTools.forEach(tool => {
+    if (!rawMenuItems.some(i => i.path === tool.path)) {
+      rawMenuItems.push(tool);
+    }
+  });
+
   // Ensure Home is always present and first
   const hasHome = rawMenuItems.some(i => i.path === '/' || i.label === 'Home');
   const activeMenuItems = hasHome 
@@ -172,10 +188,10 @@ const Header = () => {
 
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 bg-white ${
+      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
         isScrolled 
-          ? 'bg-white/95 backdrop-blur-md border-b border-agri-border shadow-sm' 
-          : 'border-b border-transparent'
+          ? 'bg-white/30 backdrop-blur-lg border-b border-white/20 shadow-lg' 
+          : 'bg-white/10 backdrop-blur-sm border-b border-transparent'
       }`}
     >
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
@@ -216,122 +232,43 @@ const Header = () => {
 
       <div className={`container mx-auto px-6 relative z-10 ${isScrolled ? 'py-2' : 'py-4'}`}>
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-3 group">
-            {settings?.logoUrl ? (
-               <OptimizedImage 
-                 src={settings.logoUrl} 
-                 className={`w-auto object-contain transition-all duration-300 ${isScrolled ? "h-10" : "h-14"}`} 
-                 alt="Agrigence" 
-                 priority={true}
-               />
-            ) : (
-               <Logo className={isScrolled ? "h-10" : "h-14"} variant="dark" showText={false} />
+          <div className="flex items-center gap-2">
+            {location.pathname !== '/' && (
+              <button 
+                onClick={() => navigate(-1)} 
+                className="p-2 hover:bg-stone-100 rounded-full transition-colors text-stone-500"
+                aria-label="Go back"
+              >
+                <ArrowLeft size={20} />
+              </button>
             )}
-            
-            <div className="flex flex-col">
-              <span className={`font-serif font-bold text-agri-primary leading-none tracking-tight transition-all duration-300 ${isScrolled ? 'text-xl' : 'text-2xl'}`}>
-                Agrigence
-              </span>
-              <p className={`font-serif italic text-agri-secondary leading-tight transition-all duration-300 ${isScrolled ? 'text-[9px] mt-0.5' : 'text-[11px] mt-1'}`}>
-                Where Agri-Intelligence Meets Agricultural Generation
-              </p>
-            </div>
-          </Link>
+            <Link to="/" className="flex items-center gap-3 group">
+              {settings?.logoUrl ? (
+                 <OptimizedImage 
+                   src={settings.logoUrl} 
+                   className={`w-auto object-contain transition-all duration-300 ${isScrolled ? "h-10" : "h-14"}`} 
+                   alt="Agrigence" 
+                   priority={true}
+                 />
+              ) : (
+                 <Logo className={isScrolled ? "h-10" : "h-14"} variant="dark" showText={false} />
+              )}
+              
+              <div className="flex flex-col">
+                <span className={`font-serif font-bold text-agri-primary leading-none tracking-tight transition-all duration-300 ${isScrolled ? 'text-xl' : 'text-2xl'}`}>
+                  Agrigence
+                </span>
+                <p className={`font-serif italic text-agri-secondary leading-tight transition-all duration-300 ${isScrolled ? 'text-[9px] mt-0.5' : 'text-[11px] mt-1'}`}>
+                  Where Agri-Intelligence Meets Agricultural Generation
+                </p>
+              </div>
+            </Link>
+          </div>
 
-          <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
-            {activeMenuItems.map((item, index) => {
-               // Fix legacy label/path issues locally to prevent flickering from API updates
-               const targetPath = (item.path === '/board' || item.label === 'Board') ? '/editorial-board' : item.path;
-               const displayLabel = (item.label === 'Board') ? 'Editorial Board' : item.label;
-               
-               const isActive = location.pathname === targetPath;
+          {/* Desktop Navigation Removed as per user request to use Hamburger Menu on all screens */}
 
-               if (targetPath === '/tools') {
-                   return (
-                     <div 
-                        key={item.id ? `nav-${item.id}-${index}` : `nav-${index}`}
-                        className="relative group"
-                        onMouseEnter={() => setIsToolsOpen(true)}
-                        onMouseLeave={() => setIsToolsOpen(false)}
-                     >
-                        <Link 
-                          to="/tools" 
-                          className={`text-sm font-medium transition-all hover:text-agri-secondary flex items-center gap-1 ${
-                            isActive ? 'text-agri-primary font-bold' : 'text-stone-500'
-                          }`}
-                        >
-                          {displayLabel}
-                          <ChevronDown size={14} className={`transition-transform duration-300 ${isToolsOpen ? 'rotate-180' : ''}`} />
-                        </Link>
-                        <span className={`absolute -bottom-1 left-0 h-0.5 bg-agri-secondary transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
-                        
-                        {/* Dropdown Menu */}
-                        <div className={`absolute top-full left-1/2 -translate-x-1/2 pt-4 transition-all duration-300 ${isToolsOpen ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'}`}>
-                            <div className="bg-white shadow-2xl rounded-2xl border border-stone-100 p-4 w-64 overflow-hidden">
-                                <div className="space-y-1">
-                                    {toolSections.map(section => (
-                                        <Link 
-                                            key={section.id} 
-                                            to="/tools" 
-                                            className="flex items-center justify-between p-3 hover:bg-stone-50 rounded-xl transition-colors group/item"
-                                            onClick={() => setIsToolsOpen(false)}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-agri-primary/5 rounded-lg flex items-center justify-center text-agri-secondary group-hover/item:bg-agri-secondary group-hover/item:text-white transition-colors">
-                                                    <Wrench size={14} />
-                                                </div>
-                                                <span className="text-xs font-bold text-agri-primary uppercase tracking-wider">{section.name}</span>
-                                            </div>
-                                            <ArrowRight size={12} className="text-stone-300 group-hover/item:text-agri-secondary transition-all" />
-                                        </Link>
-                                    ))}
-                                    <div className="pt-2 mt-2 border-t border-stone-100">
-                                        <Link 
-                                            to="/tools" 
-                                            className="block text-center py-2 text-[10px] font-black text-agri-secondary uppercase tracking-widest hover:text-agri-primary transition-colors"
-                                            onClick={() => setIsToolsOpen(false)}
-                                        >
-                                            View All Tools
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                     </div>
-                   );
-               }
-               
-               if (item.isExternal) {
-                   return (
-                     <a 
-                       key={item.id ? `nav-${item.id}-${index}` : `nav-${index}`} 
-                       href={targetPath} 
-                       target="_blank"
-                       rel="noopener noreferrer"
-                       className="text-sm font-medium transition-all hover:text-agri-secondary relative group text-stone-500"
-                     >
-                       {displayLabel}
-                       <span className="absolute -bottom-1 left-0 h-0.5 bg-agri-secondary transition-all duration-300 w-0 group-hover:w-full"></span>
-                     </a>
-                   );
-               }
-               return (
-                <Link 
-                  key={item.id ? `nav-${item.id}-${index}` : `nav-${index}`} 
-                  to={targetPath} 
-                  className={`text-sm font-medium transition-all hover:text-agri-secondary relative group ${
-                    isActive ? 'text-agri-primary font-bold' : 'text-stone-500'
-                  }`}
-                >
-                  {displayLabel}
-                  <span className={`absolute -bottom-1 left-0 h-0.5 bg-agri-secondary transition-all duration-300 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="hidden lg:flex items-center gap-6">
-            <div className="relative">
+          <div className="flex items-center gap-4 md:gap-6">
+            <div className="relative hidden sm:block">
               <div className="flex items-center bg-stone-50 rounded-full px-4 py-2 border border-stone-200 focus-within:border-agri-secondary/50 focus-within:bg-white transition-all">
                 <Search size={16} className="text-stone-400" />
                 <input 
@@ -364,28 +301,29 @@ const Header = () => {
                 </Link>
                 <button 
                   onClick={handleLogout} 
-                  className="text-stone-400 hover:text-red-500 transition-colors p-2" 
+                  className="hidden sm:block text-stone-400 hover:text-red-500 transition-colors p-2" 
                   title="Sign Out"
                 >
                   <LogOut size={20} />
                 </button>
               </div>
             ) : (
-              <Link to="/login" className="bg-agri-primary text-white px-6 py-2.5 rounded-full text-xs font-bold tracking-wide hover:bg-agri-secondary transition-all shadow-md flex items-center gap-2">
+              <Link to="/login" className="hidden sm:flex bg-agri-primary text-white px-6 py-2.5 rounded-full text-xs font-bold tracking-wide hover:bg-agri-secondary transition-all shadow-md items-center gap-2">
                 <UserIcon size={14} /> SIGN IN
               </Link>
             )}
-          </div>
 
-          <button className="lg:hidden text-agri-primary" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X /> : <Menu />}
-          </button>
+            <ThemeToggle />
+            <button className="text-agri-primary p-2 hover:bg-stone-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+          </div>
         </div>
       </div>
       
       {isMenuOpen && (
-        <div className="lg:hidden bg-white border-t border-agri-border p-6 space-y-4 shadow-xl absolute w-full left-0 z-20 max-h-[calc(100vh-80px)] overflow-y-auto">
-           <div className="mb-6">
+        <div className="bg-white border-t border-agri-border p-6 space-y-4 shadow-xl absolute w-full left-0 z-20 max-h-[calc(100vh-80px)] overflow-y-auto">
+           <div className="mb-6 sm:hidden">
              <div className="flex items-center bg-stone-50 rounded-xl px-4 py-3 border border-stone-200 focus-within:border-agri-secondary/50 focus-within:bg-white transition-all">
                <Search size={18} className="text-stone-400" />
                <input 
@@ -515,7 +453,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-stone-950 text-white pt-5 pb-3 relative overflow-hidden border-t border-white/5">
+    <footer className="bg-stone-950/80 backdrop-blur-lg text-white pt-5 pb-3 relative overflow-hidden border-t border-white/10">
       {/* Agricultural Background Pattern */}
       <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -641,7 +579,7 @@ const Footer = () => {
               <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
               <Link to="/sitemap" className="hover:text-white transition-colors">Sitemap</Link>
               <button onClick={() => window.dispatchEvent(new Event('openCookieSettings'))} className="hover:text-white transition-colors uppercase tracking-widest">Cookie Settings</button>
-              <a href="mailto:agrigence@gmail.com" className="hover:text-white transition-colors">Support</a>
+              <a href="mailto:info@agrigence.in" className="hover:text-white transition-colors">Support</a>
             </div>
           </div>
         </div>

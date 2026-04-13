@@ -1,4 +1,3 @@
-import { useLocation } from 'react-router-dom';
 import { isPlanExpired } from '../../utils/planAccess';
 import { mockBackend } from '../../services/mockBackend';
 import { useAuth } from '../../App';
@@ -57,16 +56,6 @@ const EconomicsPage: React.FC = () => {
   const [scenarios, setScenarios] = useState<any | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
-  const location = useLocation();
-  useEffect(() => {
-    if (location.state?.restoreData) {
-      const data = location.state.restoreData;
-      if (data.inputs !== undefined) setInputs(data.inputs);
-      if (data.scenarios !== undefined) setScenarios(data.scenarios);
-      if (data.showDetails !== undefined) setShowDetails(data.showDetails);
-    }
-  }, [location.state]);
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setInputs(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
@@ -80,11 +69,11 @@ const EconomicsPage: React.FC = () => {
         mockBackend.saveToolHistory({
           userId: user.id,
           toolName: 'Farm Economics Analyzer',
-          inputData: { inputs, scenarios, showDetails },
+          inputData: { timestamp: new Date().toISOString() },
           outputData: res,
           status: 'SUCCESS',
           timestamp: new Date().toISOString()
-        });
+        }).catch(console.error);
       } catch (error) {
         console.error("Failed to save tool history", error);
       }

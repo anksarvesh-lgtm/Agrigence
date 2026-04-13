@@ -4,7 +4,7 @@ import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
 import { Article, PaymentRecord, ReviewMessage, ReviewStatus, ToolHistory } from '../types';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, FileText, Calendar, Clock, CheckCircle, AlertTriangle, Star, Send, MessageSquareHeart, ChevronRight, PenTool, Layers, LogOut, ShieldCheck, ShieldAlert, CreditCard, Activity, Camera, Lock, Smartphone, Globe, Mail, X, MessageCircle, Loader2, Calculator, TrendingUp, Settings2, Wand2, LayoutGrid, Database } from 'lucide-react';
+import { Plus, FileText, Calendar, Clock, CheckCircle, AlertTriangle, Star, Send, MessageSquareHeart, ChevronRight, PenTool, Layers, LogOut, ShieldCheck, ShieldAlert, CreditCard, Activity, Camera, Lock, Smartphone, Globe, Mail, X, MessageSquareText, Loader2, Calculator, TrendingUp, Settings2, Wand2, LayoutGrid, Database } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Tracker from '../extensions/submission-tracking/Tracker';
 import { useConfirm } from '../components/ContextualConfirm';
@@ -259,6 +259,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
           <h1 className="text-3xl font-serif font-bold text-agri-primary">Researcher Dashboard</h1>
@@ -410,7 +411,7 @@ const Dashboard: React.FC = () => {
                 <Settings2 size={12} /> Researcher Toolkit
               </h3>
               <div className="space-y-3">
-                <Link 
+                      <Link 
                   to="/dashboard/tools" 
                   className="w-full p-4 bg-stone-50 hover:bg-agri-primary hover:text-white rounded-2xl transition-all group flex items-center justify-between"
                 >
@@ -517,7 +518,7 @@ const Dashboard: React.FC = () => {
                                         className="p-2 bg-indigo-50 text-indigo-500 rounded-full hover:bg-indigo-100 hover:scale-110 transition-all shadow-sm relative"
                                         title="View Review Comments"
                                     >
-                                        <MessageCircle size={16} />
+                                        <MessageSquareText size={16} />
                                         {/* Notification Dot Logic Could Be Improved */}
                                         <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                                     </button>
@@ -677,6 +678,48 @@ const Dashboard: React.FC = () => {
 
             {/* EXTENSION: Metadata Tracker Widget */}
             <Tracker articles={articles} />
+
+            {/* Data Storage & Uploads Section */}
+            <div className="bg-white rounded-[2.5rem] shadow-premium border border-stone-100 overflow-hidden">
+              <div className="px-8 py-6 border-b border-stone-100 flex justify-between items-center bg-stone-50/30">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-600 text-white p-2 rounded-lg">
+                    <Database size={18} />
+                  </div>
+                  <h3 className="font-serif font-bold text-lg text-agri-primary">Data Storage & Uploads</h3>
+                </div>
+                <span className="text-[10px] font-black bg-stone-100 px-4 py-1.5 rounded-full text-stone-500 uppercase tracking-widest">
+                  {isPlanActive ? '180 Days Retention' : '24 Hours Retention'}
+                </span>
+              </div>
+              <div className="p-8">
+                <div className="bg-stone-50 rounded-2xl p-6 border border-stone-200 mb-6">
+                  <h4 className="font-bold text-agri-primary mb-2 flex items-center gap-2">
+                    <ShieldCheck size={16} className="text-agri-secondary" /> Data Retention Policy
+                  </h4>
+                  <p className="text-sm text-stone-600 leading-relaxed">
+                    Your uploaded datasets and documents are securely stored for use with our analytical tools. 
+                    <strong> Free users</strong> have a data retention period of <strong>24 hours</strong>. 
+                    <strong> Premium subscribers</strong> enjoy extended storage for up to <strong>180 days</strong>.
+                  </p>
+                </div>
+
+                <div className="border-2 border-dashed border-stone-300 rounded-3xl p-10 text-center hover:border-agri-secondary transition-colors group cursor-pointer relative" onClick={() => document.getElementById('data-upload')?.click()}>
+                  <input type="file" id="data-upload" className="hidden" accept=".doc,.docx,.xls,.xlsx,.csv" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      alert(`File "${file.name}" selected for upload. Processing logic will be implemented in the respective tools.`);
+                    }
+                  }} />
+                  <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-agri-secondary/10 group-hover:text-agri-secondary transition-colors text-stone-400">
+                    <FileText size={32} />
+                  </div>
+                  <h4 className="font-bold text-agri-primary text-lg mb-2">Upload Research Data</h4>
+                  <p className="text-stone-500 text-sm mb-4">Click to browse or drag and drop files here</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-stone-400">Supported formats: DOC, DOCX, XLS, XLSX, CSV</p>
+                </div>
+              </div>
+            </div>
 
             {/* Subscription & Payment History */}
             <div className="bg-white rounded-[2.5rem] shadow-premium border border-stone-100 overflow-hidden">

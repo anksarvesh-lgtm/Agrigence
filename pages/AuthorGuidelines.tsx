@@ -256,15 +256,6 @@ const AuthorGuidelines: React.FC = () => {
                     <li>Compliance with research ethics.</li>
                   </ul>
                 </div>
-                <div className="bg-red-50 p-8 rounded-3xl border border-red-100">
-                  <h3 className="font-bold text-red-900 mb-4 flex items-center gap-2"><AlertTriangle size={18}/> AI & Plagiarism Screening</h3>
-                  <p className="text-sm text-red-800 leading-relaxed mb-4">
-                    All submissions are automatically analyzed for originality and AI-generation risk.
-                  </p>
-                  <p className="text-xs text-red-600 italic font-bold">
-                    Note: AI tools may assist language improvement only, not generate scientific content.
-                  </p>
-                </div>
               </div>
             </section>
 
@@ -321,7 +312,7 @@ const AuthorGuidelines: React.FC = () => {
                   Our editorial office is available to assist with formatting queries and submission technicalities.
                 </p>
                 <div className="flex justify-center gap-6">
-                  <a href="mailto:agrigence@gmail.com" className="inline-flex items-center gap-2 bg-[#3D2B1F] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#2a1e16] transition-colors">
+                  <a href="mailto:info@agrigence.in" className="inline-flex items-center gap-2 bg-[#3D2B1F] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#2a1e16] transition-colors">
                     <Mail size={18}/> Contact Editorial Office
                   </a>
                   <a href="https://agrigence.com" className="inline-flex items-center gap-2 bg-white text-[#3D2B1F] border border-[#3D2B1F]/20 px-6 py-3 rounded-xl font-bold hover:bg-stone-50 transition-colors">

@@ -164,6 +164,16 @@ const LeadershipManagement: React.FC = () => {
                           />
                        </div>
                     </div>
+                    
+                    <div>
+                        <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Email Address</label>
+                        <input 
+                          className="w-full bg-stone-50 border border-stone-200 rounded-2xl p-4 text-black font-mono text-sm outline-none focus:border-agri-secondary focus:ring-1 focus:ring-agri-secondary" 
+                          value={lead.email || ''} 
+                          onChange={e => updateLeader(lead.id, 'email', e.target.value)}
+                          placeholder="leader@example.com"
+                        />
+                    </div>
 
                     <div>
                        <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Public Biography</label>

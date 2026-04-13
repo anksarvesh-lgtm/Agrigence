@@ -85,7 +85,7 @@ const Terms: React.FC = () => {
 
           <div className="mt-8 pt-8 border-t border-stone-200">
             <p className="text-sm text-stone-500">
-              If you have any questions regarding these Terms, please contact us at <a href="mailto:agrigence@gmail.com" className="text-agri-green hover:underline">agrigence@gmail.com</a>.
+              If you have any questions regarding these Terms, please contact us at <a href="mailto:info@agrigence.in" className="text-agri-green hover:underline">info@agrigence.in</a>.
             </p>
           </div>
         </div>

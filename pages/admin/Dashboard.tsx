@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Users, FileText, ShoppingBag, TrendingUp, DollarSign, Rss, Newspaper, 
-  ShieldCheck, Megaphone, Terminal, Hash, Activity, BookOpen, CreditCard, Tag, MessageCircle 
+  ShieldCheck, Megaphone, Terminal, Hash, Activity, BookOpen, CreditCard, Tag 
 } from 'lucide-react';
 import { mockBackend } from '../../services/mockBackend';
 import { User, Article, Product, PaymentRecord, NewsItem, SiteSettings, Magazine, Coupon } from '../../types';
@@ -82,6 +82,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-10">
+
       {/* Welcome Banner */}
       <div className="bg-white border border-gray-200 rounded-[2rem] p-10 relative overflow-hidden group shadow-sm">
          <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-agri-secondary/5 to-transparent"></div>

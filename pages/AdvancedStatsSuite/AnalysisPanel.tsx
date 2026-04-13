@@ -162,7 +162,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({ dataset }) => {
           outputData: { status: 'Generated', results: analysisResults },
           status: 'SUCCESS',
           timestamp: new Date().toISOString()
-        });
+        }).catch(console.error);
       } catch (error) {
         console.error("Failed to save tool history", error);
       }

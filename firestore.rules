@@ -21,7 +21,6 @@
 //   - role: string (required, enum: SUPER_ADMIN, ADMIN, EDITORIAL_MEMBER, USER)
 //   - bio: string (optional, max 500 chars)
 //
-// ===============================================================
 
 // ===============================================================
 // Security Validator Assessment
@@ -116,6 +115,7 @@ service cloud.firestore {
              (!('bio' in data) || (data.bio is string && data.bio.size() <= 500));
     }
 
+
     // --- SYSTEM CONFIGURATION (SUPER_ADMIN ONLY) ---
     
     match /site_identity/{docId} {
@@ -153,6 +153,22 @@ service cloud.firestore {
     match /popup_messages/{docId} {
       allow read: if true;
       allow write: if isSuperAdmin();
+    }
+    match /keywords/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /keyword_clusters/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /trending_keywords/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /keyword_performance/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
     match /templates/{docId} {
       allow read: if isAdmin();
@@ -202,8 +218,8 @@ service cloud.firestore {
       ); 
       allow delete: if isSuperAdmin();
       
-      // Allow listing users for all signed-in users
-      allow list: if isSignedIn();
+      // Allow listing users for all users to support email lookups during password reset
+      allow list: if true;
     }
 
     // --- OPERATIONAL DATA ---
@@ -232,6 +248,20 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    function isValidSavedAnalysis(data) {
+      return hasRequiredFields(['userId', 'type', 'createdAt', 'results']) &&
+             data.userId is string && data.userId.size() > 0 && data.userId.size() < 100 &&
+             data.type is string && data.type.size() > 0 && data.type.size() < 50 &&
+             isValidDateString(data.createdAt);
+    }
+
+    match /saved_analyses/{analysisId} {
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isOwner(request.resource.data.userId) && isValidSavedAnalysis(request.resource.data);
+      allow update: if isOwner(resource.data.userId) && isOwner(request.resource.data.userId) && isValidSavedAnalysis(request.resource.data) && fieldUnchanged('userId') && fieldUnchanged('createdAt');
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
     match /tool_history/{historyId} {
       // Explicitly split get and list to ensure query compatibility
       allow get: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
@@ -241,6 +271,7 @@ service cloud.firestore {
       allow update: if isAdmin() && isValidToolHistory(request.resource.data);
       allow delete: if isSuperAdmin();
     }
+
 
     // --- NEW APP FEATURES ---
 

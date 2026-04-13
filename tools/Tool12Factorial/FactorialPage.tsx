@@ -1,8 +1,7 @@
-import { useLocation } from 'react-router-dom';
 import { isPlanExpired } from '../../utils/planAccess';
 import { mockBackend } from '../../services/mockBackend';
 import { useAuth } from '../../App';
-import React, { useState , useEffect} from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Network, Trash2, Plus, AlertTriangle, Download, Settings2, Table as TableIcon } from 'lucide-react';
 import { Factor, TreatmentCombination, FactorialResult } from './factorialTypes';
@@ -21,16 +20,6 @@ export default function FactorialPage() {
   const [replications, setReplications] = useState<number>(3);
   const [result, setResult] = useState<FactorialResult | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-
-  const location = useLocation();
-  useEffect(() => {
-    if (location.state?.restoreData) {
-      const data = location.state.restoreData;
-      if (data.factors !== undefined) setFactors(data.factors);
-      if (data.replications !== undefined) setReplications(data.replications);
-      if (data.warnings !== undefined) setWarnings(data.warnings);
-    }
-  }, [location.state]);
 
   const addFactor = () => {
     if (factors.length >= 5) {
@@ -69,11 +58,11 @@ export default function FactorialPage() {
         mockBackend.saveToolHistory({
           userId: user.id,
           toolName: 'Factorial Generator',
-          inputData: { factors, replications, warnings },
+          inputData: { timestamp: new Date().toISOString() },
           outputData: null,
           status: 'SUCCESS',
           timestamp: new Date().toISOString()
-        });
+        }).catch(console.error);
       } catch (error) {
         console.error("Failed to save tool history", error);
       }

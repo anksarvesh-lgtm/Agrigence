@@ -159,31 +159,6 @@ const Settings: React.FC = () => {
                  </div>
                  
                  <div>
-                    <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">UPI QR Code</label>
-                    <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 rounded-2xl bg-gray-50 flex items-center justify-center border border-gray-200 p-2 overflow-hidden shrink-0 relative">
-                            {uploadingField === 'upiQrUrl' && (
-                                <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
-                                    <Loader2 className="text-agri-secondary animate-spin" />
-                                </div>
-                            )}
-                            {settings.upiQrUrl ? (
-                                <img src={settings.upiQrUrl} className="max-h-full object-contain" alt="QR Code" />
-                            ) : (
-                                <div className="text-[9px] text-gray-400 font-black uppercase text-center leading-tight">No QR<br/>Code</div>
-                            )}
-                        </div>
-                        <div className="flex-1">
-                            <input type="file" id="qr-up" className="hidden" onChange={handleFileUpload('upiQrUrl')} disabled={!!uploadingField} />
-                            <label htmlFor="qr-up" className={`w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-4 text-[10px] font-black cursor-pointer transition-all flex items-center justify-center gap-2 text-gray-600 ${!!uploadingField ? 'opacity-50 pointer-events-none' : ''}`}>
-                                {uploadingField === 'upiQrUrl' ? <Loader2 size={14} className="animate-spin"/> : <Upload size={14} />} 
-                                {uploadingField === 'upiQrUrl' ? 'UPLOADING...' : 'REPLACE QR CODE'}
-                            </label>
-                        </div>
-                    </div>
-                 </div>
-                 
-                 <div>
                     <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block">WhatsApp Support</label>
                     <input className="w-full bg-white border border-gray-300 rounded-xl p-4 text-gray-900 outline-none focus:border-agri-secondary" value={settings.whatsappNumber} onChange={e => setSettings({...settings, whatsappNumber: e.target.value})} />
                  </div>

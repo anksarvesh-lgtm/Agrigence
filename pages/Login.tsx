@@ -348,6 +348,9 @@ const Login: React.FC = () => {
                     onChange={e => setPassword(e.target.value)}
                   />
                 </div>
+                {isLogin && (
+                    <button type="button" onClick={() => navigate('/forgot-password')} className="text-[10px] text-agri-secondary font-bold mt-2 ml-1 hover:underline">Forgot Password?</button>
+                )}
                 {!isLogin && (
                   <p className="text-[10px] text-stone-400 mt-1 ml-1">Must contain 6+ characters</p>
                 )}

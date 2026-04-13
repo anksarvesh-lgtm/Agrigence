@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { safeStringify } from '../lib/safeStringify';
 import { useAuth } from '../App';
 import { SubscriptionPlan, SiteSettings, Coupon } from '../types';
 import { 
@@ -210,7 +211,7 @@ const Subscription: React.FC = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
+        body: safeStringify({
           amount: payableAmount,
           planId: selectedPlan.id,
           userId: user.id,
@@ -677,11 +678,9 @@ const Subscription: React.FC = () => {
                                         <div className="bg-white p-3 rounded-2xl shadow-sm border border-stone-100 shrink-0">
                                             {(() => {
                                                 const upiId = settings?.upiId || 'agrigence@upi';
-                                                const isDynamic = settings?.upiQrUrl?.includes('api.qrserver.com');
                                                 const manualAmount = payableAmount; 
-                                                const qrSrc = !isDynamic && settings?.upiQrUrl 
-                                                    ? settings.upiQrUrl 
-                                                    : `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=upi://pay?pa=${upiId}&pn=Agrigence&am=${manualAmount}&cu=INR`;
+                                                const upiUrl = `upi://pay?pa=${upiId}&pn=Agrigence&am=${manualAmount}&cu=INR`;
+                                                const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(upiUrl)}`;
                                                 
                                                 return (
                                                     <img 

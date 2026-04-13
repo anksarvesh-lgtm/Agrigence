@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
 import { Article, ReviewMessage, Review, Recommendation } from '../types';
-import { FileText, MessageCircle, CheckCircle, Clock, Eye, Send, ArrowLeft, ShieldAlert, Activity, Download, User, PlayCircle, X } from 'lucide-react';
+import { FileText, MessageSquare, CheckCircle, Clock, Eye, Send, ArrowLeft, ShieldAlert, Activity, Download, User, PlayCircle, X } from 'lucide-react';
 import { useConfirm } from '../components/ContextualConfirm';
 
 const ReviewerDashboard: React.FC = () => {
@@ -328,7 +328,7 @@ const ReviewerDashboard: React.FC = () => {
                               ))}
                               {(!selectedArticle.reviewThreads || selectedArticle.reviewThreads.length === 0) && (
                                   <div className="flex flex-col items-center justify-center h-full text-white/20 space-y-3">
-                                      <MessageCircle size={32} />
+                                      <MessageSquare size={32} />
                                       <p className="text-xs italic">No remarks recorded.</p>
                                   </div>
                               )}
@@ -427,6 +427,7 @@ const ReviewerDashboard: React.FC = () => {
   // Dashboard List View
   return (
     <div className="space-y-8">
+
       {/* Welcome Banner */}
       <div className="bg-white rounded-[2.5rem] p-8 border border-stone-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden">
          <div className="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-agri-secondary/5 to-transparent pointer-events-none"></div>

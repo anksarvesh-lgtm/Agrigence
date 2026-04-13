@@ -1,4 +1,3 @@
-import { useLocation } from 'react-router-dom';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,17 +50,6 @@ const INMPage: React.FC = () => {
   const [solution, setSolution] = useState<LPSolution | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const location = useLocation();
-  useEffect(() => {
-    if (location.state?.restoreData) {
-      const data = location.state.restoreData;
-      if (data.requirement !== undefined) setRequirement(data.requirement);
-      if (data.sources !== undefined) setSources(data.sources);
-      if (data.settings !== undefined) setSettings(data.settings);
-      if (data.solution !== undefined) setSolution(data.solution);
-    }
-  }, [location.state]);
-
   const handleReqChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setRequirement(prev => ({ ...prev, [name]: parseFloat(value) || 0 }));
@@ -113,7 +101,7 @@ const INMPage: React.FC = () => {
             outputData: { status: 'Generated' },
             status: 'SUCCESS',
             timestamp: new Date().toISOString()
-          });
+          }).catch(console.error);
         } catch (error) {
           console.error("Failed to save tool history", error);
         }

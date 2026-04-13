@@ -98,6 +98,7 @@ service firebase.storage {
       allow write: if isSignedIn();
     }
 
+
     match /posts/{allPaths=**} {
       allow read: if true;
       allow write: if isSignedIn() && (request.resource == null || request.resource.size <= 5 * 1024 * 1024);

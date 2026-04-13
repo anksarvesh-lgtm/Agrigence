@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
 import { ToolHistory } from '../types';
-import { ChevronLeft, Clock, Wrench, CheckCircle, XCircle, Database, Layout, Play } from 'lucide-react';
+import { ChevronLeft, Clock, Wrench, CheckCircle, XCircle, Database, Layout } from 'lucide-react';
 
 const DataViewer = ({ data, level = 0 }: { data: any, level?: number }) => {
   if (data === null || data === undefined) return <span className="text-stone-400 italic text-sm">N/A</span>;
@@ -52,20 +52,16 @@ const DataViewer = ({ data, level = 0 }: { data: any, level?: number }) => {
     );
   }
 
-  const safeStringify = (obj: any) => {
-    const cache = new Set();
-    return JSON.stringify(obj, (key, value) => {
-      if (typeof value === 'object' && value !== null) {
-        if (cache.has(value)) {
-          return '[Circular]';
-        }
-        cache.add(value);
-      }
-      return value;
-    });
-  };
-
-  return <span className="font-mono text-stone-800 text-sm">{safeStringify(data)}</span>;
+  return <span className="font-mono text-stone-800 text-sm">{JSON.stringify(data, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (value instanceof HTMLElement || value instanceof Window) return '[Circular/DOM]';
+      // Simple circular reference detection
+      const seen = new WeakSet();
+      if (seen.has(value)) return '[Circular]';
+      seen.add(value);
+    }
+    return value;
+  })}</span>;
 };
 
 const ToolHistoryDetail: React.FC = () => {
@@ -112,30 +108,12 @@ const ToolHistoryDetail: React.FC = () => {
   return (
     <div className="min-h-screen bg-stone-50 py-12 px-6">
       <div className="container mx-auto max-w-4xl">
-        <div className="flex justify-between items-center mb-8">
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="text-stone-400 hover:text-agri-primary transition-colors flex items-center gap-2 font-bold uppercase tracking-widest text-[10px]"
-          >
-            <ChevronLeft size={16} /> Dashboard
-          </button>
-          
-          <button 
-            onClick={() => {
-              mockBackend.getAllTools().then(tools => {
-                const tool = tools.find(t => t.name === history.toolName);
-                if (tool && tool.route) {
-                  navigate(tool.route, { state: { restoreData: history.inputData } });
-                } else {
-                  alert('Tool not found');
-                }
-              });
-            }}
-            className="bg-agri-secondary text-agri-primary px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm hover:bg-agri-primary hover:text-white transition-colors"
-          >
-            <Play size={16} /> Restore Inputs
-          </button>
-        </div>
+        <button 
+          onClick={() => navigate('/dashboard')}
+          className="mb-8 text-stone-400 hover:text-agri-primary transition-colors flex items-center gap-2 font-bold uppercase tracking-widest text-[10px]"
+        >
+          <ChevronLeft size={16} /> Dashboard
+        </button>
 
         <div className="bg-white rounded-[2.5rem] shadow-premium border border-stone-100 overflow-hidden">
           <div className="p-8 md:p-12 border-b border-stone-100 bg-stone-50/30">

@@ -31,6 +31,7 @@ import AboutContact from './pages/AboutContact';
 import Products from './pages/Products';
 import Consultation from './pages/Consultation';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Dashboard from './pages/Dashboard';
@@ -45,6 +46,7 @@ import MySubscription from './pages/MySubscription';
 import ToolHistoryDetail from './pages/ToolHistoryDetail';
 import ToolsPage from './pages/ToolsPage';
 import Sitemap from './pages/Sitemap';
+
 
 // Lazy loaded tools
 const SeedRatePage = React.lazy(() => import('./tools/Tool01SeedRate/SeedRatePage'));
@@ -63,8 +65,6 @@ const ClimatePage = React.lazy(() => import('./tools/Tool13Climate/ClimatePage')
 const ANOVAPage = React.lazy(() => import('./tools/Tool14ANOVA/ANOVAPage'));
 const StatisticalAnalysisPage = React.lazy(() => import('./tools/Tool18Statistics/StatisticalAnalysisPage'));
 const GraphPage = React.lazy(() => import('./tools/Tool15Graphs/GraphPage'));
-const WritingPage = React.lazy(() => import('./tools/Tool16Writing/WritingPage'));
-const ReviewPage = React.lazy(() => import('./tools/Tool17Review/ReviewPage'));
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -93,9 +93,13 @@ import VisitorAnalytics from './pages/admin/VisitorAnalytics';
 import AdminManager from './extensions/submission-tracking/AdminManager';
 import SubmissionAdminPanel from './extensions/submission-admin/SubmissionAdminPanel';
 import ReviewerDashboard from './pages/ReviewerDashboard'; // New Page
-import KeywordIntelligence from './pages/admin/KeywordIntelligence';
+import AdsTxtManager from './pages/admin/AdsTxtManager';
 import CookieManager from './pages/admin/CookieManager';
 import CookieConsentManager from './components/CookieConsentManager';
+
+import DashboardHome from './pages/DashboardHome';
+import PipelineBuilder from './pages/PipelineBuilder';
+import AnovaEngine from './pages/AnovaEngine';
 
 // Auth Context
 interface AuthContextType {
@@ -247,6 +251,7 @@ const App: React.FC = () => {
               <Route path="products" element={<Products />} />
               <Route path="consultation" element={<Consultation />} />
               <Route path="login" element={<Login />} />
+              <Route path="forgot-password" element={<ForgotPassword />} />
               <Route path="terms" element={<Terms />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="sitemap" element={<Sitemap />} />
@@ -267,8 +272,6 @@ const App: React.FC = () => {
               <Route path="tools/anova" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><ANOVAPage /></React.Suspense>} />
               <Route path="tools/statistical-analysis" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><StatisticalAnalysisPage /></React.Suspense>} />
               <Route path="tools/auto-graph" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><GraphPage /></React.Suspense>} />
-              <Route path="tools/writing-assistant" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><WritingPage /></React.Suspense>} />
-              <Route path="tools/review-organizer" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><ReviewPage /></React.Suspense>} />
               
               {/* USER DASHBOARD */}
               <Route path="dashboard" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Dashboard /></ProtectedRoute>} />
@@ -282,6 +285,7 @@ const App: React.FC = () => {
               <Route path="subscription" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Subscription /></ProtectedRoute>} />
             </Route>
 
+
             {/* REVIEWER DASHBOARD (Strict Isolation) */}
             <Route 
               path="/reviewer" 
@@ -294,6 +298,10 @@ const App: React.FC = () => {
                <Route index element={<ReviewerDashboard />} />
                <Route path="history" element={<ReviewerDashboard />} /> 
             </Route>
+
+            <Route path="/analytics" element={<DashboardHome />} />
+            <Route path="/analytics/pipeline" element={<PipelineBuilder />} />
+            <Route path="/analytics/anova" element={<AnovaEngine />} />
 
             <Route 
               path="/admin" 
@@ -335,8 +343,8 @@ const App: React.FC = () => {
               <Route path="layout" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><LayoutManager /></ProtectedRoute>} />
               <Route path="pages" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><StaticPagesEditor /></ProtectedRoute>} />
               <Route path="tracker" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminManager /></ProtectedRoute>} />
-              <Route path="keywords" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><KeywordIntelligence /></ProtectedRoute>} />
               <Route path="cookies" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><CookieManager /></ProtectedRoute>} />
+              <Route path="ads-txt" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdsTxtManager /></ProtectedRoute>} />
             </Route>
           </Routes>
         </ConfirmationProvider>

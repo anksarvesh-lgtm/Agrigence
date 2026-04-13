@@ -1,5 +1,11 @@
 
 
+export interface AiToolSettings {
+  id: string;
+  toolName: string;
+  isEnabled: boolean;
+}
+
 export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'EDITOR' | 'USER' | 'EDITORIAL_MEMBER';
 
 export type EditorialRole = 'Reviewer' | 'Section Editor' | 'Editorial Board Member' | 'Advisory Member';
@@ -494,6 +500,7 @@ export interface LeadershipMember {
   role: string;
   bio: string;
   imageUrl: string;
+  email?: string; // Added email field
   order: number;
   isEnabled: boolean;
 }

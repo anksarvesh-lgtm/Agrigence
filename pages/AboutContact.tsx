@@ -146,6 +146,11 @@ const AboutContact: React.FC = () => {
                     <div className="flex flex-col mb-4">
                         <h3 className="text-3xl font-serif font-bold mb-1">{lead.name}</h3>
                         <span className="text-agri-gold font-bold text-xs uppercase tracking-widest">{lead.role}</span>
+                        {lead.email && (
+                            <a href={`mailto:${lead.email}`} className="text-white/70 text-xs mt-2 hover:text-agri-gold transition-colors font-mono">
+                                {lead.email}
+                            </a>
+                        )}
                     </div>
                     <div className="h-px bg-white/20 w-12 mb-4"></div>
                     <p className="text-white/80 text-sm leading-relaxed font-light">
@@ -214,7 +219,7 @@ const AboutContact: React.FC = () => {
                         </div>
                         <div>
                            <h4 className="font-bold text-xl mb-1">Email</h4>
-                           <p className="text-white/60">agrigence@gmail.com</p>
+                           <p className="text-white/60">info@agrigence.in</p>
                         </div>
                      </div>
                      <div className="flex items-start gap-6">

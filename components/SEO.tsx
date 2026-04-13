@@ -8,6 +8,7 @@ interface SEOProps {
   image?: string;
   type?: string;
   schema?: object;
+  keywords?: string;
 }
 
 const SEO: React.FC<SEOProps> = ({ 
@@ -16,12 +17,14 @@ const SEO: React.FC<SEOProps> = ({
   url = 'https://www.agrigence.in', 
   image = 'https://www.agrigence.in/logo.png', 
   type = 'website',
-  schema 
+  schema,
+  keywords = 'agriculture, farming, agritech, research, education, tools'
 }) => {
   return (
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
+      <meta name="keywords" content={keywords} />
       
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />

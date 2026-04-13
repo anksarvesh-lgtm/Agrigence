@@ -1,8 +1,7 @@
-import { useLocation } from 'react-router-dom';
 import { isPlanExpired } from '../../utils/planAccess';
 import { mockBackend } from '../../services/mockBackend';
 import { useAuth } from '../../App';
-import React, { useState , useEffect} from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FlaskConical, 
@@ -50,23 +49,6 @@ export default function ExperimentPage() {
   
   const [result, setResult] = useState<LayoutResult | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-
-  const location = useLocation();
-  useEffect(() => {
-    if (location.state?.restoreData) {
-      const data = location.state.restoreData;
-      if (data.designType !== undefined) setDesignType(data.designType);
-      if (data.replications !== undefined) setReplications(data.replications);
-      if (data.plotLength !== undefined) setPlotLength(data.plotLength);
-      if (data.plotWidth !== undefined) setPlotWidth(data.plotWidth);
-      if (data.seed !== undefined) setSeed(data.seed);
-      if (data.treatments !== undefined) setTreatments(data.treatments);
-      if (data.factors !== undefined) setFactors(data.factors);
-      if (data.mainPlotTreatments !== undefined) setMainPlotTreatments(data.mainPlotTreatments);
-      if (data.subPlotTreatments !== undefined) setSubPlotTreatments(data.subPlotTreatments);
-      if (data.warnings !== undefined) setWarnings(data.warnings);
-    }
-  }, [location.state]);
 
   const addTreatment = () => {
     const nextNum = treatments.length + 1;
@@ -176,11 +158,11 @@ export default function ExperimentPage() {
         mockBackend.saveToolHistory({
           userId: user.id,
           toolName: 'Experiment Builder',
-          inputData: { designType, replications, plotLength, plotWidth, seed, treatments, factors, mainPlotTreatments, subPlotTreatments, warnings },
+          inputData: { timestamp: new Date().toISOString() },
           outputData: layout,
           status: 'SUCCESS',
           timestamp: new Date().toISOString()
-        });
+        }).catch(console.error);
       } catch (error) {
         console.error("Failed to save tool history", error);
       }

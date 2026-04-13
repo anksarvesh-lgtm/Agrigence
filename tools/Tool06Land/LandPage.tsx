@@ -1,4 +1,3 @@
-import { useLocation } from 'react-router-dom';
 import { isPlanExpired } from '../../utils/planAccess';
 import { mockBackend } from '../../services/mockBackend';
 import { useAuth } from '../../App';
@@ -34,14 +33,6 @@ const LandPage: React.FC = () => {
 
   const [result, setResult] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const location = useLocation();
-  useEffect(() => {
-    if (location.state?.restoreData) {
-      const data = location.state.restoreData;
-      setInput(data);
-    }
-  }, [location.state]);
 
   // Auto-calculate on change
   useEffect(() => {
@@ -90,11 +81,11 @@ const LandPage: React.FC = () => {
         mockBackend.saveToolHistory({
           userId: user.id,
           toolName: 'Regional Land Converter',
-          inputData: input,
+          inputData: { timestamp: new Date().toISOString() },
           outputData: converted,
           status: 'SUCCESS',
           timestamp: new Date().toISOString()
-        });
+        }).catch(console.error);
       } catch (error) {
         console.error("Failed to save tool history", error);
       }

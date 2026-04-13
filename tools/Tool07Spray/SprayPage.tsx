@@ -1,4 +1,3 @@
-import { useLocation } from 'react-router-dom';
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,18 +52,6 @@ const SprayPage: React.FC = () => {
   const [plan, setPlan] = useState<SprayPlan | null>(null);
   const [safety, setSafety] = useState<SafetyCard | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const location = useLocation();
-  useEffect(() => {
-    if (location.state?.restoreData) {
-      const data = location.state.restoreData;
-      if (data.sprayer !== undefined) setSprayer(data.sprayer);
-      if (data.chemical !== undefined) setChemical(data.chemical);
-      if (data.field !== undefined) setField(data.field);
-      if (data.plan !== undefined) setPlan(data.plan);
-      if (data.safety !== undefined) setSafety(data.safety);
-    }
-  }, [location.state]);
 
   const handleSprayerChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -152,7 +139,7 @@ const SprayPage: React.FC = () => {
             outputData: { status: 'Generated' },
             status: 'SUCCESS',
             timestamp: new Date().toISOString()
-          });
+          }).catch(console.error);
         } catch (error) {
           console.error("Failed to save tool history", error);
         }

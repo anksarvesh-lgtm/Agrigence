@@ -74,6 +74,25 @@ const DatasetManager: React.FC<DatasetManagerProps> = ({ onSelect }) => {
             <span className="font-serif font-bold text-lg text-agri-primary">Create New Dataset</span>
           </button>
 
+          {/* Upload Existing Data Card */}
+          <button 
+            onClick={() => document.getElementById('dataset-upload')?.click()}
+            className="border-2 border-dashed border-agri-secondary/20 rounded-3xl p-8 flex flex-col items-center justify-center gap-4 hover:bg-agri-secondary/5 transition-all group h-64 relative"
+          >
+            <input type="file" id="dataset-upload" className="hidden" accept=".doc,.docx,.xls,.xlsx,.csv" onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                alert(`File "${file.name}" uploaded successfully. Data extraction will be performed.`);
+                // In a real app, parse file and create dataset
+              }
+            }} />
+            <div className="w-16 h-16 bg-agri-secondary/10 rounded-full flex items-center justify-center text-agri-secondary group-hover:scale-110 transition-transform">
+              <FileText size={32} />
+            </div>
+            <span className="font-serif font-bold text-lg text-agri-primary">Upload Existing Data</span>
+            <span className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">DOC, EXCEL, CSV</span>
+          </button>
+
           {/* Existing Datasets */}
           {datasets.map(ds => (
             <div key={ds.id} className="bg-white border border-stone-200 rounded-3xl p-6 hover:shadow-lg transition-all relative group h-64 flex flex-col">

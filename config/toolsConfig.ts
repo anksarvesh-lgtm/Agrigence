@@ -7,8 +7,9 @@ export const TOOL_CATEGORIES = [
   { id: "pub-tools", label: "Publication Tools", section: "research" },
   { id: "soil-health", label: "Soil Health", section: "soil" },
   { id: "fertility", label: "Fertility", section: "soil" },
-  { id: "stats-basic", label: "Basic Statistics", section: "statistics" },
-  { id: "stats-advanced", label: "Advanced Statistics", section: "statistics" },
+  { id: "analytics-dashboard", label: "Analytics Dashboard", section: "analytics" },
+  { id: "pipeline-builder", label: "Pipeline Builder", section: "analytics" },
+  { id: "anova-engine", label: "ANOVA Engine", section: "analytics" },
   { id: "finance-planning", label: "Financial Planning", section: "finance" },
   { id: "finance-analysis", label: "Financial Analysis", section: "finance" },
   { id: "general-utils", label: "General Utilities", section: "general" }
@@ -18,7 +19,7 @@ export const TOOL_SECTIONS = [
   { id: "agri_intelligence", label: "Agri-Intelligence Tools", icon: "Tractor" },
   { id: "research", label: "Research Tools", icon: "Microscope" },
   { id: "soil", label: "Soil & Fertility", icon: "Sprout" },
-  { id: "statistics", label: "Statistical Tools", icon: "LineChart" },
+  { id: "analytics", label: "Analytics Tools", icon: "LineChart" },
   { id: "finance", label: "Financial Tools", icon: "Calculator" },
   { id: "general", label: "General Utilities", icon: "Wrench" }
 ];

@@ -1,5 +1,4 @@
-import { useLocation } from 'react-router-dom';
-import React, { useState , useEffect} from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BarChart2, 
@@ -60,21 +59,6 @@ export default function StatisticalAnalysisPage() {
   const [corrResult, setCorrResult] = useState<number | null>(null);
   const [regrResult, setRegrResult] = useState<{ slope: number, intercept: number, r2: number } | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-
-  const location = useLocation();
-  useEffect(() => {
-    if (location.state?.restoreData) {
-      const data = location.state.restoreData;
-      if (data.analysisType !== undefined) setAnalysisType(data.analysisType);
-      if (data.design !== undefined) setDesign(data.design);
-      if (data.data !== undefined) setData(data.data);
-      if (data.anovaResult !== undefined) setAnovaResult(data.anovaResult);
-      if (data.descResult !== undefined) setDescResult(data.descResult);
-      if (data.corrResult !== undefined) setCorrResult(data.corrResult);
-      if (data.regrResult !== undefined) setRegrResult(data.regrResult);
-      if (data.warnings !== undefined) setWarnings(data.warnings);
-    }
-  }, [location.state]);
 
   const handleExport = () => {
     let result = null;
@@ -238,7 +222,7 @@ export default function StatisticalAnalysisPage() {
           outputData: { status: 'Generated' },
           status: 'SUCCESS',
           timestamp: new Date().toISOString()
-        });
+        }).catch(console.error);
       } catch (error) {
         console.error("Failed to save tool history", error);
       }

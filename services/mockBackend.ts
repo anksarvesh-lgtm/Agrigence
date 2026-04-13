@@ -1,5 +1,5 @@
 
-import { Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, ReviewStatus, Tool, ToolCategory, ToolSection, Review, ActivityLog, Recommendation, UserFieldData, WebsiteVisitor, ToolHistory, Keyword, KeywordCluster, KeywordPerformance, TrendingKeyword, CookieSettings, CookiePreferences, CookieCategory, CookieScript } from '../types';
+import { Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, ReviewStatus, Tool, ToolCategory, ToolSection, Review, ActivityLog, Recommendation, UserFieldData, WebsiteVisitor, ToolHistory, Keyword, KeywordCluster, KeywordPerformance, TrendingKeyword, CookieSettings, CookiePreferences, CookieCategory, CookieScript, AiToolSettings } from '../types';
 import { db, auth, storage } from '../src/firebase';
 import { 
   createUserWithEmailAndPassword, 
@@ -69,6 +69,16 @@ interface FirestoreErrorInfo {
   }
 }
 
+const safeStringify = (data: any) => JSON.stringify(data, (key, value) => {
+  if (typeof value === 'object' && value !== null) {
+    if (value instanceof HTMLElement || value instanceof Window) return '[Circular/DOM]';
+    const seen = new WeakSet();
+    if (seen.has(value)) return '[Circular]';
+    seen.add(value);
+  }
+  return value;
+});
+
 // --- SIMULATED SERVER ENVIRONMENT ---
 const SERVER_ENV = {
   // Use relative path for local development to avoid CORS/Fetch errors
@@ -93,7 +103,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   upiId: 'agrigence@upi',
   upiQrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=agrigence@upi&pn=Agrigence',
   whatsappNumber: '+919452571317',
-  contactEmail: 'agrigence@gmail.com',
+  contactEmail: 'info@agrigence.in',
   homeFeaturedLimit: 3,
   missionText: 'Where Agri-Intelligence Meets Agricultural Generation. Our mission is to build a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation.',
   primaryColor: '#3D2B1F',
@@ -198,7 +208,7 @@ class FirebaseBackendService {
     
     // Check seed data on load if admin
     onAuthStateChanged(auth, (user) => {
-        if (user && (user.email === 'agrigence@gmail.com' || user.email === 'admin@agrigence.com')) {
+        if (user && (user.email === 'info@agrigence.in' || user.email === 'admin@agrigence.com')) {
             this.checkAndSeedData();
         }
     });
@@ -285,6 +295,7 @@ class FirebaseBackendService {
                 await setDoc(doc(this.db, 'subscription_plans', p.id), p);
             }
         }
+
 
         const keywords = await this.getKeywords();
         if (keywords.length === 0) {
@@ -379,6 +390,14 @@ class FirebaseBackendService {
   // --- METHODS ---
   getSettings(): SiteSettings { return this.localSettings; }
   
+  async getAiToolSettings(): Promise<AiToolSettings[]> {
+    return this.getCollectionData<AiToolSettings>('ai_tool_settings');
+  }
+
+  async updateAiToolSettings(settings: AiToolSettings) {
+    await setDoc(doc(this.db, 'ai_tool_settings', settings.id), settings);
+  }
+  
   subscribeToSettings(cb: (s: SiteSettings) => void) {
     return onSnapshot(doc(this.db, 'site_identity', 'global'), (doc) => {
         if (doc.exists()) {
@@ -423,7 +442,7 @@ class FirebaseBackendService {
     const newUser: User = {
         id: cred.user.uid,
         name: data.name || 'User',
-        email: data.email,
+        email: data.email.toLowerCase().trim(),
         role: data.role || 'USER',
         occupation: data.occupation,
         permissions: { canDownloadArticles: false, canDownloadBlogs: true },
@@ -519,6 +538,23 @@ class FirebaseBackendService {
     } catch (e) { return null; }
   }
 
+  async getUserByEmail(email: string): Promise<User | null> {
+    try {
+        const normalizedEmail = email.toLowerCase().trim();
+        console.log(`Searching for user with email: ${normalizedEmail}`);
+        const q = query(collection(this.db, 'users'), where('email', '==', normalizedEmail));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+            console.log("No user found with that email.");
+            return null;
+        }
+        return snap.docs[0].data() as User;
+    } catch (e) { 
+        console.error("Error in getUserByEmail:", e);
+        return null; 
+    }
+  }
+
   async syncUser(firebaseUser: FirebaseUser) {
     const userRef = doc(this.db, 'users', firebaseUser.uid);
     try {
@@ -527,7 +563,7 @@ class FirebaseBackendService {
            const newUser: User = {
                id: firebaseUser.uid,
                name: firebaseUser.displayName || 'User',
-               email: firebaseUser.email || '',
+               email: (firebaseUser.email || '').toLowerCase().trim(),
                role: 'USER',
                permissions: { canDownloadArticles: false, canDownloadBlogs: true },
                articleUsage: 0,
@@ -1278,9 +1314,10 @@ class FirebaseBackendService {
         { id: 'soil-health', name: 'Soil Health', sectionId: 'soil' },
         { id: 'fertility', name: 'Fertility', sectionId: 'soil' }
       ],
-      'statistics': [
-        { id: 'stats-basic', name: 'Basic Statistics', sectionId: 'statistics' },
-        { id: 'stats-advanced', name: 'Advanced Statistics', sectionId: 'statistics' }
+      'analytics': [
+        { id: 'analytics-dashboard', name: 'Analytics Dashboard', sectionId: 'analytics' },
+        { id: 'pipeline-builder', name: 'Pipeline Builder', sectionId: 'analytics' },
+        { id: 'anova-engine', name: 'ANOVA Engine', sectionId: 'analytics' }
       ],
       'finance': [
         { id: 'finance-planning', name: 'Financial Planning', sectionId: 'finance' },
@@ -1288,6 +1325,10 @@ class FirebaseBackendService {
       ],
       'general': [
         { id: 'general-utils', name: 'General Utilities', sectionId: 'general' }
+      ],
+      'ai_tools': [
+        { id: 'ai-vision', name: 'AI Vision & Diagnostics', sectionId: 'ai_tools' },
+        { id: 'ai-writing', name: 'AI Writing & Analysis', sectionId: 'ai_tools' }
       ]
     };
 
@@ -1298,11 +1339,14 @@ class FirebaseBackendService {
       const snap = await getDocs(q);
       const categories = snap.docs.map(d => ({ ...d.data(), id: d.id })) as ToolCategory[];
       
-      if (categories.length === 0) {
-        for (const c of toAdd) {
+      const categoryIds = new Set(categories.map(c => c.id));
+      const missingCategories = toAdd.filter(c => !categoryIds.has(c.id));
+
+      if (missingCategories.length > 0) {
+        for (const c of missingCategories) {
           await setDoc(doc(this.db, 'tool_categories', c.id), c).catch(() => {});
+          categories.push(c);
         }
-        return toAdd;
       }
       return categories;
     } catch (e) {
@@ -1334,9 +1378,7 @@ class FirebaseBackendService {
         { id: 'advanced-stats-suite', name: 'Advanced Research Data & Statistical Analysis Suite', description: 'Customizable research data entry and advanced statistical analysis system.', categoryId: 'analysis-tools', route: '/dashboard/advanced-research' }
       ],
       'pub-tools': [
-        { id: 'auto-graph', name: 'Graph Generator', description: 'Research visualization engine.', categoryId: 'pub-tools', route: '/tools/auto-graph' },
-        { id: 'writing-assistant', name: 'Writing Assistant', description: 'Scientific writing support.', categoryId: 'pub-tools', route: '/tools/writing-assistant' },
-        { id: 'review-organizer', name: 'Review Organizer', description: 'Literature management tool.', categoryId: 'pub-tools', route: '/tools/review-organizer' }
+        { id: 'auto-graph', name: 'Graph Generator', description: 'Research visualization engine.', categoryId: 'pub-tools', route: '/tools/auto-graph' }
       ],
       'soil-health': [
         { id: 'nutrient-req', name: 'Nutrient Requirement', description: 'Precision STCR-based nutrient recommendation.', categoryId: 'soil-health', route: '/tools/nutrient-req' }
@@ -1344,11 +1386,10 @@ class FirebaseBackendService {
       'fertility': [
         { id: 'inm-planner', name: 'INM Planner', description: 'Cost-minimized nutrient planning with organic constraints.', categoryId: 'fertility', route: '/tools/inm-planner' }
       ],
-      'stats-basic': [
-        { id: 'statistical-analysis', name: 'Statistical Analysis', description: 'Comprehensive descriptive, correlation, and regression analysis.', categoryId: 'stats-basic', route: '/tools/statistical-analysis' }
-      ],
-      'stats-advanced': [
-        { id: 'anova', name: 'ANOVA Tools', description: 'Analysis of Variance for research data.', categoryId: 'stats-advanced', route: '/tools/anova' }
+      'analytics-dashboard': [
+        { id: 'analytics-dashboard', name: 'Analytics Dashboard', description: 'Comprehensive descriptive, correlation, and regression analysis.', categoryId: 'analytics-dashboard', route: '/analytics' },
+        { id: 'pipeline-builder', name: 'Pipeline Builder', description: 'Pipeline builder.', categoryId: 'pipeline-builder', route: '/analytics/pipeline' },
+        { id: 'anova-engine', name: 'ANOVA Engine', description: 'ANOVA Engine.', categoryId: 'anova-engine', route: '/analytics/anova' }
       ],
       'finance-planning': [
       ],
@@ -1357,6 +1398,14 @@ class FirebaseBackendService {
       ],
       'general-utils': [
         { id: 'land-converter', name: 'Land Converter', description: 'Convert vernacular land units to standard metric units.', categoryId: 'general-utils', route: '/tools/land-converter' }
+      ],
+      'ai-vision': [
+        { id: 'crop-disease-diagnostic', name: 'AI Crop Disease Diagnostic', description: 'AI-powered crop disease identification and treatment.', categoryId: 'ai-vision', route: '/tools/crop-disease-diagnostic' }
+      ],
+      'ai-writing': [
+        { id: 'writing-assistant', name: 'AI Writing Assistant', description: 'Scientific writing support with AI enhancement.', categoryId: 'ai-writing', route: '/tools/writing-assistant' },
+        { id: 'review-organizer', name: 'AI Review Organizer', description: 'Literature management with AI abstract extraction.', categoryId: 'ai-writing', route: '/tools/review-organizer' },
+        { id: 'plagiarism-checker', name: 'AI Plagiarism & Integrity Checker', description: 'Analyze articles for similarity and AI-generated content.', categoryId: 'ai-writing', route: '/tools/plagiarism-checker' }
       ]
     };
 
@@ -1367,11 +1416,14 @@ class FirebaseBackendService {
       const snap = await getDocs(q);
       const tools = snap.docs.map(d => ({ ...d.data(), id: d.id })) as Tool[];
 
-      if (tools.length === 0) {
-        for (const t of toAdd) {
+      const toolIds = new Set(tools.map(t => t.id));
+      const missingTools = toAdd.filter(t => !toolIds.has(t.id));
+
+      if (missingTools.length > 0) {
+        for (const t of missingTools) {
           await setDoc(doc(this.db, 'tools', t.id), t).catch(() => {});
+          tools.push(t);
         }
-        return toAdd;
       }
       return tools;
     } catch (e) {
@@ -1557,11 +1609,6 @@ class FirebaseBackendService {
   }
 
 
-  async markNotificationRead(notificationId: string): Promise<void> {
-    const docRef = doc(this.db, 'agri_notifications', notificationId);
-    await updateDoc(docRef, { read: true });
-  }
-
   async banUser(userId: string): Promise<void> {
     const docRef = doc(this.db, 'users', userId);
     await updateDoc(docRef, { status: 'BLOCKED' });
@@ -1593,11 +1640,11 @@ class FirebaseBackendService {
       };
       
       // Replace old backup
-      localStorage.setItem('agrigence_site_backup', JSON.stringify(data));
+      localStorage.setItem('agrigence_site_backup', safeStringify(data));
       localStorage.setItem('last_auto_backup', new Date().toISOString());
       
       if (!isAuto) {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const blob = new Blob([safeStringify(data)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -1633,8 +1680,8 @@ class FirebaseBackendService {
       operationType,
       path
     }
-    console.error('Firestore Error: ', JSON.stringify(errInfo));
-    throw new Error(JSON.stringify(errInfo));
+    console.error('Firestore Error: ', safeStringify(errInfo));
+    throw new Error(safeStringify(errInfo));
   }
 
   // --- TOOL HISTORY ---
@@ -1672,7 +1719,7 @@ class FirebaseBackendService {
         authUid: auth.currentUser?.uid,
         isMatch: userId === auth.currentUser?.uid
       };
-      console.error('Tool History Subscription Error Debug:', JSON.stringify(debugInfo));
+      console.error('Tool History Subscription Error Debug:', safeStringify(debugInfo));
       this.handleFirestoreError(error, OperationType.LIST, path);
     });
   }

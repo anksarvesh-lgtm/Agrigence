@@ -1,6 +1,6 @@
 
 import React, { useState, Suspense } from 'react';
-import { Wrench, ChevronLeft, Tractor, Microscope, Sprout, LineChart, Calculator, ArrowRight } from 'lucide-react';
+import { Wrench, ChevronLeft, Tractor, Microscope, Sprout, LineChart, Calculator, ArrowRight, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { TOOL_SECTIONS } from '../config/toolsConfig';
 import ToolSkeleton from '../components/ToolSkeleton';
@@ -11,6 +11,7 @@ import OptimizedImage from '../components/OptimizedImage';
 import SEO from '../components/SEO';
 
 const iconMap: Record<string, React.ReactNode> = {
+  Sparkles: <Sparkles className="w-8 h-8" />,
   Tractor: <Tractor className="w-8 h-8" />,
   Microscope: <Microscope className="w-8 h-8" />,
   Sprout: <Sprout className="w-8 h-8" />,
@@ -25,7 +26,7 @@ const categoryComponents: Record<string, React.LazyExoticComponent<React.Compone
   general: React.lazy(() => import('./toolCategories/general/index')),
   research: React.lazy(() => import('./toolCategories/research/index')),
   soil: React.lazy(() => import('./toolCategories/soil/index')),
-  statistics: React.lazy(() => import('./toolCategories/statistics/index')),
+  analytics: React.lazy(() => import('./toolCategories/analytics/index')),
 };
 
 import DataStorageNotice from '../components/DataStorageNotice';

@@ -92,7 +92,7 @@ const AdvancedResearchSuite: React.FC = () => {
           outputData: { status: 'Generated', results: results },
           status: 'SUCCESS',
           timestamp: new Date().toISOString()
-        });
+        }).catch(console.error);
       } catch (error) {
         console.error("Failed to save tool history", error);
       }
