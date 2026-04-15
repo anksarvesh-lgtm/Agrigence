@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
+import { safeStringify } from '../lib/safeStringify';
 import { ToolHistory } from '../types';
 import { ChevronLeft, Clock, Wrench, CheckCircle, XCircle, Database, Layout } from 'lucide-react';
 
@@ -52,17 +53,7 @@ const DataViewer = ({ data, level = 0 }: { data: any, level?: number }) => {
     );
   }
 
-  return <span className="font-mono text-stone-800 text-sm">{(() => {
-    const seen = new WeakSet();
-    return JSON.stringify(data, (key, value) => {
-      if (typeof value === 'object' && value !== null) {
-        if (value instanceof HTMLElement || value instanceof Window) return '[Circular/DOM]';
-        if (seen.has(value)) return '[Circular]';
-        seen.add(value);
-      }
-      return value;
-    });
-  })()}</span>;
+  return <span className="font-mono text-stone-800 text-sm">{safeStringify(data)}</span>;
 };
 
 const ToolHistoryDetail: React.FC = () => {

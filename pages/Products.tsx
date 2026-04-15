@@ -23,7 +23,7 @@ const Products: React.FC = () => {
   const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
     <motion.div 
       whileHover={{ y: -5 }}
-      className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden hover:shadow-premium transition-all group flex flex-col h-full"
+      className="glossy glossy-card rounded-2xl overflow-hidden hover:shadow-premium transition-all group flex flex-col h-full"
     >
       <div className="h-56 bg-stone-100 overflow-hidden relative">
         <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />

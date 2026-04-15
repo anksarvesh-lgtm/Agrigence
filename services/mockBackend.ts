@@ -1,4 +1,5 @@
 
+import { safeStringify } from '../lib/safeStringify';
 import { Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, ReviewStatus, Tool, ToolCategory, ToolSection, Review, ActivityLog, Recommendation, UserFieldData, WebsiteVisitor, ToolHistory, Keyword, KeywordCluster, KeywordPerformance, TrendingKeyword, CookieSettings, CookiePreferences, CookieCategory, CookieScript, AiToolSettings } from '../types';
 import { db, auth, storage } from '../src/firebase';
 import { 
@@ -68,18 +69,6 @@ interface FirestoreErrorInfo {
     }[];
   }
 }
-
-const safeStringify = (data: any) => {
-  const seen = new WeakSet();
-  return JSON.stringify(data, (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (value instanceof HTMLElement || value instanceof Window) return '[Circular/DOM]';
-      if (seen.has(value)) return '[Circular]';
-      seen.add(value);
-    }
-    return value;
-  });
-};
 
 // --- SIMULATED SERVER ENVIRONMENT ---
 const SERVER_ENV = {

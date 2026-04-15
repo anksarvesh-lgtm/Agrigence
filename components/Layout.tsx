@@ -1,41 +1,111 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
 import { 
   Menu, X, Search, User as UserIcon, LogOut, 
-  Facebook, Linkedin, Youtube, Twitter, Instagram, ArrowRight, Clock, ChevronDown, Wrench, ChevronRight, ArrowLeft
+  Home, BookOpen, Newspaper, FileText, ShoppingBag, Wrench, BarChart2, Info, Users, Settings, ChevronRight, ArrowLeft
 } from 'lucide-react';
 import Logo from './Logo';
 import { SiteSettings } from '../types';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useConfirm } from './ContextualConfirm';
 import OptimizedImage from './OptimizedImage';
 import ThemeToggle from './ThemeToggle';
 
-const Header = () => {
+const DockItem = ({ children, mouseY, isCollapsed, onClick, isActive }: any) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isClicked, setIsClicked] = useState(false);
+  
+  const distance = useTransform(mouseY, (val: number) => {
+    const bounds = ref.current?.getBoundingClientRect() ?? { y: 0, height: 0 };
+    return val - (bounds.y + bounds.height / 2);
+  });
+
+  const scale = useTransform(distance, [-150, -75, 0, 75, 150], [1, 1.1, 1.4, 1.1, 1]);
+  const scaleSpring = useSpring(scale, { stiffness: 200, damping: 25 });
+  
+  const y = useTransform(distance, [-150, 0, 150], [0, -5, 0]);
+  const ySpring = useSpring(y, { stiffness: 200, damping: 25 });
+
+  const finalScale = isCollapsed ? scaleSpring : 1;
+  const finalY = isCollapsed ? ySpring : 0;
+
+  const handleClick = (e: React.MouseEvent) => {
+    setIsClicked(true);
+    setTimeout(() => setIsClicked(false), 600);
+    onClick?.(e);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      style={{ 
+        scale: finalScale,
+        y: finalY
+      }}
+      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
+      animate={isClicked ? { scale: [1, 0.95, 1.1, 1] } : {}}
+      onClick={handleClick}
+      className="relative group cursor-pointer rounded-xl transition-colors duration-200"
+    >
+      {children}
+      
+      {/* Glow Pulse */}
+      <AnimatePresence>
+        {isClicked && (
+          <motion.div
+            initial={{ scale: 0.5, opacity: 1, border: '2px solid rgba(194,146,99,1)', boxShadow: '0 0 0px rgba(194,146,99,0)' }}
+            animate={{ 
+              scale: 2.5, 
+              opacity: 0, 
+              border: '2px solid rgba(194,146,99,0)',
+              boxShadow: '0 0 20px rgba(194,146,99,0.5)'
+            }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="absolute inset-0 rounded-xl pointer-events-none z-10"
+          />
+        )}
+      </AnimatePresence>
+
+      {isActive && (
+        <motion.div 
+          layoutId="active-pill"
+          className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-agri-primary rounded-r-full shadow-[0_0_10px_rgba(61,43,31,0.5)]"
+        />
+      )}
+    </motion.div>
+  );
+};
+
+const AppLayout: React.FC = () => {
   const { user, logout } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isAboutOpen, setIsAboutOpen] = useState(false);
+  const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const [toolSections, setToolSections] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
-  const [toolSections, setToolSections] = useState<any[]>([]);
-  const [isToolsOpen, setIsToolsOpen] = useState(false);
+  const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
+  const [clickPos, setClickPos] = useState({ x: 0, y: 0 });
   const navigate = useNavigate();
   const location = useLocation();
   const { confirm } = useConfirm();
+  
+  const mouseY = useMotionValue(Infinity);
+  const sidebarRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    
-    // Subscribe to settings for real-time updates (e.g. Logo change)
+    // Close sidebar on route change on mobile
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
     const unsubSettings = mockBackend.subscribeToSettings((data) => {
         setSettings(data);
-        
-        // --- DYNAMIC FAVICON SYNC ---
+        // Favicon logic
         if (data.logoUrl) {
             const updateFavicon = (url: string) => {
                 const linkId = 'dynamic-favicon';
@@ -45,70 +115,66 @@ const Header = () => {
                 newLink.rel = 'shortcut icon';
                 newLink.type = 'image/png';
                 newLink.href = url;
-
-                if (oldLink) {
-                    document.head.removeChild(oldLink);
-                } else {
-                    // Remove any other existing icons to avoid conflicts
-                    const existingIcons = document.querySelectorAll("link[rel*='icon']");
-                    existingIcons.forEach(el => el.remove());
-                }
+                if (oldLink) document.head.removeChild(oldLink);
+                else document.querySelectorAll("link[rel*='icon']").forEach(el => el.remove());
                 document.head.appendChild(newLink);
             };
-
-            // Attempt to use Canvas for resizing and ensuring transparency (if CORS allows)
             const canvas = document.createElement('canvas');
-            canvas.width = 64;
-            canvas.height = 64;
+            canvas.width = 64; canvas.height = 64;
             const ctx = canvas.getContext('2d');
-            
             if (ctx) {
                 const img = new Image();
-                // 'Anonymous' allows canvas export if server sends Access-Control-Allow-Origin
                 img.crossOrigin = "Anonymous"; 
-                
                 img.onload = () => {
                     try {
                         ctx.clearRect(0, 0, 64, 64);
-                        
-                        // Maintain Aspect Ratio, Center Image
                         const scale = Math.min(64 / img.width, 64 / img.height);
-                        const w = img.width * scale;
-                        const h = img.height * scale;
-                        const x = (64 - w) / 2;
-                        const y = (64 - h) / 2;
-                        
+                        const w = img.width * scale; const h = img.height * scale;
+                        const x = (64 - w) / 2; const y = (64 - h) / 2;
                         ctx.drawImage(img, x, y, w, h);
-                        
-                        // Export to data URI
-                        const faviconUrl = canvas.toDataURL('image/png');
-                        updateFavicon(faviconUrl);
-                    } catch (e) {
-                        // Canvas Tainted (CORS) - Fallback to raw URL
-                        updateFavicon(data.logoUrl);
-                    }
+                        updateFavicon(canvas.toDataURL('image/png'));
+                    } catch (e) { updateFavicon(data.logoUrl); }
                 };
-                
-                img.onerror = () => {
-                    // Image load failed (likely CORS blocking the request entirely) - Fallback
-                    updateFavicon(data.logoUrl);
-                };
-
+                img.onerror = () => updateFavicon(data.logoUrl);
                 img.src = data.logoUrl;
             }
         }
     });
+    return () => unsubSettings();
+  }, []);
 
+  useEffect(() => {
     const loadTools = async () => {
-        const sections = await mockBackend.getToolSections();
-        setToolSections(sections);
+      const sections = await mockBackend.getToolSections();
+      setToolSections(sections);
     };
     loadTools();
+  }, []);
 
-    return () => {
-        window.removeEventListener('scroll', handleScroll);
-        unsubSettings();
-    };
+  const getNextDeadline = () => {
+    const now = new Date();
+    let target = new Date(now.getFullYear(), now.getMonth(), 25, 23, 59, 59);
+    if (now.getTime() > target.getTime()) {
+      target = new Date(now.getFullYear(), now.getMonth() + 1, 25, 23, 59, 59);
+    }
+    return target.getTime();
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const target = getNextDeadline();
+      const diff = target - now;
+      if (diff > 0) {
+        setTimeLeft({
+          d: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          h: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          m: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+          s: Math.floor((diff % (1000 * 60)) / 1000)
+        });
+      }
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,16 +182,13 @@ const Header = () => {
     setSearchTerm(term);
     if (term.length > 2) {
       const results = await mockBackend.getArticles(term);
-      
       const allUsers = await mockBackend.getPublicAdmins();
       const adminIds = new Set(allUsers.map(u => u.id));
-
       const publicResults = results.filter(a => {
          if (a.status !== 'PUBLISHED' && a.status !== 'APPROVED') return false;
          if (!a.authorId) return true; 
          return adminIds.has(a.authorId);
       });
-
       setSearchResults(publicResults);
     } else {
       setSearchResults([]);
@@ -138,11 +201,9 @@ const Header = () => {
         type: 'danger',
         trigger: e.currentTarget
     });
-    
     if (isConfirmed) {
       logout();
       navigate('/login');
-      setIsMenuOpen(false);
     }
   };
 
@@ -151,453 +212,318 @@ const Header = () => {
     : [];
 
   const defaultItems = [
-    { label: 'Home', path: '/' },
-    { label: 'Archive', path: '/journals' },
-    { label: 'News', path: '/news' },
-    { label: 'Blogs', path: '/blogs' },
-    { label: 'Store', path: '/products' },
-    { label: 'Tools', path: '/tools' },
-    { label: 'Analytics', path: '/analytics' },
-    { label: 'Pipeline Builder', path: '/analytics/pipeline' },
-    { label: 'ANOVA Engine', path: '/analytics/anova' },
-    { label: 'Author Guidelines', path: '/author-guidelines' },
-    { label: 'Editorial Board', path: '/editorial-board' },
-    { label: 'About', path: '/about-contact' },
+    { label: 'Home', path: '/', icon: Home },
+    { label: 'Archive', path: '/journals', icon: BookOpen },
+    { label: 'News', path: '/news', icon: Newspaper },
+    { label: 'Blogs', path: '/blogs', icon: FileText },
+    { label: 'Store', path: '/products', icon: ShoppingBag },
+    { label: 'Tools', path: '/tools', icon: Wrench },
+    { label: 'Author Guidelines', path: '/author-guidelines', icon: FileText },
+    { label: 'Editorial Board', path: '/editorial-board', icon: Users },
+    { label: 'About & Contact Us', path: '/about-contact', icon: Info },
   ];
 
-  const rawMenuItems = menuItems.length > 0 ? menuItems : defaultItems.map(i => ({ ...i, id: i.path, isExternal: false, order: 0, isEnabled: true }));
+  const rawMenuItems = menuItems.length > 0 ? menuItems.map(m => ({...m, icon: defaultItems.find(d => d.path === m.path)?.icon || FileText})) : defaultItems.map(i => ({ ...i, id: i.path, isExternal: false, order: 0, isEnabled: true }));
   
-  // Ensure Analytics tools are present
-  const analyticsTools = [
-    { label: 'Analytics', path: '/analytics', id: 'analytics', isExternal: false, order: 5, isEnabled: true },
-    { label: 'Pipeline Builder', path: '/analytics/pipeline', id: 'pipeline', isExternal: false, order: 6, isEnabled: true },
-    { label: 'ANOVA Engine', path: '/analytics/anova', id: 'anova', isExternal: false, order: 7, isEnabled: true },
+  // Ensure Tools and About & Contact Us are always present
+  const essentialItems = [
+    { label: 'Tools', path: '/tools', icon: Wrench },
+    { label: 'About & Contact Us', path: '/about-contact', icon: Info },
   ];
 
-  analyticsTools.forEach(tool => {
-    if (!rawMenuItems.some(i => i.path === tool.path)) {
-      rawMenuItems.push(tool);
+  essentialItems.forEach(item => {
+    if (!rawMenuItems.some(i => i.path === item.path || i.label === item.label)) {
+      rawMenuItems.push({ ...item, id: item.path, isExternal: false, order: 99, isEnabled: true } as any);
     }
   });
 
-  // Ensure Home is always present and first
   const hasHome = rawMenuItems.some(i => i.path === '/' || i.label === 'Home');
   const activeMenuItems = hasHome 
       ? rawMenuItems 
-      : [{ label: 'Home', path: '/', id: 'home-auto', isExternal: false, order: -999, isEnabled: true }, ...rawMenuItems];
+      : [{ label: 'Home', path: '/', id: 'home-auto', isExternal: false, order: -999, isEnabled: true, icon: Home }, ...rawMenuItems];
+
+  // Filter out the specific analytics items if they exist in activeMenuItems
+  const filteredMenuItems = activeMenuItems.filter(item => {
+    const label = item.label?.trim().toLowerCase() || '';
+    return !['analytics', 'pipeline builder', 'anova engine'].includes(label);
+  });
 
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
-        isScrolled 
-          ? 'bg-white/30 backdrop-blur-lg border-b border-white/20 shadow-lg' 
-          : 'bg-white/10 backdrop-blur-sm border-b border-transparent'
-      }`}
-    >
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-         <motion.div
-           initial={{ opacity: 0, y: -20 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 1.5 }}
-           className="absolute top-0 left-0"
-         >
-            <svg width="200" height="150" viewBox="0 0 200 150" className="text-[#4A7C59] opacity-80 fill-current">
-               <path d="M0,0 C20,40 10,80 30,120" fill="none" stroke="#3D2B1F" strokeWidth="2" />
-               <path d="M10,0 C30,30 40,70 20,110" fill="none" stroke="#3D2B1F" strokeWidth="1.5" />
-               <path d="M20,30 Q5,25 10,45 Q25,45 20,30" />
-               <path d="M25,70 Q10,75 15,90 Q30,85 25,70" />
-               <path d="M15,10 Q0,5 5,20 Q20,20 15,10" />
-               <path d="M30,110 Q15,115 20,130 Q35,125 30,110" />
-               <path d="M5,50 Q-10,45 -5,65 Q10,65 5,50" className="opacity-70" />
-               <path d="M35,50 Q50,45 45,65 Q30,65 35,50" className="opacity-70" />
-            </svg>
-         </motion.div>
+    <div className="flex h-screen w-screen overflow-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-sans">
+      
+      {/* Sidebar (Desktop) & Drawer (Mobile) */}
+      <aside className={`fixed inset-y-0 left-0 z-50 glossy border-r border-white/10 transform transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64'} md:relative md:translate-x-0 ${isCollapsed ? 'md:w-20' : 'md:w-64'} flex flex-col shadow-2xl md:shadow-none`}>
+        
+        {/* Logo Area */}
+        <div className="h-16 flex items-center justify-between px-4 border-b border-white/10 shrink-0 glossy">
+          <Link to="/" className={`flex items-center gap-3 ${isCollapsed ? 'md:justify-center md:w-full' : ''}`}>
+            {settings?.logoUrl ? (
+                <OptimizedImage src={settings.logoUrl} className="h-8 w-auto object-contain shrink-0" alt="Agrigence" priority={true} />
+            ) : (
+                <Logo className="h-8 shrink-0" variant="dark" showText={false} />
+            )}
+            <span className={`font-serif font-bold text-agri-primary dark:text-stone-100 text-lg tracking-tight truncate ${isCollapsed ? 'md:hidden' : ''}`}>Agrigence</span>
+          </Link>
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg">
+            <X size={20} />
+          </button>
+        </div>
 
-         <motion.div
-           initial={{ opacity: 0, y: -20 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 1.5 }}
-           className="absolute top-0 right-0 transform -scale-x-100"
-         >
-            <svg width="250" height="180" viewBox="0 0 250 180" className="text-[#4A7C59] opacity-80 fill-current">
-               <path d="M0,0 C30,50 10,100 40,150" fill="none" stroke="#3D2B1F" strokeWidth="2" />
-               <path d="M20,0 C50,40 60,90 30,140" fill="none" stroke="#3D2B1F" strokeWidth="1.5" />
-               <path d="M30,40 Q15,35 20,55 Q35,55 30,40" />
-               <path d="M10,80 Q-5,75 0,95 Q15,95 10,80" />
-               <path d="M40,120 Q25,115 30,135 Q45,135 40,120" />
-               <path d="M50,60 Q65,55 60,75 Q45,75 50,60" className="opacity-60" />
-            </svg>
-         </motion.div>
-      </div>
+        {/* Navigation Links */}
+        <div 
+          className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar"
+          onMouseMove={(e) => mouseY.set(e.clientY)}
+          onMouseLeave={() => mouseY.set(Infinity)}
+        >
+          {filteredMenuItems.map((item, index) => {
+            const targetPath = (item.path === '/board' || item.label === 'Board') ? '/editorial-board' : item.path;
+            const displayLabel = (item.label === 'Board') ? 'Editorial Board' : item.label;
+            const Icon = item.icon || FileText;
+            const isActive = location.pathname === targetPath || (targetPath !== '/' && location.pathname.startsWith(targetPath));
 
-      <div className={`container mx-auto px-6 relative z-10 ${isScrolled ? 'py-2' : 'py-4'}`}>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
+            const handleItemClick = (e: React.MouseEvent) => {
+              setClickPos({ x: e.clientX, y: e.clientY });
+              if (item.isExternal) {
+                window.open(targetPath, '_blank');
+              } else {
+                navigate(targetPath);
+              }
+            };
+
+            if (displayLabel === 'Tools') {
+              return (
+                <DockItem key={index} mouseY={mouseY} isCollapsed={isCollapsed} isActive={isActive}>
+                  <div className="flex flex-col">
+                    <button onClick={() => { setIsToolsOpen(!isToolsOpen); if (isCollapsed) setIsCollapsed(false); }} className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-agri-primary dark:hover:text-white ${isCollapsed ? 'md:justify-center' : ''}`} title={isCollapsed ? "Tools" : undefined}>
+                      <div className="flex items-center gap-3">
+                        <Icon size={18} className="shrink-0" />
+                        <span className={`truncate ${isCollapsed ? 'md:hidden' : ''}`}>Tools</span>
+                      </div>
+                      <ChevronRight size={16} className={`transition-transform ${isToolsOpen ? 'rotate-90' : ''} ${isCollapsed ? 'md:hidden' : ''}`} />
+                    </button>
+                    <AnimatePresence>
+                      {isToolsOpen && !isCollapsed && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                          <div className="pl-10 pr-3 py-2 space-y-2 border-l-2 border-stone-100 dark:border-stone-800 ml-5 mt-1">
+                            <Link to="/tools" onClick={(e) => setClickPos({ x: e.clientX, y: e.clientY })} className="block text-xs font-medium text-stone-500 hover:text-agri-primary dark:hover:text-white transition-colors">All Tools</Link>
+                            <Link to="/analytics" onClick={(e) => setClickPos({ x: e.clientX, y: e.clientY })} className="block text-xs font-medium text-stone-500 hover:text-agri-primary dark:hover:text-white transition-colors">Analytics</Link>
+                            <Link to="/analytics/pipeline" onClick={(e) => setClickPos({ x: e.clientX, y: e.clientY })} className="block text-xs font-medium text-stone-500 hover:text-agri-primary dark:hover:text-white transition-colors">Pipeline Builder</Link>
+                            <Link to="/analytics/anova" onClick={(e) => setClickPos({ x: e.clientX, y: e.clientY })} className="block text-xs font-medium text-stone-500 hover:text-agri-primary dark:hover:text-white transition-colors">ANOVA Engine</Link>
+                            {toolSections.map(section => (
+                              <Link key={section.id} to="/tools" onClick={(e) => setClickPos({ x: e.clientX, y: e.clientY })} className="block text-xs font-medium text-stone-500 hover:text-agri-primary dark:hover:text-white transition-colors">
+                                {section.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </DockItem>
+              );
+            }
+
+            if (displayLabel === 'About' || displayLabel === 'About & Contact Us') {
+              return (
+                <DockItem key={index} mouseY={mouseY} isCollapsed={isCollapsed} isActive={isActive}>
+                  <div className="flex flex-col">
+                    <button onClick={() => { setIsAboutOpen(!isAboutOpen); if (isCollapsed) setIsCollapsed(false); }} className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-agri-primary dark:hover:text-white ${isCollapsed ? 'md:justify-center' : ''}`} title={isCollapsed ? "About & Contact Us" : undefined}>
+                      <div className="flex items-center gap-3">
+                        <Icon size={18} className="shrink-0" />
+                        <span className={`truncate ${isCollapsed ? 'md:hidden' : ''}`}>About & Contact Us</span>
+                      </div>
+                      <ChevronRight size={16} className={`transition-transform ${isAboutOpen ? 'rotate-90' : ''} ${isCollapsed ? 'md:hidden' : ''}`} />
+                    </button>
+                    <AnimatePresence>
+                      {isAboutOpen && !isCollapsed && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                          <div className="pl-10 pr-3 py-2 space-y-2 border-l-2 border-stone-100 dark:border-stone-800 ml-5 mt-1">
+                            <Link to="/about-contact" onClick={(e) => setClickPos({ x: e.clientX, y: e.clientY })} className="block text-xs font-medium text-stone-500 hover:text-agri-primary dark:hover:text-white transition-colors">Contact Us</Link>
+                            <Link to="/editorial-board" onClick={(e) => setClickPos({ x: e.clientX, y: e.clientY })} className="block text-xs font-medium text-stone-500 hover:text-agri-primary dark:hover:text-white transition-colors">Leadership</Link>
+                            <Link to="/privacy" onClick={(e) => setClickPos({ x: e.clientX, y: e.clientY })} className="block text-xs font-medium text-stone-500 hover:text-agri-primary dark:hover:text-white transition-colors">Privacy Policy</Link>
+                            <Link to="/terms" onClick={(e) => setClickPos({ x: e.clientX, y: e.clientY })} className="block text-xs font-medium text-stone-500 hover:text-agri-primary dark:hover:text-white transition-colors">Terms of Service</Link>
+                            <button onClick={() => window.dispatchEvent(new Event('openCookieSettings'))} className="block text-xs font-medium text-stone-500 hover:text-agri-primary dark:hover:text-white transition-colors text-left w-full">Cookie Settings</button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </DockItem>
+              );
+            }
+
+            return (
+              <DockItem key={index} mouseY={mouseY} isCollapsed={isCollapsed} isActive={isActive} onClick={handleItemClick}>
+                <div className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${isActive ? 'bg-agri-primary/10 text-agri-primary dark:bg-agri-primary/20 dark:text-agri-secondary' : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-agri-primary dark:hover:text-white'} ${isCollapsed ? 'md:justify-center' : ''}`} title={isCollapsed ? displayLabel : undefined}>
+                  <Icon size={18} className={`shrink-0 ${isActive ? 'text-agri-primary dark:text-agri-secondary' : ''}`} />
+                  <span className={`truncate ${isCollapsed ? 'md:hidden' : ''}`}>{displayLabel}</span>
+                </div>
+              </DockItem>
+            );
+          })}
+        </div>
+
+        {/* Bottom Actions */}
+        <div className="p-4 border-t border-white/10 shrink-0 space-y-3 glossy">
+           <div className={`flex items-center ${isCollapsed ? 'md:justify-center justify-between' : 'justify-between'} px-2`}>
+             <span className={`text-xs font-medium text-stone-500 dark:text-stone-400 ${isCollapsed ? 'md:hidden' : ''}`}>Theme</span>
+             <ThemeToggle />
+           </div>
+           
+           {user ? (
+             <div className={`flex items-center ${isCollapsed ? 'md:justify-center justify-between' : 'justify-between'} bg-white/5 dark:bg-black/20 backdrop-blur-md p-2 rounded-xl border border-white/10`}>
+               <Link to={['SUPER_ADMIN', 'ADMIN'].includes(user.role) ? "/admin" : "/dashboard"} className="flex items-center gap-2 overflow-hidden" title={isCollapsed ? "Dashboard" : undefined}>
+                 <div className="w-8 h-8 rounded-full bg-agri-primary text-white flex items-center justify-center font-bold text-xs shrink-0">
+                   {user.name[0]}
+                 </div>
+                 <div className={`flex flex-col min-w-0 ${isCollapsed ? 'md:hidden' : ''}`}>
+                   <span className="text-xs font-bold text-stone-800 dark:text-stone-200 truncate">{user.name}</span>
+                   <span className="text-[10px] text-stone-500 dark:text-stone-400 truncate">{user.role}</span>
+                 </div>
+               </Link>
+               <button onClick={handleLogout} className={`p-1.5 text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors ${isCollapsed ? 'md:hidden' : ''}`} title="Sign Out">
+                 <LogOut size={16} />
+               </button>
+             </div>
+           ) : (
+             <Link to="/login" className={`flex items-center justify-center gap-2 w-full bg-agri-primary/80 backdrop-blur-md text-white border border-white/20 ${isCollapsed ? 'md:px-0 md:py-2.5 px-4 py-2.5' : 'px-4 py-2.5'} rounded-xl text-sm font-bold hover:bg-agri-secondary transition-colors shadow-lg shadow-agri-primary/20`} title={isCollapsed ? "Sign In" : undefined}>
+               <UserIcon size={16} className="shrink-0" /> <span className={`${isCollapsed ? 'md:hidden' : ''}`}>Sign In</span>
+             </Link>
+           )}
+           <div className={`text-center pt-2 ${isCollapsed ? 'md:hidden' : ''}`}>
+             <span className="text-[9px] text-stone-400 dark:text-stone-600 uppercase tracking-widest">© {new Date().getFullYear()} Agrigence</span>
+           </div>
+        </div>
+      </aside>
+
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden" 
+            onClick={() => setIsSidebarOpen(false)} 
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        
+        {/* Top App Bar */}
+        <header className="h-16 flex items-center justify-between px-4 sm:px-6 glossy border-b border-white/10 z-30 shrink-0">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors">
+              <Menu size={20} />
+            </button>
+            <button onClick={() => setIsCollapsed(!isCollapsed)} className="hidden md:flex p-2 -ml-2 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors">
+              <Menu size={20} />
+            </button>
             {location.pathname !== '/' && (
-              <button 
-                onClick={() => navigate(-1)} 
-                className="p-2 hover:bg-stone-100 rounded-full transition-colors text-stone-500"
-                aria-label="Go back"
-              >
-                <ArrowLeft size={20} />
+              <button onClick={() => navigate(-1)} className="hidden sm:flex p-1.5 text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors" aria-label="Go back">
+                <ArrowLeft size={18} />
               </button>
             )}
-            <Link to="/" className="flex items-center gap-3 group">
-              {settings?.logoUrl ? (
-                 <OptimizedImage 
-                   src={settings.logoUrl} 
-                   className={`w-auto object-contain transition-all duration-300 ${isScrolled ? "h-10" : "h-14"}`} 
-                   alt="Agrigence" 
-                   priority={true}
-                 />
-              ) : (
-                 <Logo className={isScrolled ? "h-10" : "h-14"} variant="dark" showText={false} />
-              )}
+            <div className={`flex flex-col ml-1 ${!isCollapsed ? 'md:hidden' : ''}`}>
+              <span className="font-serif font-bold text-agri-primary dark:text-stone-100 text-xl leading-none tracking-tight">
+                Agrigence
+              </span>
+              <p className="font-serif italic text-agri-secondary dark:text-agri-secondary/80 text-[9px] sm:text-[10px] leading-tight mt-0.5 hidden sm:block">
+                Where Agri-Intelligence Meets Agricultural Generation
+              </p>
+            </div>
+          </div>
+          <div className="flex-1 flex justify-end max-w-md relative">
+            <div className="flex items-center gap-3 bg-stone-950/40 dark:bg-black/40 backdrop-blur-xl px-5 py-2.5 rounded-2xl border-2 border-agri-primary/40 shadow-[0_0_25px_rgba(61,43,31,0.3)] relative overflow-hidden group glossy-card">
+              {/* Futuristic Scanline Effect */}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-agri-primary/15 to-transparent h-[200%] animate-scanline pointer-events-none" />
               
-              <div className="flex flex-col">
-                <span className={`font-serif font-bold text-agri-primary leading-none tracking-tight transition-all duration-300 ${isScrolled ? 'text-xl' : 'text-2xl'}`}>
-                  Agrigence
-                </span>
-                <p className={`font-serif italic text-agri-secondary leading-tight transition-all duration-300 ${isScrolled ? 'text-[9px] mt-0.5' : 'text-[11px] mt-1'}`}>
-                  Where Agri-Intelligence Meets Agricultural Generation
-                </p>
-              </div>
-            </Link>
-          </div>
+              {/* Digital Grid overlay */}
+              <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[radial-gradient(#C29263_0.5px,transparent_0.5px)] [background-size:10px_10px]" />
 
-          {/* Desktop Navigation Removed as per user request to use Hamburger Menu on all screens */}
-
-          <div className="flex items-center gap-4 md:gap-6">
-            <div className="relative hidden sm:block">
-              <div className="flex items-center bg-stone-50 rounded-full px-4 py-2 border border-stone-200 focus-within:border-agri-secondary/50 focus-within:bg-white transition-all">
-                <Search size={16} className="text-stone-400" />
-                <input 
-                  type="text" 
-                  placeholder="Search articles..." 
-                  className="bg-transparent border-none focus:outline-none text-sm ml-2 w-32 focus:w-48 transition-all placeholder:text-stone-400 text-agri-primary"
-                  value={searchTerm}
-                  onChange={handleSearch}
-                />
-              </div>
-              {searchResults.length > 0 && (
-                <div className="absolute top-full right-0 mt-3 w-80 bg-white shadow-2xl rounded-xl border border-stone-100 p-2 z-50 overflow-hidden">
-                  <div className="bg-stone-50 px-3 py-1 text-[9px] font-bold uppercase text-stone-400 tracking-widest border-b border-stone-100 mb-1">
-                     Public Registry
-                  </div>
-                  {searchResults.map(a => (
-                    <div key={a.id} onClick={() => { setSearchResults([]); navigate('/journals'); }} className="p-3 hover:bg-stone-50 rounded-lg cursor-pointer transition-colors group">
-                      <p className="font-serif font-bold text-sm text-agri-primary truncate group-hover:text-agri-secondary transition-colors">{a.title}</p>
-                      <p className="text-xs text-stone-500 mt-0.5">{a.authorName}</p>
-                    </div>
-                  ))}
+              <div className="flex flex-col items-end mr-3 hidden sm:flex relative z-10">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-agri-secondary animate-pulse shadow-[0_0_5px_rgba(194,146,99,0.8)]" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.25em] text-agri-secondary">System Live</span>
                 </div>
-              )}
-            </div>
-
-            {user ? (
-              <div className="flex items-center gap-3">
-                <Link to={['SUPER_ADMIN', 'ADMIN'].includes(user.role) ? "/admin" : "/dashboard"} className="w-10 h-10 rounded-full bg-agri-primary text-white flex items-center justify-center font-bold text-sm shadow-md hover:bg-agri-secondary transition-colors" title="Dashboard">
-                  {user.name[0]}
-                </Link>
-                <button 
-                  onClick={handleLogout} 
-                  className="hidden sm:block text-stone-400 hover:text-red-500 transition-colors p-2" 
-                  title="Sign Out"
-                >
-                  <LogOut size={20} />
-                </button>
+                <span className="text-[11px] font-bold text-stone-500 tracking-tight">Submission Deadline</span>
               </div>
-            ) : (
-              <Link to="/login" className="hidden sm:flex bg-agri-primary text-white px-6 py-2.5 rounded-full text-xs font-bold tracking-wide hover:bg-agri-secondary transition-all shadow-md items-center gap-2">
-                <UserIcon size={14} /> SIGN IN
-              </Link>
-            )}
-
-            <ThemeToggle />
-            <button className="text-agri-primary p-2 hover:bg-stone-100 rounded-lg transition-colors" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      {isMenuOpen && (
-        <div className="bg-white border-t border-agri-border p-6 space-y-4 shadow-xl absolute w-full left-0 z-20 max-h-[calc(100vh-80px)] overflow-y-auto">
-           <div className="mb-6 sm:hidden">
-             <div className="flex items-center bg-stone-50 rounded-xl px-4 py-3 border border-stone-200 focus-within:border-agri-secondary/50 focus-within:bg-white transition-all">
-               <Search size={18} className="text-stone-400" />
-               <input 
-                 type="text" 
-                 placeholder="Search articles..." 
-                 className="bg-transparent border-none focus:outline-none text-sm ml-3 w-full placeholder:text-stone-400 text-agri-primary"
-                 value={searchTerm}
-                 onChange={handleSearch}
-               />
-             </div>
-             {searchResults.length > 0 && (
-               <div className="mt-2 bg-white shadow-lg rounded-xl border border-stone-100 p-2 overflow-hidden">
-                 <div className="bg-stone-50 px-3 py-1 text-[9px] font-bold uppercase text-stone-400 tracking-widest border-b border-stone-100 mb-1">
-                    Public Registry
-                 </div>
-                 {searchResults.map(a => (
-                   <div key={a.id} onClick={() => { setSearchResults([]); setIsMenuOpen(false); navigate('/journals'); }} className="p-3 hover:bg-stone-50 rounded-lg cursor-pointer transition-colors group">
-                     <p className="font-serif font-bold text-sm text-agri-primary truncate group-hover:text-agri-secondary transition-colors">{a.title}</p>
-                     <p className="text-xs text-stone-500 mt-0.5">{a.authorName}</p>
-                   </div>
-                 ))}
-               </div>
-             )}
-           </div>
-
-           {activeMenuItems.map((item, index) => {
-             const targetPath = (item.path === '/board' || item.label === 'Board') ? '/editorial-board' : item.path;
-             const displayLabel = (item.label === 'Board') ? 'Editorial Board' : item.label;
-             if (targetPath === '/tools') {
-                 return (
-                   <div key={item.id ? `mobile-nav-${item.id}-${index}` : `mobile-nav-${index}`} className="space-y-2">
-                       <Link to="/tools" onClick={() => setIsMenuOpen(false)} className="block text-sm font-bold text-agri-primary">{displayLabel}</Link>
-                       <div className="pl-4 space-y-2 border-l border-stone-100">
-                           {toolSections.map(section => (
-                               <Link 
-                                   key={section.id} 
-                                   to="/tools" 
-                                   onClick={() => setIsMenuOpen(false)}
-                                   className="block text-xs font-bold text-stone-400 uppercase tracking-widest hover:text-agri-secondary"
-                               >
-                                   {section.name}
-                               </Link>
-                           ))}
-                       </div>
-                   </div>
-                 );
-             }
-
-             return item.isExternal 
-               ? <a key={item.id ? `mobile-nav-${item.id}-${index}` : `mobile-nav-${index}`} href={targetPath} target="_blank" className="block text-sm font-bold text-agri-primary">{displayLabel}</a>
-               : <Link key={item.id ? `mobile-nav-${item.id}-${index}` : `mobile-nav-${index}`} to={targetPath} onClick={() => setIsMenuOpen(false)} className="block text-sm font-bold text-agri-primary">{displayLabel}</Link>
-           })}
-           <div className="pt-4 border-t border-stone-100">
-             {user ? (
-               <>
-                 <Link to={['SUPER_ADMIN', 'ADMIN'].includes(user.role) ? "/admin" : "/dashboard"} onClick={() => setIsMenuOpen(false)} className="block text-agri-secondary font-bold text-sm mb-4">My Dashboard</Link>
-                 <button onClick={handleLogout} className="flex items-center gap-2 text-red-500 font-bold text-sm w-full text-left py-2">
-                    <LogOut size={16} /> Sign Out
-                 </button>
-               </>
-             ) : (
-               <Link to="/login" onClick={() => setIsMenuOpen(false)} className="text-agri-primary font-bold text-sm">Sign In</Link>
-             )}
-           </div>
-        </div>
-      )}
-    </header>
-  );
-};
-
-const Footer = () => {
-  const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
-  const [visitorCount, setVisitorCount] = useState<number>(0);
-
-  useEffect(() => {
-    const unsub = mockBackend.subscribeToSettings(setSettings);
-    
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      let targetDate = new Date(now.getFullYear(), now.getMonth(), 25, 23, 59, 59);
-      if (now.getTime() > targetDate.getTime()) {
-        targetDate = new Date(now.getFullYear(), now.getMonth() + 1, 25, 23, 59, 59);
-      }
-      const diff = targetDate.getTime() - now.getTime();
-      
-      setTimeLeft({
-        d: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        h: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        m: Math.floor((diff / 1000 / 60) % 60),
-        s: Math.floor((diff / 1000) % 60)
-      });
-    };
-
-    calculateTimeLeft();
-    const interval = setInterval(calculateTimeLeft, 1000);
-
-    const trackVisitor = async () => {
-        try {
-            const hasVisited = localStorage.getItem('agri_visitor_tracked');
-            let count = 0;
-            if (!hasVisited) {
-                count = await mockBackend.incrementVisitorCount();
-                localStorage.setItem('agri_visitor_tracked', 'true');
-            } else {
-                count = await mockBackend.getVisitorCount();
-            }
-            setVisitorCount(count);
-        } catch (e: any) {
-            console.error("Visitor tracking failed", e.message || e);
-        }
-    };
-    trackVisitor();
-
-    return () => {
-        clearInterval(interval);
-        unsub();
-    };
-  }, []);
-
-  const socials = [
-    { icon: Twitter, link: settings?.footerSocials.twitter, label: 'Twitter' },
-    { icon: Instagram, link: settings?.footerSocials.instagram, label: 'Instagram' },
-    { icon: Facebook, link: settings?.footerSocials.facebook, label: 'Facebook' },
-    { icon: Linkedin, link: settings?.footerSocials.linkedin, label: 'LinkedIn' },
-    { icon: Youtube, link: settings?.footerSocials.youtube, label: 'YouTube' },
-  ];
-
-  return (
-    <footer className="bg-stone-950/80 backdrop-blur-lg text-white pt-5 pb-3 relative overflow-hidden border-t border-white/10">
-      {/* Agricultural Background Pattern */}
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="leafPattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-              <path d="M50 20c-10 0-20 10-20 20s10 20 20 20 20-10 20-20-10-20-20-20zm0 35c-8.3 0-15-6.7-15-15s6.7-15 15-15 15 6.7 15 15-6.7 15-15 15z" fill="currentColor" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#leafPattern)" />
-        </svg>
-      </div>
-
-      <div className="container mx-auto px-6 relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
-          
-          {/* Column 1: Brand & Description */}
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <Link to="/" className="shrink-0 mt-1">
-                 {settings?.logoUrl ? (
-                    <img src={settings.logoUrl} className="h-10 w-auto object-contain brightness-0 invert" alt="Agrigence" />
-                 ) : (
-                    <Logo className="h-10" variant="light" showText={false} />
-                 )}
-              </Link>
-              <div className="flex flex-col">
-                <span className="text-2xl font-serif font-bold text-white leading-none tracking-tight">Agrigence</span>
-                <p className="text-[11px] font-serif italic text-sky-400 mt-1.5 leading-tight">
-                  Where Agri-Intelligence Meets Agricultural Generation
-                </p>
-              </div>
-            </div>
-            <p className="text-stone-400 text-[10px] leading-relaxed font-serif italic">
-              Bridging the gap between scientific research and practical farming innovation through intelligent agricultural systems and expert academic resources.
-            </p>
-            <div className="pt-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Clock size={10} className="text-agri-secondary" />
-                <span className="text-[8px] font-black uppercase tracking-widest text-agri-secondary">Next Issue Countdown</span>
-              </div>
-              <div className="flex gap-2 text-center">
-                {[['d', timeLeft.d], ['h', timeLeft.h], ['m', timeLeft.m], ['s', timeLeft.s]].map(([unit, val]) => (
-                  <div key={unit as string} className="bg-white/5 border border-white/10 rounded-lg px-2 py-0.5 min-w-[30px]">
-                    <span className="block text-[10px] font-bold text-white leading-none">{val}</span>
-                    <span className="text-[6px] text-stone-500 uppercase font-black">{unit}</span>
+              
+              <div className="flex gap-2 relative z-10">
+                {Object.entries(timeLeft).map(([unit, val]) => (
+                  <div key={unit} className="flex flex-col items-center relative">
+                    <div className="bg-stone-900 dark:bg-stone-950 rounded-lg px-2.5 py-1.5 min-w-[40px] border border-stone-800 dark:border-stone-900 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] group-hover:border-agri-primary/60 transition-all duration-500 relative overflow-hidden">
+                      {/* Individual digit glow */}
+                      <div className="absolute inset-0 bg-agri-primary/5 blur-md" />
+                      <span className="relative block text-[15px] font-mono font-bold text-agri-secondary leading-none tracking-tighter drop-shadow-[0_0_10px_rgba(194,146,99,0.9)]">
+                        {val.toString().padStart(2, '0')}
+                      </span>
+                    </div>
+                    <span className="text-[8px] text-stone-600 uppercase font-black mt-1.5 tracking-[0.15em]">{unit}</span>
                   </div>
                 ))}
               </div>
+
+              {/* Corner Accents */}
+              <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-agri-primary/50" />
+              <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-agri-primary/50" />
             </div>
           </div>
+        </header>
 
-          {/* Column 2: Quick Links */}
-          <div>
-            <h4 className="text-white font-bold text-[10px] uppercase tracking-widest mb-2 flex items-center gap-2">
-              <span className="w-3 h-px bg-agri-secondary"></span>
-              Quick Links
-            </h4>
-            <ul className="space-y-1 text-[10px] text-stone-400">
-              <li><Link to="/" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Home</Link></li>
-              <li><Link to="/tools" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Agri-Tools</Link></li>
-              <li><Link to="/products" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Store</Link></li>
-              <li><Link to="/blogs" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Expert Blogs</Link></li>
-              <li><Link to="/news" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> News & Updates</Link></li>
-            </ul>
-          </div>
+        {/* Scrollable Content */}
+        <main className="flex-1 overflow-y-auto bg-stone-50 dark:bg-stone-950 relative">
+          {/* Background darkening overlay during transition */}
+          <AnimatePresence>
+            {location.pathname && (
+              <motion.div
+                key="transition-overlay"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0 bg-black pointer-events-none z-0"
+              />
+            )}
+          </AnimatePresence>
 
-          {/* Column 3: Resources */}
-          <div>
-            <h4 className="text-white font-bold text-[10px] uppercase tracking-widest mb-2 flex items-center gap-2">
-              <span className="w-3 h-px bg-agri-secondary"></span>
-              Resources
-            </h4>
-            <ul className="space-y-1 text-[10px] text-stone-400">
-              <li><Link to="/journals" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Research Archive</Link></li>
-              <li><Link to="/author-guidelines" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Author Guidelines</Link></li>
-              <li><Link to="/editorial-board" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Editorial Board</Link></li>
-              <li><Link to="/submission" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> Submit Manuscript</Link></li>
-              <li><Link to="/about-contact" className="hover:text-agri-secondary transition-colors flex items-center gap-2 group"><ChevronRight size={8} className="text-agri-secondary/50 group-hover:translate-x-1 transition-transform" /> About & Contact</Link></li>
-            </ul>
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ 
+                scale: 0.2, 
+                opacity: 0, 
+                x: clickPos.x - window.innerWidth / 2, 
+                y: clickPos.y - window.innerHeight / 2,
+                filter: 'blur(20px)'
+              }}
+              animate={{ 
+                scale: 1, 
+                opacity: 1, 
+                x: 0, 
+                y: 0,
+                filter: 'blur(0px)'
+              }}
+              exit={{ 
+                scale: 1.1, 
+                opacity: 0,
+                filter: 'blur(10px)',
+                transition: { duration: 0.3 }
+              }}
+              transition={{ 
+                duration: 0.5,
+                ease: [0.22, 1, 0.36, 1]
+              }}
+              className="h-full w-full relative z-10"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </main>
 
-          {/* Column 4: Social Media */}
-          <div>
-            <h4 className="text-white font-bold text-[10px] uppercase tracking-widest mb-2 flex items-center gap-2">
-              <span className="w-3 h-px bg-agri-secondary"></span>
-              Connect
-            </h4>
-            <div className="grid grid-cols-5 gap-2 mb-3">
-                {socials.map((social, i) => (
-                  <a 
-                    key={i} 
-                    href={social.link || '#'} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center text-stone-400 hover:bg-agri-secondary hover:text-white transition-all border border-white/10 group"
-                    title={social.label}
-                  >
-                    <social.icon size={12} className="group-hover:scale-110 transition-transform" />
-                  </a>
-                ))}
-            </div>
-            <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-              <p className="text-[8px] font-black uppercase tracking-widest text-stone-500 mb-0.5">Global Visitor Count</p>
-              <p className="text-lg font-serif font-bold text-agri-secondary">{visitorCount.toLocaleString()}</p>
-              <div className="mt-1 flex items-center gap-2">
-                <span className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></span>
-                <span className="text-[7px] font-bold text-white/60 uppercase tracking-wider">System Online</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Bottom Bar */}
-        <div className="pt-2 border-t border-white/5">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-2">
-            <div className="text-[8px] font-black uppercase tracking-[0.2em] text-stone-600">
-              © {new Date().getFullYear()} AGRIGENCE INTELLECTUAL PROPERTY.
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-3 text-[8px] font-black uppercase tracking-widest text-stone-500">
-              <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
-              <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-              <Link to="/sitemap" className="hover:text-white transition-colors">Sitemap</Link>
-              <button onClick={() => window.dispatchEvent(new Event('openCookieSettings'))} className="hover:text-white transition-colors uppercase tracking-widest">Cookie Settings</button>
-              <a href="mailto:info@agrigence.in" className="hover:text-white transition-colors">Support</a>
-            </div>
-          </div>
-        </div>
       </div>
-    </footer>
-  );
-};
-
-const Layout: React.FC = () => {
-  return (
-    <div className="flex flex-col min-h-screen bg-agri-bg">
-      <Header />
-      <div className="flex-grow pt-24">
-        <Outlet />
-      </div>
-      <Footer />
     </div>
   );
 };
 
-export default Layout;
+export default AppLayout;

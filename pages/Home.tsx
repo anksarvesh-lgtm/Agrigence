@@ -92,7 +92,7 @@ const Home: React.FC = () => {
     <motion.div
       whileHover={{ y: -5, shadow: "0 25px 50px -12px rgba(31, 38, 135, 0.15)" }}
       onClick={onClick}
-      className={`bg-white/40 backdrop-blur-xl border border-white/60 rounded-[2rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] hover:shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] hover:bg-white/50 cursor-pointer transition-all overflow-hidden p-6 ${className}`}
+      className={`glossy glossy-card rounded-[2rem] cursor-pointer transition-all overflow-hidden p-6 ${className}`}
     >
       {children}
     </motion.div>

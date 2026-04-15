@@ -32,7 +32,7 @@ const ThemeToggle: React.FC = () => {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-full bg-stone-100 dark:bg-stone-800 text-agri-primary dark:text-stone-300 transition-colors"
+      className="p-2 rounded-full glossy text-agri-primary dark:text-stone-300 transition-colors shadow-sm"
       aria-label="Toggle theme"
     >
       {isDark ? <Sun size={20} /> : <Moon size={20} />}

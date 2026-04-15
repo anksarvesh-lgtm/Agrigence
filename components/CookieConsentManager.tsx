@@ -158,44 +158,39 @@ const CookieConsentManager: React.FC = () => {
       <AnimatePresence>
         {showBanner && !showModal && (
           <motion.div 
-            initial={{ y: 50, opacity: 0 }}
+            initial={{ y: '100%', opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            className="fixed bottom-0 left-0 right-0 z-[9998] bg-white shadow-[0_-4px_20px_rgb(0,0,0,0.08)] border-t border-gray-100 p-4"
+            exit={{ y: '100%', opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed bottom-0 left-0 right-0 z-[9999] glossy border-t border-white/10 p-6 md:p-8"
           >
-            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-green-50 p-2 rounded-full shrink-0 hidden md:block">
-                  <ShieldCheck className="h-5 w-5 text-agri-green" />
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-agri-primary/10 p-3 rounded-2xl shrink-0">
+                  <ShieldCheck className="h-6 w-6 text-agri-primary" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900">
-                    We value your privacy
+                  <h3 className="text-base font-bold text-stone-900 dark:text-stone-100">
+                    Cookie Consent
                   </h3>
-                  <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
-                    We use cookies to enhance your experience. You can choose to accept or customize them.
-                    <a href={settings.cookiePolicyUrl} className="text-agri-green hover:underline ml-1">Read Policy</a>
+                  <p className="text-sm text-stone-500 dark:text-stone-400 mt-1 leading-relaxed max-w-2xl">
+                    We use cookies to improve your experience on our site. To find out more, read our 
+                    <a href={settings.cookiePolicyUrl} className="text-agri-primary hover:underline ml-1 font-medium">Privacy Policy</a>.
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                <button 
-                  onClick={() => setShowModal(true)}
-                  className="flex-1 md:flex-none px-4 py-2 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors whitespace-nowrap"
-                >
-                  Customize
-                </button>
+              <div className="flex items-center gap-3 w-full md:w-auto">
                 <button 
                   onClick={handleRejectAll}
-                  className="flex-1 md:flex-none px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap"
+                  className="flex-1 md:flex-none px-8 py-3 text-sm font-bold text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-xl transition-all active:scale-95 whitespace-nowrap"
                 >
-                  Reject All
+                  Reject
                 </button>
                 <button 
                   onClick={handleAcceptAll}
-                  className="flex-1 md:flex-none px-6 py-2 text-xs font-semibold text-white bg-agri-green hover:bg-agri-dark rounded-lg transition-colors whitespace-nowrap"
+                  className="flex-1 md:flex-none px-8 py-3 text-sm font-bold text-white bg-agri-primary hover:bg-agri-secondary rounded-xl shadow-lg shadow-agri-primary/20 transition-all active:scale-95 whitespace-nowrap"
                 >
-                  Accept All
+                  Accept
                 </button>
               </div>
             </div>
@@ -279,17 +274,6 @@ const CookieConsentManager: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
-
-      {/* Floating Footer Button */}
-      {!showBanner && !showModal && (
-        <button
-          onClick={() => setShowModal(true)}
-          className="fixed bottom-4 left-4 z-[9998] bg-white shadow-md hover:shadow-lg border border-gray-200 rounded-full p-3 text-gray-600 hover:text-agri-green transition-all group"
-          title="Cookie Settings"
-        >
-          <ShieldCheck className="h-5 w-5" />
-        </button>
-      )}
     </>
   );
 };

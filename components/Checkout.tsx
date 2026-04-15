@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { mockBackend } from "../services/mockBackend";
+import { safeStringify } from "../lib/safeStringify";
 import { useAuth } from "../App";
 import { SubscriptionPlan } from "../types";
 import { CreditCard } from "lucide-react";
@@ -64,7 +65,7 @@ const Checkout = ({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
+        body: safeStringify({
           amount: finalTotal,
           planId: selectedPlan.id,
           userId: user.id,
@@ -92,7 +93,7 @@ const Checkout = ({
               headers: {
                 'Content-Type': 'application/json',
               },
-              body: JSON.stringify({
+              body: safeStringify({
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,

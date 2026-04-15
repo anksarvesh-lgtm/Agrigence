@@ -117,6 +117,41 @@
       .harvest-gradient {
         background: linear-gradient(135deg, var(--primary-earth) 0%, #2A1D15 100%);
       }
+      @keyframes scanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
+      }
+      .animate-scanline {
+        animation: scanline 4s linear infinite;
+      }
+      .glossy {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+      .glossy-card {
+        position: relative;
+        overflow: hidden;
+      }
+      .glossy-card::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+          45deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.03) 45%,
+          rgba(255, 255, 255, 0.07) 50%,
+          rgba(255, 255, 255, 0.03) 55%,
+          transparent 100%
+        );
+        transform: rotate(25deg);
+        pointer-events: none;
+      }
     </style>
     <script>
       tailwind.config = {

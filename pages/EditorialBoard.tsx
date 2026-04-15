@@ -46,7 +46,7 @@ const MemberCard: React.FC<{ member: EditorialMember, index: number }> = ({ memb
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.6, delay: index * 0.1 }}
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
-      className="bg-white/80 backdrop-blur-md rounded-3xl shadow-lg border border-green-100 p-6 flex flex-col items-center text-center relative z-10 hover:shadow-2xl hover:border-green-200 transition-all group"
+      className="glossy glossy-card rounded-3xl p-6 flex flex-col items-center text-center relative z-10 hover:shadow-2xl transition-all group"
     >
       <div className="relative mb-4">
         <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md group-hover:scale-110 transition-transform duration-500">

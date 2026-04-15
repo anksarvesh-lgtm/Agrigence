@@ -25,7 +25,7 @@ const DashboardHome: React.FC = () => {
               </h2>
               <div className="space-y-3">
                 {projects.map(p => (
-                  <div key={p.id} className="p-4 bg-white border border-stone-900 hover:bg-stone-900 hover:text-white transition-colors cursor-pointer group">
+                  <div key={p.id} className="p-4 bg-white/80 backdrop-blur-sm border border-stone-900 hover:bg-stone-900 hover:text-white transition-colors cursor-pointer group glossy">
                     <p className="font-medium text-stone-900 group-hover:text-white">{p.name}</p>
                     <p className="text-xs text-stone-500 group-hover:text-stone-300 mt-1 font-mono">Updated: {p.date}</p>
                   </div>
@@ -60,13 +60,13 @@ const DashboardHome: React.FC = () => {
                 <Plus size={16}/> Quick Actions
               </h2>
               <div className="flex flex-col gap-3">
-                <button className="flex items-center justify-between w-full p-4 bg-white border border-stone-900 hover:bg-stone-900 hover:text-white transition-colors font-medium group">
+                <button className="flex items-center justify-between w-full p-4 bg-white/80 backdrop-blur-sm border border-stone-900 hover:bg-stone-900 hover:text-white transition-colors font-medium group glossy">
                   Upload Dataset <Database size={16} className="group-hover:text-white"/>
                 </button>
-                <Link to="/analytics/pipeline" className="flex items-center justify-between w-full p-4 bg-white border border-stone-900 hover:bg-stone-900 hover:text-white transition-colors font-medium group">
+                <Link to="/analytics/pipeline" className="flex items-center justify-between w-full p-4 bg-white/80 backdrop-blur-sm border border-stone-900 hover:bg-stone-900 hover:text-white transition-colors font-medium group glossy">
                   Create Pipeline <GitBranch size={16} className="group-hover:text-white"/>
                 </Link>
-                <Link to="/analytics/anova" className="flex items-center justify-between w-full p-4 bg-agri-primary text-white hover:bg-stone-900 transition-colors font-medium">
+                <Link to="/analytics/anova" className="flex items-center justify-between w-full p-4 bg-agri-primary/80 backdrop-blur-md text-white hover:bg-stone-900 transition-colors font-medium glossy">
                   Agrigence ANOVA Engine <Calculator size={16}/>
                 </Link>
               </div>
