@@ -143,49 +143,99 @@ const Home: React.FC = () => {
       />
       
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden rounded-b-[3rem] mx-2 mt-2 shadow-sm">
-        <div className="absolute inset-0">
-           <OptimizedImage 
-             src="https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=2000&auto=format&fit=crop" 
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 z-0">
+           <img 
+             src="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=2070&auto=format&fit=crop" 
              alt="Agriculture innovation and technology" 
-             className="w-full h-full object-cover"
-             priority={true}
+             className="w-full h-full object-cover scale-105"
+             referrerPolicy="no-referrer"
            />
-           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-agri-primary/80 z-10"></div>
+           <div className="absolute inset-0 bg-gradient-to-br from-agri-primary/95 via-agri-primary/80 to-transparent z-10"></div>
+           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 z-11"></div>
         </div>
 
-        <div className="container mx-auto px-6 relative z-30 flex flex-col items-center text-center mt-16">
+        <div className="container mx-auto px-6 relative z-30 grid lg:grid-cols-2 gap-12 items-center pt-20">
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="max-w-5xl"
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
           >
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="mb-8 flex flex-col items-center"
+              className="mb-6"
             >
-              <div className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20">
+              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-agri-secondary/20 backdrop-blur-md border border-agri-secondary/30">
                 <Leaf size={14} className="text-agri-secondary" />
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white">Modern Agriculture Hub</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-agri-secondary">Next-Gen Agritech</span>
               </div>
             </motion.div>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif font-bold mb-6 leading-[1.1] text-white tracking-tight">
-              Cultivating <span className="text-transparent bg-clip-text bg-gradient-to-r from-agri-secondary to-emerald-400">Intelligence</span>
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-serif font-bold mb-8 leading-[0.9] text-white tracking-tighter">
+              Future <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-agri-secondary via-amber-200 to-emerald-400">Harvest</span>
             </h1>
-            <p className="text-lg md:text-2xl text-white/90 font-light leading-relaxed mb-12 max-w-3xl mx-auto">
-              Empowering farmers, students, researchers, and innovators with smart agricultural tools, expert research insights, and a global academic community.
+            <p className="text-lg md:text-xl text-white/70 font-light leading-relaxed mb-10 max-w-xl">
+              Merging deep agricultural wisdom with cutting-edge digital intelligence. Empowering the global farming community through data-driven innovation.
             </p>
-            <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 md:gap-6 w-full px-4 sm:px-0">
-               <Link to="/tools" className="w-full sm:w-auto justify-center bg-agri-secondary text-agri-primary px-8 py-4 rounded-full font-bold text-sm hover:bg-white transition-all shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] flex items-center gap-2 group">
-                 <Wrench size={18} className="group-hover:rotate-12 transition-transform" /> EXPLORE TOOLS
+            <div className="flex flex-col sm:flex-row gap-4">
+               <Link to="/tools" className="group relative px-8 py-4 bg-agri-secondary text-agri-primary font-bold text-sm tracking-widest overflow-hidden rounded-xl transition-all hover:scale-105 active:scale-95">
+                 <span className="relative z-10 flex items-center gap-2">
+                   <Wrench size={18} /> EXPLORE ECOSYSTEM
+                 </span>
+                 <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                </Link>
-               <Link to="/blogs" className="w-full sm:w-auto justify-center bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-full font-bold text-sm hover:bg-white/20 transition-all flex items-center gap-2 group">
-                 <BookOpen size={18} className="group-hover:-translate-y-1 transition-transform" /> READ BLOGS
+               <Link to="/blogs" className="group px-8 py-4 bg-white/5 backdrop-blur-xl border border-white/10 text-white font-bold text-sm tracking-widest rounded-xl hover:bg-white/10 transition-all flex items-center gap-2">
+                 <BookOpen size={18} /> RESEARCH LAB
                </Link>
             </div>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
+            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+            transition={{ duration: 1.2, delay: 0.3 }}
+            className="hidden lg:block relative"
+          >
+            <div className="relative z-10 glossy glossy-card rounded-[3rem] p-2 border border-white/20 aspect-square max-w-md mx-auto overflow-hidden">
+               <OptimizedImage 
+                 src="https://images.unsplash.com/photo-1586771107445-d3af22d1031c?q=80&w=800&auto=format&fit=crop" 
+                 className="w-full h-full object-cover rounded-[2.8rem]" 
+                 alt="Tech Agriculture" 
+               />
+               <div className="absolute inset-0 bg-gradient-to-t from-agri-primary/60 to-transparent"></div>
+               <div className="absolute bottom-10 left-10 right-10">
+                  <div className="p-6 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl">
+                    <div className="flex items-center gap-4 mb-2">
+                      <Activity size={20} className="text-agri-secondary" />
+                      <span className="text-xs font-bold text-white uppercase tracking-widest">Live Analytics</span>
+                    </div>
+                    <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                      <motion.div 
+                        animate={{ width: ["20%", "80%", "40%", "90%"] }}
+                        transition={{ repeat: Infinity, duration: 10, ease: "easeInOut" }}
+                        className="h-full bg-agri-secondary"
+                      />
+                    </div>
+                  </div>
+               </div>
+            </div>
+            {/* Floating elements */}
+            <motion.div 
+              animate={{ y: [0, -20, 0] }}
+              transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+              className="absolute -top-10 -right-10 w-32 h-32 glossy rounded-3xl flex items-center justify-center border border-white/20 z-20"
+            >
+              <Droplets size={40} className="text-blue-400" />
+            </motion.div>
+            <motion.div 
+              animate={{ y: [0, 20, 0] }}
+              transition={{ repeat: Infinity, duration: 6, ease: "easeInOut", delay: 1 }}
+              className="absolute -bottom-10 -left-10 w-40 h-40 glossy rounded-full flex items-center justify-center border border-white/20 z-20"
+            >
+              <Leaf size={48} className="text-emerald-400" />
+            </motion.div>
           </motion.div>
         </div>
         
@@ -193,187 +243,344 @@ const Home: React.FC = () => {
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 1 }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 hidden md:flex flex-col items-center gap-2"
+          transition={{ delay: 1.5, duration: 1 }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-3"
         >
-          <span className="text-white/50 text-[10px] uppercase tracking-widest font-bold">Scroll</span>
-          <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
-            <motion.div 
-              animate={{ y: [0, 12, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-              className="w-1 h-2 bg-agri-secondary rounded-full"
-            />
-          </div>
+          <div className="w-px h-20 bg-gradient-to-b from-transparent via-agri-secondary to-transparent"></div>
+          <span className="text-white/30 text-[9px] uppercase tracking-[0.5em] font-bold rotate-90 origin-left translate-x-1 mt-4">Discover</span>
         </motion.div>
       </section>
 
-      {/* 3. NEWS & UPDATES */}
-      <section className="py-24 relative z-10">
+      {/* 2. NEWS & UPDATES (Technical Grid Style) - MOVED HERE */}
+      <section className="py-32 relative z-10 bg-stone-900 text-white overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
         <div className="container mx-auto px-6">
-          <SectionHeader title="News & Updates" link="/news" />
-          <div className="grid md:grid-cols-2 gap-8">
-            {news.length > 0 ? news.slice(0, 2).map((item, i) => (
-              <GlassCard 
-                key={i}
-                onClick={() => navigate(`/news/${item.id}`)}
-                className="p-8"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="w-2 h-2 rounded-full bg-agri-secondary"></span>
-                  <span className="text-stone-500 text-xs font-bold uppercase tracking-widest">{new Date(item.date).toLocaleDateString()}</span>
-                </div>
-                <h4 className="text-2xl font-serif font-bold text-agri-primary group-hover:text-agri-secondary transition-colors leading-snug">{item.title}</h4>
-              </GlassCard>
-            )) : (
-              <div className="col-span-full text-center py-12 text-stone-400 italic">No recent news updates available.</div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* 4. BLOGS & EXPERT INSIGHTS */}
-      <section className="py-24 relative z-10 bg-white">
-        <div className="container mx-auto px-6">
-          <SectionHeader title="Blogs & Expert Insights" link="/blogs" />
-          <div className="grid md:grid-cols-3 gap-8">
-            {blogs.length > 0 ? blogs.map((blog, i) => (
-              <GlassCard 
-                key={i}
-                onClick={() => navigate(`/blog/${blog.id}`)}
-                className="flex flex-col p-0"
-              >
-                <div className="h-64 relative overflow-hidden">
-                  <OptimizedImage 
-                    src={blog.featuredImage || blog.fileUrl || `https://images.unsplash.com/photo-1586771107445-d3af22d1031c?q=80&w=800&auto=format&fit=crop&sig=${i}`} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                    alt={blog.title} 
-                  />
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-full text-[10px] font-bold text-agri-primary uppercase tracking-widest shadow-sm">
-                    {blog.categoryId || 'Agriculture'}
-                  </div>
-                </div>
-                <div className="p-8">
-                  <div className="flex items-center gap-4 mb-4 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
-                    <span className="flex items-center gap-1"><User size={12} /> {blog.authorName}</span>
-                    <span className="flex items-center gap-1"><Calendar size={12} /> {new Date(blog.submissionDate).toLocaleDateString()}</span>
-                  </div>
-                  <h4 className="text-2xl font-serif font-bold text-agri-primary mb-4 group-hover:text-agri-secondary transition-colors line-clamp-2 leading-snug">{blog.title}</h4>
-                  <p className="text-stone-600 text-sm mb-8 line-clamp-3 leading-relaxed">{blog.excerpt || blog.content?.substring(0, 150)}...</p>
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className="text-xs font-bold text-agri-secondary uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
-                      READ ARTICLE <ArrowRight size={14} />
-                    </span>
-                  </div>
-                </div>
-              </GlassCard>
-            )) : (
-              <div className="col-span-full text-center py-12 text-stone-400 italic">No recent blog posts available.</div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* 5. MAGAZINE SECTION */}
-      <section className="py-24 relative overflow-hidden z-10 mx-4 rounded-[3rem] my-12 shadow-xl">
-        <div className="absolute inset-0 bg-stone-100/90 backdrop-blur-2xl"></div>
-        <div className="absolute top-0 right-0 w-1/3 h-full opacity-5 pointer-events-none">
-           <svg viewBox="0 0 100 100" className="w-full h-full fill-current text-agri-primary">
-              <path d="M0,0 L100,0 L100,100 L0,100 Z" />
-           </svg>
-        </div>
-        <div className="container mx-auto px-6 relative z-10 text-agri-primary">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-            <div className="max-w-xl">
-              <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4 tracking-tight">Agriculture Magazines</h2>
-              <p className="text-stone-600 font-medium text-lg">Explore our featured publications, research journals, and monthly agriculture digests.</p>
-            </div>
-            <Link to="/journals" className="text-xs font-bold uppercase tracking-widest text-agri-secondary hover:text-agri-primary transition-all flex items-center gap-2 group">
-              VIEW ALL ISSUES <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
+          <div className="flex items-center gap-4 mb-16">
+            <div className="w-12 h-px bg-agri-secondary"></div>
+            <h2 className="text-xs font-bold uppercase tracking-[0.5em] text-agri-secondary">Global Intelligence Feed</h2>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            {magazines.length > 0 ? magazines.map((mag, i) => (
+          <div className="grid lg:grid-cols-12 gap-12">
+            <div className="lg:col-span-4">
+              <h3 className="text-5xl md:text-6xl font-serif font-bold mb-8 leading-tight">Latest <br /> Breakthroughs</h3>
+              <p className="text-stone-400 text-lg mb-12 font-light">Real-time updates from the intersection of technology and agriculture.</p>
+              <Link to="/news" className="inline-flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-white hover:text-agri-secondary transition-colors group">
+                VIEW ALL UPDATES <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+              </Link>
+            </div>
+            
+            <div className="lg:col-span-8 grid md:grid-cols-2 gap-px bg-white/10 border border-white/10 rounded-3xl overflow-hidden">
+              {news.length > 0 ? news.slice(0, 4).map((item, i) => (
+                <div 
+                  key={i}
+                  onClick={() => navigate(`/news/${item.id}`)}
+                  className="p-10 bg-stone-900 hover:bg-stone-800 transition-colors cursor-pointer group relative overflow-hidden"
+                >
+                  <div className="absolute top-0 left-0 w-1 h-0 bg-agri-secondary group-hover:h-full transition-all duration-500"></div>
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-[10px] font-mono text-stone-500 uppercase tracking-widest">
+                      {new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    <Megaphone size={14} className="text-stone-700 group-hover:text-agri-secondary transition-colors" />
+                  </div>
+                  <h4 className="text-xl font-bold leading-snug group-hover:text-agri-secondary transition-colors">{item.title}</h4>
+                </div>
+              )) : (
+                <div className="col-span-full text-center py-24 text-stone-500 italic">No active intelligence feeds.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. QUICK TOOLS SECTION (Bento Grid Style) */}
+      <section className="py-32 relative z-10">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div className="max-w-2xl">
+              <h2 className="text-5xl md:text-7xl font-serif font-bold text-agri-primary mb-6 tracking-tighter leading-none">
+                Precision <br />
+                <span className="text-agri-secondary">Instruments</span>
+              </h2>
+              <p className="text-stone-500 text-lg font-medium">Advanced computational tools designed for the modern agronomist.</p>
+            </div>
+            <Link to="/tools" className="group flex items-center gap-4 px-8 py-4 bg-stone-900 text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-agri-primary transition-all">
+              FULL CATALOG <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {/* Large Feature Tool */}
+            <div className="md:col-span-2 md:row-span-2">
+              <GlassCard 
+                onClick={() => navigate('/tools/nutrient-req')}
+                className="h-full flex flex-col justify-between bg-emerald-900/5 border-emerald-900/10"
+              >
+                <div>
+                  <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mb-8">
+                    <Leaf size={32} className="text-emerald-600" />
+                  </div>
+                  <h3 className="text-4xl font-serif font-bold text-agri-primary mb-4">Soil Health Intelligence</h3>
+                  <p className="text-stone-600 text-lg leading-relaxed mb-8">Comprehensive nutrient analysis and fertilizer recommendation engine based on global soil standards.</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex -space-x-2">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-stone-200 overflow-hidden">
+                        <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="user" />
+                      </div>
+                    ))}
+                    <div className="w-10 h-10 rounded-full border-2 border-white bg-agri-secondary flex items-center justify-center text-[10px] font-bold text-agri-primary">
+                      +2k
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-agri-secondary uppercase tracking-widest">Launch Tool →</span>
+                </div>
+              </GlassCard>
+            </div>
+
+            {/* Smaller Tools */}
+            <GlassCard onClick={() => navigate('/tools/water-req')} className="bg-blue-50/50 border-blue-100">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
+                <Droplets size={24} className="text-blue-600" />
+              </div>
+              <h3 className="font-bold text-xl text-agri-primary mb-2">Hydro-Sync</h3>
+              <p className="text-stone-500 text-sm mb-6">Precision irrigation scheduling.</p>
+              <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Active</div>
+            </GlassCard>
+
+            <GlassCard onClick={() => navigate('/tools/yield-estimator')} className="bg-amber-50/50 border-amber-100">
+              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center mb-6">
+                <Activity size={24} className="text-amber-600" />
+              </div>
+              <h3 className="font-bold text-xl text-agri-primary mb-2">Yield Predictor</h3>
+              <p className="text-stone-500 text-sm mb-6">Harvest estimation engine.</p>
+              <div className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">98% Accuracy</div>
+            </GlassCard>
+
+            <GlassCard onClick={() => navigate('/tools/economics')} className="md:col-span-2 bg-purple-50/50 border-purple-100">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center shrink-0">
+                  <Calculator size={32} className="text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-2xl text-agri-primary mb-1">Agri-Finance Suite</h3>
+                  <p className="text-stone-500 text-sm">Profitability analysis and cost optimization for large-scale farming.</p>
+                </div>
+                <div className="ml-auto">
+                  <ChevronRight size={24} className="text-stone-300" />
+                </div>
+              </div>
+            </GlassCard>
+          </div>
+        </div>
+      </section>
+
+
+      {/* 4. BLOGS & EXPERT INSIGHTS (Editorial Style) */}
+      <section className="py-32 relative z-10 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center max-w-3xl mx-auto mb-20">
+            <h2 className="text-5xl md:text-7xl font-serif font-bold text-agri-primary mb-6 tracking-tighter">Blogs</h2>
+            <p className="text-stone-500 text-lg">In-depth analysis, peer-reviewed insights, and expert perspectives on the future of food systems.</p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-12">
+            {blogs.length > 0 ? blogs.map((blog, i) => (
               <motion.div 
-                key={i} 
-                initial={{ opacity: 0, y: 20 }}
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-white border border-stone-200 rounded-[2.5rem] p-8 flex flex-col items-center text-center group hover:shadow-2xl transition-all"
+                onClick={() => navigate(`/blog/${blog.id}`)}
+                className="group cursor-pointer"
               >
-                <div className="w-48 h-64 bg-stone-200 rounded-xl mb-8 shadow-xl overflow-hidden relative group-hover:-translate-y-2 transition-transform duration-500">
+                <div className="aspect-[4/5] relative overflow-hidden rounded-[2rem] mb-8 glossy-card">
                   <OptimizedImage 
-                    src={mag.coverImage || `https://images.unsplash.com/photo-1500937386664-56d1dfef3854?q=80&w=400&auto=format&fit=crop`} 
-                    className="w-full h-full object-cover" 
-                    alt={mag.title} 
+                    src={blog.featuredImage || blog.fileUrl || `https://images.unsplash.com/photo-1586771107445-d3af22d1031c?q=80&w=800&auto=format&fit=crop&sig=${i}`} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
+                    alt={blog.title} 
                   />
-                  <div className="absolute inset-0 bg-agri-primary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                    <BookOpen size={48} className="text-white" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-agri-primary/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                  <div className="absolute bottom-8 left-8 right-8">
+                    <div className="inline-block px-4 py-1 bg-agri-secondary text-agri-primary text-[10px] font-bold uppercase tracking-widest rounded-full mb-4">
+                      {blog.categoryId || 'Agriculture'}
+                    </div>
+                    <h4 className="text-2xl font-serif font-bold text-white leading-tight line-clamp-2">{blog.title}</h4>
                   </div>
                 </div>
-                <h4 className="text-2xl font-serif font-bold mb-2 text-agri-primary leading-snug">{mag.title}</h4>
-                <p className="text-stone-500 text-xs mb-6 uppercase tracking-widest font-bold">Issue {mag.issueNumber} • {mag.year}</p>
-                <div className="flex gap-4 mt-auto">
-                   <PDFAction 
-                     fileUrl={mag.pdfUrl} 
-                     title={mag.title} 
-                   />
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-agri-primary font-bold text-[10px]">
+                    {blog.authorName[0]}
+                  </div>
+                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{blog.authorName} • {new Date(blog.submissionDate).toLocaleDateString()}</span>
                 </div>
+                <p className="text-stone-600 text-sm leading-relaxed line-clamp-3 mb-6">{blog.excerpt || blog.content?.substring(0, 150)}...</p>
+                <div className="w-full h-px bg-stone-100 group-hover:bg-agri-secondary transition-colors"></div>
               </motion.div>
             )) : (
-              <div className="col-span-full text-center py-12 text-stone-400 italic">No magazines available at the moment.</div>
+              <div className="col-span-full text-center py-24 text-stone-400 italic">No research papers found.</div>
             )}
           </div>
         </div>
       </section>
 
-      {/* 6. STORE SECTION */}
-      <section className="py-24 relative z-10 bg-white">
+      {/* 5. MAGAZINE SECTION (Immersive Style) */}
+      <section className="py-32 relative overflow-hidden z-10">
+        <div className="absolute inset-0 bg-stone-50"></div>
+        <div className="absolute top-0 left-0 w-full h-full opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')]"></div>
+        
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-20">
+            <div className="lg:w-1/3">
+              <h2 className="text-5xl md:text-7xl font-serif font-bold mb-8 tracking-tighter text-agri-primary">The <br /> <span className="text-agri-secondary">Archives</span></h2>
+              <p className="text-stone-600 font-medium text-lg mb-10 leading-relaxed">Curated publications, research journals, and monthly digests documenting the evolution of agricultural science.</p>
+              <Link to="/journals" className="inline-flex items-center gap-3 px-8 py-4 bg-agri-primary text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-agri-secondary transition-all group">
+                EXPLORE ALL ISSUES <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+              </Link>
+            </div>
+            
+            <div className="lg:w-2/3 grid md:grid-cols-3 gap-8">
+              {magazines.length > 0 ? magazines.map((mag, i) => (
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="group"
+                >
+                  <div className="relative aspect-[3/4] rounded-[2rem] overflow-hidden shadow-2xl mb-6 glossy-card">
+                    <OptimizedImage 
+                      src={mag.coverImage || `https://images.unsplash.com/photo-1500937386664-56d1dfef3854?q=80&w=400&auto=format&fit=crop`} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      alt={mag.title} 
+                    />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors"></div>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                       <PDFAction 
+                         fileUrl={mag.pdfUrl} 
+                         title={mag.title} 
+                       />
+                    </div>
+                  </div>
+                  <h4 className="text-xl font-serif font-bold text-agri-primary mb-1 text-center">{mag.title}</h4>
+                  <p className="text-stone-400 text-[10px] font-bold uppercase tracking-widest text-center">Issue {mag.issueNumber} • {mag.year}</p>
+                </motion.div>
+              )) : (
+                <div className="col-span-full text-center py-24 text-stone-400 italic">Archives are currently being digitized.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 6. OUR MISSION (Split Layout Style) */}
+      <section className="py-32 relative z-10 overflow-hidden">
         <div className="container mx-auto px-6">
-          <SectionHeader title="Store" link="/products" />
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="bg-agri-primary rounded-[4rem] overflow-hidden grid lg:grid-cols-2 shadow-2xl">
+            <div className="relative min-h-[500px]">
+               <OptimizedImage 
+                 src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop" 
+                 className="w-full h-full object-cover" 
+                 alt="Agriculture Mission" 
+               />
+               <div className="absolute inset-0 bg-agri-primary/40 mix-blend-multiply"></div>
+               <div className="absolute inset-0 bg-gradient-to-r from-agri-primary to-transparent"></div>
+               <div className="absolute bottom-12 left-12">
+                  <div className="flex items-center gap-4 text-white">
+                    <div className="w-16 h-16 rounded-full bg-agri-secondary flex items-center justify-center text-agri-primary">
+                      <Shield size={32} />
+                    </div>
+                    <div>
+                      <h4 className="text-2xl font-serif font-bold">Verified Data</h4>
+                      <p className="text-white/60 text-sm">Scientifically validated resources.</p>
+                    </div>
+                  </div>
+               </div>
+            </div>
+            <div className="p-12 md:p-24 flex flex-col justify-center text-white">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-8 h-px bg-agri-secondary"></div>
+                <span className="text-xs font-bold uppercase tracking-[0.4em] text-agri-secondary">Our Core Purpose</span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-serif font-bold mb-10 leading-tight tracking-tighter">Empowering the <br /> <span className="italic font-normal">Next Generation</span></h2>
+              <p className="text-lg text-white/70 leading-relaxed mb-12 font-light max-w-lg">
+                {settings?.missionText || "Agrigence is dedicated to building a trusted digital ecosystem for agricultural knowledge, research publishing, and academic excellence. We bridge the gap between scientific research, student learning, and field application."}
+              </p>
+              
+              <div className="grid grid-cols-2 gap-12 mb-12">
+                <div>
+                  <div className="text-5xl font-serif font-bold text-agri-secondary mb-2">10k+</div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Active Contributors</p>
+                </div>
+                <div>
+                  <div className="text-5xl font-serif font-bold text-agri-secondary mb-2">500+</div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Published Papers</p>
+                </div>
+              </div>
+
+              <Link to="/about-contact" className="group inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest text-agri-secondary hover:text-white transition-colors">
+                LEARN MORE ABOUT OUR IMPACT <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 7. STORE SECTION (Minimal Grid Style) */}
+      <section className="py-32 relative z-10 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="flex justify-between items-end mb-20">
+            <div>
+              <h2 className="text-5xl md:text-7xl font-serif font-bold text-agri-primary tracking-tighter">The <span className="text-agri-secondary">Market</span></h2>
+              <p className="text-stone-500 mt-4 font-medium">Premium agricultural products and academic resources.</p>
+            </div>
+            <Link to="/products" className="text-[10px] font-bold uppercase tracking-[0.3em] text-stone-400 hover:text-agri-primary transition-colors">
+              Enter Store →
+            </Link>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-stone-100 border border-stone-100 rounded-[3rem] overflow-hidden">
             {products.length > 0 ? products.map((prod, i) => (
-              <GlassCard 
+              <div 
                 key={i}
                 onClick={() => navigate(`/product/${prod.id}`)}
-                className="flex flex-col p-0"
+                className="bg-white p-10 flex flex-col hover:bg-stone-50 transition-colors cursor-pointer group"
               >
-                <div className="h-64 relative bg-white overflow-hidden p-6">
+                <div className="aspect-square relative mb-10 p-4">
                   <OptimizedImage 
                     src={prod.imageUrl || `https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=500&auto=format&fit=crop`} 
                     className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700" 
                     alt={prod.name} 
                   />
                 </div>
-                <div className="p-6 flex flex-col flex-grow">
-                  <h4 className="font-bold text-lg text-agri-primary mb-2 truncate group-hover:text-agri-secondary transition-colors">{prod.name}</h4>
-                  <p className="text-stone-600 text-sm mb-6 line-clamp-2">{prod.description}</p>
-                  <div className="flex items-center justify-between mt-auto">
-                    <span className="text-2xl font-serif font-bold text-agri-primary">₹{prod.price}</span>
-                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-agri-primary shadow-sm border border-stone-100 group-hover:bg-agri-secondary group-hover:text-white transition-all">
-                      <ShoppingBag size={20} />
-                    </div>
+                <h4 className="font-bold text-lg text-agri-primary mb-2 line-clamp-1">{prod.name}</h4>
+                <p className="text-stone-400 text-xs mb-8 line-clamp-2 leading-relaxed">{prod.description}</p>
+                <div className="mt-auto flex items-center justify-between">
+                  <span className="text-2xl font-serif font-bold text-agri-primary">₹{prod.price}</span>
+                  <div className="w-10 h-10 rounded-full border border-stone-200 flex items-center justify-center text-stone-400 group-hover:bg-agri-primary group-hover:text-white group-hover:border-agri-primary transition-all">
+                    <ShoppingBag size={18} />
                   </div>
                 </div>
-              </GlassCard>
+              </div>
             )) : (
-              <div className="col-span-full text-center py-12 text-stone-400 italic">Store items are being updated.</div>
+              <div className="col-span-full text-center py-24 text-stone-400 italic">Marketplace is being restocked.</div>
             )}
           </div>
         </div>
       </section>
 
-
-      {/* 7. REVIEWS & TESTIMONIALS */}
-      <section className="py-24 relative overflow-hidden z-10 bg-stone-50">
+      {/* 8. REVIEWS & TESTIMONIALS */}
+      <section className="py-32 relative overflow-hidden z-10 bg-stone-50">
         <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-agri-primary mb-4 tracking-tight">Community Feedback</h2>
-            <p className="text-stone-600 font-medium text-lg">What farmers, researchers, and students say about Agrigence.</p>
+          <div className="text-center mb-20">
+            <h2 className="text-5xl md:text-7xl font-serif font-bold text-agri-primary mb-6 tracking-tighter">Voices of the <span className="text-agri-secondary">Field</span></h2>
+            <p className="text-stone-500 text-lg">Trusted by thousands of agricultural professionals worldwide.</p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-12">
             {feedbacks.length > 0 ? feedbacks.map((fb, i) => (
               <motion.div 
                 key={i} 
@@ -381,196 +588,118 @@ const Home: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-stone-200 relative hover:shadow-xl transition-all"
+                className="bg-white p-12 rounded-[3rem] shadow-premium border border-stone-100 relative hover:shadow-2xl transition-all group"
               >
-                <Quote size={48} className="absolute top-8 right-8 text-agri-secondary/20" />
-                <div className="flex gap-1 mb-6">
+                <Quote size={64} className="absolute top-10 right-10 text-agri-secondary/10 group-hover:text-agri-secondary/20 transition-colors" />
+                <div className="flex gap-1 mb-8">
                   {[...Array(5)].map((_, j) => (
                     <Star key={j} size={14} className={j < (fb.rating || 5) ? "fill-agri-secondary text-agri-secondary" : "text-stone-200"} />
                   ))}
                 </div>
-                <p className="text-stone-700 font-medium italic mb-8 leading-relaxed">"{fb.comment}"</p>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-agri-primary/10 rounded-full flex items-center justify-center text-agri-primary font-bold">
+                <p className="text-stone-700 font-medium italic mb-10 leading-relaxed text-lg">"{fb.comment}"</p>
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 bg-agri-primary text-white rounded-full flex items-center justify-center font-bold text-xl">
                     {fb.userName[0]}
                   </div>
                   <div>
-                    <h5 className="font-bold text-agri-primary text-sm">{fb.userName}</h5>
-                    <p className="text-[10px] text-stone-500 uppercase tracking-widest font-bold">{fb.userOccupation || 'Verified User'}</p>
+                    <h5 className="font-bold text-agri-primary text-base">{fb.userName}</h5>
+                    <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold">{fb.userOccupation || 'Verified User'}</p>
                   </div>
                 </div>
               </motion.div>
             )) : (
-              <div className="col-span-full text-center py-12 text-stone-400 italic">No testimonials available yet.</div>
+              <div className="col-span-full text-center py-24 text-stone-400 italic">No community feedback yet.</div>
             )}
           </div>
         </div>
       </section>
 
-      {/* 8. OUR MISSION */}
-      <section className="py-24 relative z-10">
+      {/* 9. FAQ (AI SEO) */}
+      <section className="py-32 relative z-10 bg-white">
         <div className="container mx-auto px-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="bg-agri-primary rounded-[3rem] overflow-hidden relative shadow-2xl border border-stone-800"
-          >
-            <div className="absolute inset-0 opacity-30 mix-blend-overlay">
-               <OptimizedImage 
-                 src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop" 
-                 className="w-full h-full object-cover" 
-                 alt="Agriculture Mission" 
-               />
-            </div>
-            <div className="relative z-10 p-12 md:p-24 flex flex-col md:flex-row items-center gap-12">
-              <div className="md:w-1/2 text-white">
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="h-px w-12 bg-agri-secondary"></span>
-                  <span className="text-xs font-bold uppercase tracking-widest text-agri-secondary">Our Purpose</span>
-                </div>
-                <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-8 leading-tight">Empowering Farmers, Students, and Researchers</h2>
-                <p className="text-lg text-white/90 leading-relaxed mb-12 font-light">
-                  {settings?.missionText || "Agrigence is dedicated to building a trusted digital ecosystem for agricultural knowledge, research publishing, and academic excellence. We bridge the gap between scientific research, student learning, and field application."}
-                </p>
-                <div className="grid grid-cols-2 gap-8">
-                  <div>
-                    <h4 className="text-4xl font-serif font-bold text-agri-secondary mb-2">10k+</h4>
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/70">Active Users</p>
-                  </div>
-                  <div>
-                    <h4 className="text-4xl font-serif font-bold text-agri-secondary mb-2">500+</h4>
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/70">Research Papers</p>
-                  </div>
-                </div>
-              </div>
-              <div className="md:w-1/2">
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-10 rounded-[2.5rem] text-white">
-                  <h3 className="text-2xl font-serif font-bold mb-8">How we help:</h3>
-                  <ul className="space-y-6">
-                    {[
-                      { icon: <CheckCircle size={20} />, text: "Providing high-precision agricultural calculators" },
-                      { icon: <CheckCircle size={20} />, text: "Publishing peer-reviewed research journals" },
-                      { icon: <CheckCircle size={20} />, text: "Academic resources and study materials for students" },
-                      { icon: <CheckCircle size={20} />, text: "Connecting farmers with expert insights" }
-                    ].map((item, i) => (
-                      <li key={i} className="flex items-start gap-4">
-                        <span className="text-agri-secondary mt-1">{item.icon}</span>
-                        <span className="text-base text-white/90 font-medium">{item.text}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link to="/about-contact" className="mt-10 flex items-center justify-center gap-2 w-full bg-agri-secondary text-agri-primary py-4 rounded-full font-bold text-sm hover:bg-white transition-all group">
-                    LEARN MORE ABOUT US <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          <div className="max-w-5xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-20">
+              <div>
+                <h2 className="text-5xl md:text-7xl font-serif font-bold text-agri-primary mb-8 tracking-tighter leading-none">Common <br /> <span className="text-agri-secondary">Inquiries</span></h2>
+                <p className="text-stone-500 text-lg mb-12">Everything you need to know about our agricultural intelligence platform.</p>
+                <div className="p-8 bg-stone-50 rounded-3xl border border-stone-100">
+                  <h4 className="font-bold text-agri-primary mb-4">Still have questions?</h4>
+                  <p className="text-stone-500 text-sm mb-6">Our support team is ready to help you with any specific technical or academic queries.</p>
+                  <Link to="/about-contact" className="text-xs font-bold text-agri-secondary uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all">
+                    CONTACT SUPPORT <ArrowRight size={14} />
                   </Link>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* 9. FAQ (AI SEO) */}
-      <section className="py-24 relative z-10 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-serif font-bold text-agri-primary mb-4 tracking-tight">Frequently Asked Questions</h2>
-              <p className="text-stone-600 font-medium text-lg">Common questions about agricultural intelligence and our platform.</p>
-            </div>
-            <div className="space-y-6">
-              {[
-                { q: "What is Agrigence?", a: "Agrigence is an international platform for agricultural research, innovation, and scholarly publication connecting students, farmers, and institutions worldwide." },
-                { q: "How can students benefit from this platform?", a: "Students can access a vast archive of research journals, use precision calculators for their studies, and stay updated with the latest agricultural innovations." },
-                { q: "How do I submit a research paper?", a: "Login to your account and visit the 'Submission' page. Ensure your manuscript follows our Author Guidelines." },
-                { q: "Are the calculators accurate?", a: "Yes, our calculators are built using scientifically validated formulas from organizations like ICAR and FAO." }
-              ].map((faq, i) => (
-                <motion.div 
-                  key={i} 
-                  initial={{ opacity: 0, y: 10 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-stone-50 p-8 rounded-3xl border border-stone-200 hover:shadow-md transition-all"
-                >
-                  <h3 className="font-bold text-xl text-agri-primary mb-4 flex items-start gap-3">
-                    <span className="text-agri-secondary mt-1"><CheckCircle size={20} /></span>
-                    {faq.q}
-                  </h3>
-                  <p className="text-stone-600 pl-8 leading-relaxed">{faq.a}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 10. QUICK TOOLS SECTION */}
-      <section className="py-32 relative overflow-hidden z-10 bg-stone-100">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold text-agri-primary mb-6 tracking-tight">Quick Access Tools</h2>
-            <p className="text-stone-600 text-lg max-w-3xl mx-auto">High-precision calculators and academic resources for modern farming and agricultural studies.</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { title: "Soil Health", desc: "Analyze soil parameters instantly.", link: "/tools/nutrient-req", icon: <Leaf size={24} />, color: "bg-emerald-100 text-emerald-600" },
-              { title: "Water Req", desc: "Precision irrigation scheduling.", link: "/tools/water-req", icon: <Droplets size={24} />, color: "bg-blue-100 text-blue-600" },
-              { title: "Yield Estimator", desc: "Predict your harvest accurately.", link: "/tools/yield-estimator", icon: <Activity size={24} />, color: "bg-amber-100 text-amber-600" },
-              { title: "Economics", desc: "Farm profitability analysis.", link: "/tools/economics", icon: <Calculator size={24} />, color: "bg-purple-100 text-purple-600" }
-            ].map((tool, i) => (
-              <GlassCard 
-                key={i}
-                onClick={() => navigate(tool.link)}
-                className="p-8"
-              >
-                <div className={`w-16 h-16 ${tool.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  {tool.icon}
-                </div>
-                <h3 className="font-bold text-xl text-agri-primary mb-3">{tool.title}</h3>
-                <p className="text-stone-600 text-sm mb-8 leading-relaxed">{tool.desc}</p>
-                <div className="text-xs font-bold text-agri-secondary uppercase tracking-widest flex items-center gap-2 group-hover:gap-3 transition-all">
-                  OPEN TOOL <ArrowRight size={14} />
-                </div>
-              </GlassCard>
-            ))}
-          </div>
-          <div className="mt-16 text-center">
-            <Link to="/tools" className="inline-flex items-center gap-2 bg-white border border-stone-200 text-agri-primary px-8 py-4 rounded-full font-bold text-sm hover:bg-stone-50 transition-all shadow-sm group">
-              VIEW ALL 20+ TOOLS <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* 11. TRUST SIGNALS */}
-      <section className="relative z-10 mx-4 mb-4 rounded-[3rem] overflow-hidden shadow-xl bg-stone-900">
-        <div className="absolute inset-0 opacity-10">
-           <svg viewBox="0 0 100 100" className="w-full h-full fill-current text-white">
-              <path d="M0,0 L100,0 L100,100 L0,100 Z" />
-           </svg>
-        </div>
-        <div className="container mx-auto px-6 text-center py-24 relative z-10 text-white">
-          <Shield size={48} className="text-agri-secondary mx-auto mb-8" />
-          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-16 tracking-tight">Trusted by Farmers, Students, and Researchers</h2>
-          
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <div className="bg-white/5 p-10 rounded-[2.5rem] border border-white/10 hover:bg-white/10 transition-all">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-8">Agriculture Data Sources</h3>
-              <div className="flex flex-wrap justify-center gap-3">
-                {['ICAR', 'FAO', 'Agricultural Universities', 'Research Centers', 'Govt. Portals'].map((source, i) => (
-                  <span key={i} className="bg-white/10 px-6 py-3 rounded-full font-bold text-xs border border-white/10 hover:bg-agri-secondary hover:text-agri-primary transition-colors">{source}</span>
+              
+              <div className="space-y-8">
+                {[
+                  { q: "What is Agrigence?", a: "Agrigence is an international platform for agricultural research, innovation, and scholarly publication connecting students, farmers, and institutions worldwide." },
+                  { q: "How can students benefit?", a: "Students can access a vast archive of research journals, use precision calculators for their studies, and stay updated with the latest agricultural innovations." },
+                  { q: "How do I submit a paper?", a: "Login to your account and visit the 'Submission' page. Ensure your manuscript follows our Author Guidelines." },
+                  { q: "Are the calculators accurate?", a: "Yes, our calculators are built using scientifically validated formulas from organizations like ICAR and FAO." }
+                ].map((faq, i) => (
+                  <motion.div 
+                    key={i} 
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.1 }}
+                    className="group"
+                  >
+                    <h3 className="font-bold text-xl text-agri-primary mb-4 flex items-start gap-4 group-hover:text-agri-secondary transition-colors">
+                      <span className="text-agri-secondary mt-1"><CheckCircle size={20} /></span>
+                      {faq.q}
+                    </h3>
+                    <p className="text-stone-500 pl-9 leading-relaxed text-sm">{faq.a}</p>
+                    <div className="mt-8 h-px w-full bg-stone-100"></div>
+                  </motion.div>
                 ))}
               </div>
             </div>
-            <div className="bg-white/5 p-10 rounded-[2.5rem] border border-white/10 hover:bg-white/10 transition-all flex flex-col justify-center items-center">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-stone-400 mb-8">Author & Research</h3>
-              <div className="bg-agri-secondary/20 border border-agri-secondary/30 px-8 py-8 rounded-3xl inline-block">
-                <p className="font-serif text-2xl font-bold text-agri-secondary">Agrigence Research Team</p>
-                <p className="text-sm text-white/70 mt-2">Dedicated to advancing agricultural science through digital innovation.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 10. TRUST SIGNALS */}
+      <section className="py-32 relative z-10 bg-stone-900 text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-5 pointer-events-none">
+           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent"></div>
+        </div>
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="text-center max-w-4xl mx-auto mb-24">
+            <Shield size={64} className="text-agri-secondary mx-auto mb-10" />
+            <h2 className="text-5xl md:text-7xl font-serif font-bold mb-8 tracking-tighter">Global Trust Network</h2>
+            <p className="text-stone-400 text-xl font-light">Collaborating with world-class institutions to ensure data integrity and academic excellence.</p>
+          </div>
+          
+          <div className="grid lg:grid-cols-3 gap-12">
+            <div className="bg-white/5 p-12 rounded-[3rem] border border-white/10 hover:bg-white/10 transition-all">
+              <h3 className="text-[10px] font-bold uppercase tracking-[0.4em] text-agri-secondary mb-10">Data Sources</h3>
+              <div className="flex flex-wrap gap-3">
+                {['ICAR', 'FAO', 'Global Universities', 'Research Centers', 'Govt. Portals'].map((source, i) => (
+                  <span key={i} className="bg-white/5 px-6 py-3 rounded-full font-bold text-[10px] border border-white/10">{source}</span>
+                ))}
+              </div>
+            </div>
+            
+            <div className="lg:col-span-2 bg-white/5 p-12 rounded-[3rem] border border-white/10 hover:bg-white/10 transition-all flex flex-col md:flex-row items-center gap-12">
+              <div className="shrink-0">
+                <div className="w-32 h-32 rounded-full border-4 border-agri-secondary/30 p-2">
+                   <img 
+                     src="https://images.unsplash.com/photo-1592982537447-7440770cbfc9?q=80&w=200&auto=format&fit=crop" 
+                     className="w-full h-full object-cover rounded-full" 
+                     alt="Agrigence Logo" 
+                     referrerPolicy="no-referrer"
+                   />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-3xl font-serif font-bold text-agri-secondary mb-4">Agrigence</h3>
+                <p className="text-stone-400 text-lg font-light leading-relaxed">Our dedicated team of scientists and agronomists ensures every tool, article, and resource meets the highest standards of scientific accuracy.</p>
               </div>
             </div>
           </div>
+          
         </div>
       </section>
     </div>

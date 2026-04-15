@@ -83,8 +83,6 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   };
 
   return (
-    <picture>
-      {webpSrcSet && <source srcSet={webpSrcSet} type="image/webp" sizes={srcSet ? props.sizes || '(max-width: 768px) 100vw, 50vw' : undefined} />}
       <img
         src={optimizedSrc}
         alt={alt}
@@ -101,7 +99,6 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
         referrerPolicy="no-referrer"
         {...props}
       />
-    </picture>
   );
 };
 

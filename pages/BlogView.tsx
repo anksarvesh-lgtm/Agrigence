@@ -3,7 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
 import { Article } from '../types';
-import { Loader2, ArrowLeft, Calendar, Clock, Share2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Calendar, Clock } from 'lucide-react';
+import SocialShare from '../components/SocialShare';
+import { Helmet } from 'react-helmet-async';
 
 const BlogView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -41,6 +43,14 @@ const BlogView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFCFB]">
+      <Helmet>
+        <title>{article.title} | Agrigence</title>
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={article.content ? article.content.replace(/<[^>]*>?/gm, '').substring(0, 150) : ''} />
+        <meta property="og:image" content={article.featuredImage || "https://www.agrigence.in/logo.png"} />
+        <meta property="og:url" content={window.location.href} />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
       <div className="container mx-auto px-6 py-8">
         <button onClick={() => navigate('/blogs')} className="flex items-center gap-2 text-stone-500 hover:text-[#3D2B1F] transition-colors font-bold text-sm uppercase tracking-widest">
            <ArrowLeft size={16} /> Back to Blogs
@@ -90,11 +100,7 @@ const BlogView: React.FC = () => {
 
         <div className="mt-16 pt-8 border-t border-stone-200 flex justify-between items-center">
            <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Share this article</p>
-           <div className="flex gap-4">
-              <button className="p-2 rounded-full bg-stone-100 text-stone-600 hover:bg-[#C29263] hover:text-white transition-all">
-                 <Share2 size={18} />
-              </button>
-           </div>
+           <SocialShare url={window.location.href} title={article.title} />
         </div>
       </article>
     </div>

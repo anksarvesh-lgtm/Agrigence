@@ -1,9 +1,35 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
+  const projectId = 'gen-lang-client-0276037966';
+
+  // Helper to fetch document
+  async function getDoc(collection: string, id: string) {
+    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collection}/${id}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const doc: any = {};
+    if (data.fields) {
+      for (const [key, value] of Object.entries(data.fields)) {
+        doc[key] = (value as any).stringValue || (value as any).integerValue || (value as any).booleanValue;
+      }
+    }
+    return doc;
+  }
+
+  // Helper to inject meta tags
+  function injectMeta(html: string, title: string, description: string, image: string, url: string) {
+    return html
+      .replace(/<title>.*?<\/title>/, `<title>${title} | Agrigence</title>`)
+      .replace(/<meta property="og:title" content=".*?"\/>/, `<meta property="og:title" content="${title}"/>`)
+      .replace(/<meta property="og:description" content=".*?"\/>/, `<meta property="og:description" content="${description}"/>`)
+      .replace(/<meta property="og:image" content=".*?"\/>/, `<meta property="og:image" content="${image}"/>`)
+      .replace(/<meta property="og:url" content=".*?"\/>/, `<meta property="og:url" content="${url}"/>`);
+  }
 
   // API routes
   app.use(express.json());
@@ -113,9 +139,28 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), 'dist');
+    const indexPath = path.join(distPath, 'index.html');
     app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    
+    app.get('*all', async (req, res) => {
+      let html = fs.readFileSync(indexPath, 'utf8');
+      
+      const blogMatch = req.path.match(/^\/blog\/(.+)$/);
+      const newsMatch = req.path.match(/^\/news\/(.+)$/);
+      
+      if (blogMatch || newsMatch) {
+        const collection = blogMatch ? 'blogs' : 'news';
+        const id = blogMatch ? blogMatch[1] : newsMatch![1];
+        const doc = await getDoc(collection, id);
+        if (doc) {
+          const title = doc.title || 'Agrigence';
+          const description = (doc.content || doc.description || '').substring(0, 150);
+          const image = doc.featuredImage || doc.thumbnail || 'https://www.agrigence.in/logo.png';
+          html = injectMeta(html, title, description, image, `https://www.agrigence.in${req.path}`);
+        }
+      }
+      
+      res.send(html);
     });
   }
 
