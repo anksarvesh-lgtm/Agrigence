@@ -19,9 +19,6 @@ import { calculateANOVA } from './anovaCore';
 import { useAuth } from '../../App';
 import { mockBackend } from '../../services/mockBackend';
 import { isPlanExpired } from '../../utils/planAccess';
-import { GoogleGenAI } from '@google/genai';
-
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY });
 
 export default function ANOVAPage() {
   const { user, planDetails } = useAuth();
@@ -36,35 +33,6 @@ export default function ANOVAPage() {
   
   const [result, setResult] = useState<AnovaSummary | null>(null);
   const [warnings, setWarnings] = useState<string[]>([]);
-  const [aiInterpretation, setAiInterpretation] = useState<string | null>(null);
-  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
-
-  const generateAiInterpretation = async () => {
-    if (!result) return;
-    setIsGeneratingAi(true);
-    try {
-      const prompt = `You are an expert agricultural statistician. I have just run an ANOVA analysis.
-      Here are the results:
-      Design: ${design}
-      CV (%): ${result.cv.toFixed(2)}
-      LSD: ${result.lsd.toFixed(4)}
-      F-Calculated: ${result.fCalc.toFixed(2)}
-      Is Significant: ${result.isSignificant ? 'Yes' : 'No'}
-      
-      Mean Comparison:
-      ${result.means.map(m => `Treatment ${m.treatment}: Mean = ${m.mean.toFixed(2)}, Grouping = ${m.grouping}`).join('\n')}
-      
-      Please provide a concise, 2-3 paragraph interpretation of these results suitable for a scientific report's "Results and Discussion" section. Explain what the significance means, which treatments performed best based on the groupings, and if the CV indicates good experimental precision.`;
-
-      // Interpretation logic removed
-      setAiInterpretation("AI interpretation disabled.");
-    } catch (error) {
-      console.error("Interpretation failed:", error);
-      setAiInterpretation("Failed to generate interpretation.");
-    } finally {
-      setIsGeneratingAi(false);
-    }
-  };
 
   const addRow = () => {
     setData([...data, { id: `obs-${Date.now()}`, replication: 'R1', treatment: 'T1', value: 0 }]);
@@ -410,41 +378,6 @@ export default function ANOVAPage() {
                     </tbody>
                   </table>
                 </div>
-              </div>
-
-              <div className="bg-purple-50/50 rounded-2xl shadow-sm border border-purple-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-purple-100 flex items-center justify-between">
-                  <h2 className="font-semibold text-purple-900 flex items-center gap-2">
-                    <Wand2 size={18} className="text-purple-600" /> AI Interpretation
-                  </h2>
-                  {!isPlanActive ? (
-                    <Link to="/subscription" className="flex items-center gap-2 text-xs font-medium text-purple-700 bg-purple-100 px-3 py-1.5 rounded-lg hover:bg-purple-200 transition-colors">
-                      <Lock size={14} /> Premium Feature
-                    </Link>
-                  ) : !aiInterpretation && (
-                    <button 
-                      onClick={generateAiInterpretation}
-                      disabled={isGeneratingAi}
-                      className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2"
-                    >
-                      {isGeneratingAi ? <Loader2 size={16} className="animate-spin" /> : 'Generate Interpretation'}
-                    </button>
-                  )}
-                </div>
-                {isPlanActive && aiInterpretation && (
-                  <div className="p-5">
-                    <div className="prose prose-sm prose-purple max-w-none text-stone-700 whitespace-pre-wrap">
-                      {aiInterpretation}
-                    </div>
-                    <button 
-                      onClick={generateAiInterpretation}
-                      disabled={isGeneratingAi}
-                      className="mt-4 text-xs font-medium text-purple-600 hover:text-purple-700 flex items-center gap-1"
-                    >
-                      {isGeneratingAi ? <Loader2 size={12} className="animate-spin" /> : 'Regenerate'}
-                    </button>
-                  </div>
-                )}
               </div>
             </>
           ) : (

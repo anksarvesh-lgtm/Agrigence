@@ -52,16 +52,17 @@ const DataViewer = ({ data, level = 0 }: { data: any, level?: number }) => {
     );
   }
 
-  return <span className="font-mono text-stone-800 text-sm">{JSON.stringify(data, (key, value) => {
-    if (typeof value === 'object' && value !== null) {
-      if (value instanceof HTMLElement || value instanceof Window) return '[Circular/DOM]';
-      // Simple circular reference detection
-      const seen = new WeakSet();
-      if (seen.has(value)) return '[Circular]';
-      seen.add(value);
-    }
-    return value;
-  })}</span>;
+  return <span className="font-mono text-stone-800 text-sm">{(() => {
+    const seen = new WeakSet();
+    return JSON.stringify(data, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        if (value instanceof HTMLElement || value instanceof Window) return '[Circular/DOM]';
+        if (seen.has(value)) return '[Circular]';
+        seen.add(value);
+      }
+      return value;
+    });
+  })()}</span>;
 };
 
 const ToolHistoryDetail: React.FC = () => {

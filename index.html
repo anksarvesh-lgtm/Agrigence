@@ -71,6 +71,15 @@
     <!-- Preload Critical Hero Image -->
     <link rel="preload" as="image" href="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=2070&auto=format&fit=crop" />
     
+    <script>
+      // Prevent theme flashing
+      if (localStorage.getItem('theme') === 'dark' || !localStorage.getItem('theme')) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    </script>
+
     <!-- Tailwind CDN for styling configuration -->
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -82,11 +91,24 @@
         --bg-silk: #FAFAFA; /* Off-white */
         --text-charcoal: #1C1917; /* Stone 900 */
         --border-sepia: #E7E5E4; /* Stone 200 */
+        --grid-color: #E7E5E4;
+      }
+      .dark {
+        --primary-earth: #D4A373; /* Lighter brown for dark mode */
+        --secondary-tan: #E9C46A; 
+        --accent-gold: #F4A261;
+        --bg-silk: #121212; /* Dark background */
+        --text-charcoal: #E5E5E5; /* Light text */
+        --border-sepia: #333333; /* Dark border */
+        --grid-color: #333333;
+      }
+      html {
+        position: relative;
       }
       body {
         background-color: var(--bg-silk);
         color: var(--text-charcoal);
-        background-image: radial-gradient(#E7E5E4 0.5px, transparent 0.5px);
+        background-image: radial-gradient(var(--grid-color) 0.5px, transparent 0.5px);
         background-size: 30px 30px;
       }
       .premium-shadow {
@@ -98,6 +120,7 @@
     </style>
     <script>
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             fontFamily: {
