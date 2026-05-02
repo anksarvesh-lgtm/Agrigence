@@ -1,7 +1,7 @@
 import express from 'express';
-import { db } from './db.js';
-import { eventBus } from './eventBus.js';
-import { queueMessage } from './queue.js';
+import { db } from './db.ts';
+import { eventBus } from './eventBus.ts';
+import { queueMessage } from './queue.ts';
 
 export const whatsappRouter = express.Router();
 

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { db } from './db.js';
+import { db } from './db.ts';
 
 const WHAPI_URL = 'https://gate.whapi.cloud/messages/text';
 const MAX_MESSAGES_PER_DAY = 150;

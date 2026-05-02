@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
-import { db } from './db.js';
-import { queueMessage } from './queue.js';
+import { db } from './db.ts';
+import { queueMessage } from './queue.ts';
 
 class WhatsAppEventBus extends EventEmitter {
   constructor() {

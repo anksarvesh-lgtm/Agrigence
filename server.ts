@@ -1,7 +1,9 @@
 import express from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
-import { whatsappRouter } from './src/server/whatsapp/api.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+import { whatsappRouter } from './src/server/whatsapp/api.ts';
 
 async function startServer() {
   const app = express();
@@ -222,7 +224,7 @@ Always structure answers like this:
   let razorpayInstance: any = null;
 
   try {
-    const Razorpay = require('razorpay');
+    const Razorpay = (await import('razorpay')).default;
     razorpayInstance = new Razorpay({
       key_id: RAZORPAY_KEY_ID,
       key_secret: RAZORPAY_KEY_SECRET,
@@ -251,9 +253,9 @@ Always structure answers like this:
     }
   });
 
-  app.post('/api/mobile/razorpay/verify-payment', (req, res) => {
+  app.post('/api/mobile/razorpay/verify-payment', async (req, res) => {
     try {
-      const crypto = require('crypto');
+      const crypto = await import('crypto');
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
       // Verify the signature

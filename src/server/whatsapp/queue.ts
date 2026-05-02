@@ -1,7 +1,7 @@
 import { Queue, Worker, QueueEvents } from 'bullmq';
 import IORedis from 'ioredis';
-import { sendWhatsAppMessage } from './whapi.js';
-import { db } from './db.js';
+import { sendWhatsAppMessage } from './whapi.ts';
+import { db } from './db.ts';
 
 // Configuration
 let REDIS_URL = process.env.REDIS_URL || '';
