@@ -2,14 +2,25 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../services/mockBackend';
 import { Article, EditorialMember, NewsItem, Product } from '../types';
-import { Plus, Trash2, CheckCircle, XCircle, Edit2 } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, XCircle, Edit2, RefreshCw } from 'lucide-react';
+import { db } from '../src/firebase';
+import { collection, getDocs, doc, updateDoc, query, orderBy } from 'firebase/firestore';
+
+interface PasswordResetRequest {
+  id: string;
+  email: string;
+  dob: string;
+  status: 'pending' | 'reset';
+  createdAt: any;
+}
 
 const Admin: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'articles' | 'news' | 'journals' | 'members' | 'products'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'news' | 'journals' | 'members' | 'products' | 'password_resets'>('articles');
   const [articles, setArticles] = useState<Article[]>([]);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [members, setMembers] = useState<EditorialMember[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [passwordResets, setPasswordResets] = useState<PasswordResetRequest[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,9 +28,18 @@ const Admin: React.FC = () => {
       setNews(await mockBackend.getNews());
       setMembers(await mockBackend.getMembers());
       setProducts(await mockBackend.getProducts());
+      
+      const q = query(collection(db, 'password_reset_requests'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      setPasswordResets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PasswordResetRequest)));
     };
     fetchData();
   }, []);
+
+  const handleResetStatus = async (id: string) => {
+    await updateDoc(doc(db, 'password_reset_requests', id), { status: 'reset' });
+    setPasswordResets(prev => prev.map(r => r.id === id ? { ...r, status: 'reset' } : r));
+  };
 
   // Article Management
   const handleArticleAction = async (id: string, status: 'APPROVED' | 'REJECTED') => {
@@ -103,6 +123,7 @@ const Admin: React.FC = () => {
     { id: 'news', label: 'Manage News' },
     { id: 'members', label: 'Editorial Board' },
     { id: 'products', label: 'Manage Store' },
+    { id: 'password_resets', label: 'Password Reset Requests' },
   ];
 
   return (
@@ -142,6 +163,24 @@ const Admin: React.FC = () => {
             </div>
           ))}
           {articles.length === 0 && <p className="text-stone-400 text-center">No articles found.</p>}
+        </div>
+      )}
+
+      {/* PASSWORD RESETS TAB */}
+      {activeTab === 'password_resets' && (
+        <div className="space-y-4">
+          {passwordResets.map(request => (
+            <div key={request.id} className="bg-white p-4 rounded-lg shadow-sm border border-stone-100 flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-stone-800">{request.email}</h3>
+                <p className="text-xs text-stone-500">DOB: {request.dob} • Status: {request.status}</p>
+              </div>
+              {request.status === 'pending' && (
+                <button onClick={() => handleResetStatus(request.id)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"><RefreshCw /></button>
+              )}
+            </div>
+          ))}
+          {passwordResets.length === 0 && <p className="text-stone-400 text-center">No password reset requests.</p>}
         </div>
       )}
 

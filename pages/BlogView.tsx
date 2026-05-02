@@ -94,9 +94,19 @@ const BlogView: React.FC = () => {
         <div 
           className="prose prose-stone prose-lg max-w-none font-serif text-stone-700 leading-relaxed"
           style={{ wordWrap: 'break-word' }} 
-          dangerouslySetInnerHTML={{ __html: article.content || '<p>No content available.</p>' }}
+          dangerouslySetInnerHTML={{ __html: article.content || '' }}
         >
         </div>
+
+        {article.fileUrl && (
+           <div className="mt-12 p-6 bg-[#3D2B1F]/5 rounded-2xl border border-[#3D2B1F]/10 flex flex-col items-center text-center">
+              <h4 className="text-sm font-bold text-[#3D2B1F] mb-2 uppercase tracking-widest">Attached Document</h4>
+              <p className="text-stone-500 mb-6 font-serif">The author has attached a supplementary document for this post.</p>
+              <a href={article.fileUrl} target="_blank" rel="noreferrer" className="bg-[#C29263] text-white px-8 py-3 rounded-full font-bold uppercase tracking-widest text-xs hover:bg-[#a67c52] transition-colors shadow-lg">
+                 Download .docx
+              </a>
+           </div>
+        )}
 
         <div className="mt-16 pt-8 border-t border-stone-200 flex justify-between items-center">
            <p className="text-stone-400 text-xs font-bold uppercase tracking-widest">Share this article</p>

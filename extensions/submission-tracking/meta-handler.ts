@@ -1,5 +1,6 @@
 
 import { Article } from '../../types';
+import { safeStringify } from '../../lib/safeStringify';
 
 export interface SubmissionMeta {
   articleId: string;
@@ -26,7 +27,7 @@ export const createMetaFile = async (articleId: string, title: string, author: s
   };
 
   const path = getMetaKey(articleId);
-  window.localStorage.setItem(path, JSON.stringify(meta));
+  window.localStorage.setItem(path, safeStringify(meta));
   return true;
 };
 
@@ -35,24 +36,28 @@ export const getMetaFile = async (article: Article): Promise<SubmissionMeta> => 
   const path = getMetaKey(article.id);
   const data = window.localStorage.getItem(path);
   
-  if (data) {
-    return JSON.parse(data);
+  if (data && data !== '[Unstringifiable Object]' && !data.startsWith('[Complex Object')) {
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      // Ignored
+    }
   }
 
   // Auto-Recovery: Create and return a default record if missing
   // This ensures the UI always has data to render
   const defaultMeta: SubmissionMeta = {
-    articleId: article.id,
-    title: article.title,
-    author: article.authorName,
-    submittedAt: article.submissionDate,
+    articleId: String(article.id || ''),
+    title: String(article.title || 'Untitled'),
+    author: String(article.authorName || 'Unknown'),
+    submittedAt: String(article.submissionDate || new Date().toISOString()),
     status: 'Pending',
     remarks: 'Status pending initialization...',
-    lastUpdated: article.submissionDate
+    lastUpdated: String(article.submissionDate || new Date().toISOString())
   };
   
   // Optionally persist this recovery to fix the data gap
-  window.localStorage.setItem(path, JSON.stringify(defaultMeta));
+  window.localStorage.setItem(path, safeStringify(defaultMeta));
   
   return defaultMeta;
 };
@@ -62,15 +67,19 @@ export const updateMetaStatus = async (articleId: string, status: SubmissionMeta
   const data = window.localStorage.getItem(path);
   
   let current: SubmissionMeta;
-  if (data) {
-    current = JSON.parse(data);
+  if (data && data !== '[Unstringifiable Object]' && !data.startsWith('[Complex Object')) {
+    try {
+      current = JSON.parse(data);
+    } catch(e) {
+      return false;
+    }
   } else {
     // Should not happen with getMetaFile utilized, but safety first
     return false; 
   }
 
   const updated = { ...current, status, remarks, lastUpdated: new Date().toISOString() };
-  window.localStorage.setItem(path, JSON.stringify(updated));
+  window.localStorage.setItem(path, safeStringify(updated));
   return true;
 };
 

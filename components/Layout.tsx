@@ -12,6 +12,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { useConfirm } from './ContextualConfirm';
 import OptimizedImage from './OptimizedImage';
 import ThemeToggle from './ThemeToggle';
+import Footer from './Footer';
 
 const DockItem = ({ children, mouseY, isCollapsed, onClick, isActive }: any) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -249,7 +250,7 @@ const AppLayout: React.FC = () => {
   });
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-sans">
+    <div className="flex h-screen w-full overflow-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-sans">
       
       {/* Sidebar (Desktop) & Drawer (Mobile) */}
       <aside className={`fixed inset-y-0 left-0 z-50 glossy border-r border-white/10 transform transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64'} md:relative md:translate-x-0 ${isCollapsed ? 'md:w-20' : 'md:w-64'} flex flex-col shadow-2xl md:shadow-none`}>
@@ -472,7 +473,7 @@ const AppLayout: React.FC = () => {
         </header>
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto bg-stone-50 dark:bg-stone-950 relative">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-stone-50 dark:bg-stone-950 relative">
           {/* Background darkening overlay during transition */}
           <AnimatePresence>
             {location.pathname && (
@@ -514,9 +515,12 @@ const AppLayout: React.FC = () => {
                 duration: 0.5,
                 ease: [0.22, 1, 0.36, 1]
               }}
-              className="h-full w-full relative z-10"
+              className="h-full w-full relative z-10 flex flex-col"
             >
-              <Outlet />
+              <div className="flex-1">
+                <Outlet />
+              </div>
+              <Footer />
             </motion.div>
           </AnimatePresence>
         </main>

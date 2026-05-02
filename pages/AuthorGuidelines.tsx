@@ -315,7 +315,7 @@ const AuthorGuidelines: React.FC = () => {
                   <a href="mailto:info@agrigence.in" className="inline-flex items-center gap-2 bg-[#3D2B1F] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#2a1e16] transition-colors">
                     <Mail size={18}/> Contact Editorial Office
                   </a>
-                  <a href="https://agrigence.com" className="inline-flex items-center gap-2 bg-white text-[#3D2B1F] border border-[#3D2B1F]/20 px-6 py-3 rounded-xl font-bold hover:bg-stone-50 transition-colors">
+                  <a href="https://www.agrigence.in/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-white text-[#3D2B1F] border border-[#3D2B1F]/20 px-6 py-3 rounded-xl font-bold hover:bg-stone-50 transition-colors">
                     Visit Website
                   </a>
                 </div>

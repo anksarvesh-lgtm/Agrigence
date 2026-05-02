@@ -152,6 +152,117 @@
         transform: rotate(25deg);
         pointer-events: none;
       }
+      /* --- WEATHER ANIMATIONS --- */
+      .sun-container {
+          position: relative;
+          width: 60px;
+          height: 60px;
+          background: radial-gradient(circle, #ffce54 40%, #f6bb42 100%);
+          border-radius: 50%;
+          box-shadow: 0 0 20px #ffce54;
+          animation: pulse-sun 3s infinite ease-in-out;
+      }
+      .sun-container::after {
+          content: "";
+          position: absolute;
+          top: -20%; left: -20%; width: 140%; height: 140%;
+          border: 4px dashed #ffce54;
+          border-radius: 50%;
+          animation: rotate-rays 10s linear infinite;
+          opacity: 0.6;
+      }
+      @keyframes pulse-sun {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 20px #ffce54; }
+          50% { transform: scale(1.1); box-shadow: 0 0 30px #f6bb42; }
+      }
+      @keyframes rotate-rays {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+      }
+      .rain-container {
+          width: 60px;
+          height: 60px;
+          background: #e6e9ed;
+          border-radius: 12px;
+          position: relative;
+          overflow: hidden;
+          box-shadow: inset 0 -10px 20px rgba(0,0,0,0.1);
+      }
+      .drop {
+          position: absolute;
+          background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, #4a89dc 100%);
+          width: 3px;
+          height: 20px;
+          top: -25px;
+          animation: fall linear infinite;
+      }
+      @keyframes fall {
+          to { transform: translateY(85px); }
+      }
+      .drop:nth-child(1) { left: 20%; animation-duration: 0.7s; }
+      .drop:nth-child(2) { left: 50%; animation-duration: 0.9s; animation-delay: 0.2s; }
+      .drop:nth-child(3) { left: 80%; animation-duration: 0.6s; animation-delay: 0.4s; }
+      .drop:nth-child(4) { left: 35%; animation-duration: 0.8s; animation-delay: 0.1s; }
+      .drop:nth-child(5) { left: 65%; animation-duration: 0.6s; animation-delay: 0.5s; }
+      .cloud-anim {
+          width: 60px; height: 35px;
+          background: white;
+          border-radius: 30px;
+          position: relative;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      }
+      .cloud-anim::before, .cloud-anim::after {
+          content: ''; position: absolute; background: white; border-radius: 50%;
+      }
+      .cloud-anim::before { width: 25px; height: 25px; top: -10px; left: 10px; }
+      .cloud-anim::after { width: 35px; height: 35px; top: -15px; right: 10px; }
+      .cloud-container {
+          display: flex; align-items: center; justify-content: center;
+          width: 60px; height: 60px; overflow: hidden; position: relative;
+          background: #4fc3f7; border-radius: 16px;
+      }
+      .moving-cloud {
+          animation: move-cloud 4s linear infinite;
+      }
+      @keyframes move-cloud {
+          0% { transform: translateX(-60px); }
+          100% { transform: translateX(60px); }
+      }
+      .thunder-container {
+          width: 60px; height: 60px;
+          background: #434a54; border-radius: 12px; position: relative; overflow: hidden;
+      }
+      .thunder-container .storm-cloud {
+          background: #656d78; width: 45px; height: 25px; border-radius: 20px;
+          position: absolute; top: 10px; left: 7px;
+      }
+      .thunder-container .storm-cloud::before {
+          content: ''; position: absolute; width: 20px; height: 20px; top: -10px; left: 10px; background: #656d78; border-radius: 50%;
+      }
+      .lightning {
+          position: absolute; bottom: 5px; left: 25px; width: 0; height: 0;
+          border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 15px solid #ffce54;
+          animation: flash 2s infinite;
+      }
+      @keyframes flash {
+          0%, 90%, 100% { opacity: 0; }
+          91%, 95% { opacity: 1; }
+      }
+      .fog-container {
+          width: 60px; height: 60px;
+          background: #aab2bd; border-radius: 12px; position: relative; overflow: hidden;
+          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+      }
+      .fog-bar {
+          width: 40px; height: 4px; background: rgba(255,255,255,0.7); border-radius: 2px;
+          animation: fade-fog 3s infinite alternate;
+      }
+      .fog-bar:nth-child(2) { width: 30px; animation-delay: 0.5s; opacity: 0.4;}
+      .fog-bar:nth-child(3) { width: 45px; animation-delay: 1s; opacity: 0.5;}
+      @keyframes fade-fog {
+          0% { transform: translateX(-5px); opacity: 0.2; }
+          100% { transform: translateX(5px); opacity: 0.8; }
+      }
     </style>
     <script>
       tailwind.config = {
@@ -197,26 +308,34 @@
         }
       }
     </script>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
-    "framer-motion": "https://esm.sh/framer-motion@^12.34.0",
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.4",
-    "firebase/": "https://esm.sh/firebase@^12.9.0/",
-    "react-dom": "https://esm.sh/react-dom@^19.2.4",
-    "@google/genai": "https://esm.sh/@google/genai@^1.41.0"
-  }
-}
-</script>
 </head>
   <body class="bg-agri-bg text-agri-text antialiased selection:bg-agri-secondary selection:text-white">
+    <div id="error-container" style="display: none; color: red; padding: 20px; font-family: monospace; white-space: pre-wrap;"></div>
+    <script>
+      window.addEventListener('error', function(e) {
+        document.getElementById('error-container').style.display = 'block';
+        document.getElementById('error-container').innerText += e.message + '\n' + (e.error && e.error.stack ? e.error.stack : '') + '\n\n';
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        document.getElementById('error-container').style.display = 'block';
+        document.getElementById('error-container').innerText += e.reason + '\n\n';
+      });
+    </script>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
+    <!--Start of Tawk.to Script-->
+    <script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    Tawk_API.visitor = { name: 'Kishan mitra' };
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/69f5e57b56b5461c337607e0/1jnk8grl7';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!--End of Tawk.to Script-->
   </body>
 </html>

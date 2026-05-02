@@ -51,7 +51,7 @@ service cloud.firestore {
     // SUPER_ADMIN: Full System Authority
     function isSuperAdmin() {
       return isSignedIn() && (
-        (request.auth.token.email == 'anksarvesh@gmail.com') ||
+        (request.auth.token.email == 'anksarvesh@gmail.com' || request.auth.token.email == 'agrigence@gmail.com') ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'USER') == 'SUPER_ADMIN')
       );
@@ -60,7 +60,7 @@ service cloud.firestore {
     // ADMIN: Operational Manager
     function isAdmin() {
       return isSignedIn() && (
-        (request.auth.token.email == 'anksarvesh@gmail.com') ||
+        (request.auth.token.email == 'anksarvesh@gmail.com' || request.auth.token.email == 'agrigence@gmail.com') ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'USER') in ['SUPER_ADMIN', 'ADMIN'])
       );
@@ -326,7 +326,7 @@ service cloud.firestore {
     }
 
     match /website_visitors/{docId} {
-      allow read: if isAdmin();
+      allow read: if true;
       allow create, update: if true;
       allow delete: if isSuperAdmin();
     }
@@ -340,6 +340,31 @@ service cloud.firestore {
     match /site_stats/{docId} {
       allow read: if true;
       allow write: if true;
+    }
+
+    match /farmer_questions/{docId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if isAdmin();
+    }
+
+    match /farmer_replies/{docId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if isAdmin();
+    }
+
+    match /govt_schemes/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /marketplace_items/{docId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (resource.data.sellerId == request.auth.uid || isAdmin());
     }
 
     // --- DEFAULT DENY ---

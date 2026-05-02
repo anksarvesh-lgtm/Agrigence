@@ -2,9 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { User, Role, EditorialRole, Tool, SubscriptionPlan } from '../../types';
-import { Search, Edit, Trash2, Shield, Lock, Unlock, UserPlus, X, Globe, Smartphone, BookOpen, Activity, Plus, Minus, FileText, PenTool, Clock, Gift } from 'lucide-react';
+import { Search, Edit, Trash2, Shield, Lock, Unlock, UserPlus, X, Globe, Smartphone, BookOpen, Activity, Plus, Minus, FileText, PenTool, Clock, Gift, RefreshCw } from 'lucide-react';
 import { useConfirm } from '../../components/ContextualConfirm';
 import { useAuth } from '../../App';
+import axios from 'axios';
 
 const UserManagement: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -25,7 +26,7 @@ const UserManagement: React.FC = () => {
     notes: '',
     adminEnabledTools: [] as string[],
     adminExpiryOverride: '' as string,
-    userType: 'INDIVIDUAL' as 'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION'
+    userType: 'INDIVIDUAL' as 'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION' | 'FARMER'
   });
   const [isSavingLimits, setIsSavingLimits] = useState(false);
 
@@ -139,19 +140,68 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] = useState(false);
+  const [selectedUserForReset, setSelectedUserForReset] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+
+  const handleResetPassword = (user: User) => {
+    setSelectedUserForReset(user);
+    setNewPassword('');
+    setIsResetPasswordModalOpen(true);
+  };
+
+  const submitResetPassword = async () => {
+    if (!selectedUserForReset || !newPassword) return;
+    setIsResettingPassword(true);
+    try {
+      await mockBackend.adminResetUserPassword(selectedUserForReset.id, newPassword);
+      setIsResetPasswordModalOpen(false);
+      alert("Password reset successfully.");
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Failed to reset password.");
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+
+  const [syncing, setSyncing] = useState(false);
+  const handleSyncUsers = async () => {
+    if (!window.confirm('This will sync all users contacts to the WhatsApp database. Continue?')) return;
+    setSyncing(true);
+    try {
+      const res = await axios.post('/api/whatsapp/sync-users');
+      alert(`Successfully synced ${res.data.count} new contacts from ${res.data.totalProcessed} users.`);
+    } catch (e: any) {
+      alert('Sync failed: ' + (e.response?.data?.error || e.message));
+    }
+    setSyncing(false);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <h1 className="text-2xl font-bold text-admin-text">User Management</h1>
         {isSuperAdmin && (
-          <button 
-            onClick={() => { setEditingUser({}); setIsModalOpen(true); }}
-            className="bg-agri-secondary hover:bg-agri-primary text-white px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all font-bold text-sm shadow-md"
-          >
-            <UserPlus size={18} /> Add User
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={handleSyncUsers}
+              disabled={syncing}
+              className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all font-bold text-sm shadow-md ${syncing ? 'bg-stone-200 text-stone-500 cursor-not-allowed' : 'bg-stone-900 text-white hover:bg-black'}`}
+            >
+              <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
+              {syncing ? 'Syncing...' : 'Sync WhatsApp Contacts'}
+            </button>
+            <button 
+              onClick={() => { setEditingUser({}); setIsModalOpen(true); }}
+              className="bg-agri-secondary hover:bg-agri-primary text-white px-6 py-2.5 rounded-xl flex items-center gap-2 transition-all font-bold text-sm shadow-md"
+            >
+              <UserPlus size={18} /> Add User
+            </button>
+          </div>
         )}
       </div>
 
@@ -240,6 +290,9 @@ const UserManagement: React.FC = () => {
                       </button>
                       {isSuperAdmin && (
                         <>
+                          <button onClick={() => handleResetPassword(user)} className="p-2 hover:bg-yellow-50 rounded-lg text-admin-muted hover:text-yellow-600 transition-colors" title="Reset Password">
+                            <Lock size={16} />
+                          </button>
                           <button onClick={() => handleToggleBlock(user)} className="p-2 hover:bg-white border border-transparent hover:border-admin-border rounded-lg text-admin-muted hover:text-admin-text transition-all shadow-sm" title={user.status === 'BLOCKED' ? "Unblock" : "Block"}>
                             {user.status === 'BLOCKED' ? <Unlock size={16} /> : <Lock size={16} />}
                           </button>
@@ -364,6 +417,7 @@ const UserManagement: React.FC = () => {
                     <option value="INDIVIDUAL">Individual</option>
                     <option value="INSTITUTE">Institute</option>
                     <option value="ORGANISATION">Organisation</option>
+                    <option value="FARMER">Farmer</option>
                   </select>
                 </div>
 
@@ -519,6 +573,46 @@ const UserManagement: React.FC = () => {
             <div className="p-6 border-t border-admin-border flex justify-end gap-3 bg-admin-bg rounded-b-2xl">
               <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-admin-secondary hover:text-admin-text font-bold text-sm">Cancel</button>
               <button onClick={handleSaveUser} className="bg-agri-secondary hover:bg-agri-primary text-white px-6 py-2 rounded-xl font-bold shadow-lg transition-all text-sm">Save User</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isResetPasswordModalOpen && selectedUserForReset && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="p-6 border-b border-admin-border flex justify-between items-center">
+              <h2 className="text-xl font-bold text-admin-text flex items-center gap-2">
+                <Lock className="text-yellow-500" /> Reset Password
+              </h2>
+              <button onClick={() => setIsResetPasswordModalOpen(false)} className="text-admin-muted hover:text-admin-text transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-admin-secondary">
+                Resetting password for <span className="font-bold text-admin-text">{selectedUserForReset.name}</span> ({selectedUserForReset.email}).
+              </p>
+              <div>
+                <label className="block text-xs font-bold text-admin-secondary mb-1 uppercase tracking-wide">New Password</label>
+                <input 
+                  type="password"
+                  className="w-full bg-white border border-admin-border rounded-lg p-3 text-admin-text focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 outline-none transition-all"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-admin-border flex justify-end gap-3 bg-admin-bg rounded-b-2xl">
+              <button onClick={() => setIsResetPasswordModalOpen(false)} className="px-4 py-2 text-admin-secondary hover:text-admin-text font-bold text-sm">Cancel</button>
+              <button 
+                onClick={submitResetPassword} 
+                disabled={isResettingPassword || !newPassword}
+                className="bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white px-6 py-2 rounded-xl font-bold shadow-lg transition-all text-sm"
+              >
+                {isResettingPassword ? 'Resetting...' : 'Reset Password'}
+              </button>
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ import {
   Settings, LogOut, Menu, X, Image, CreditCard,
   Rss, Award, Newspaper, Tag, ShieldCheck, Megaphone,
   Navigation, Layout as LayoutIcon, Globe, Mail, MessageSquare, Files, Sliders, Trash2,
-  Activity, FolderOpen, Crown, Layers, PenTool, Home, BrainCircuit, Bot,
+  Activity, FolderOpen, Crown, Layers, PenTool, Home, BrainCircuit, Bot, Landmark, Tractor,
 } from 'lucide-react';
 import Logo from '../components/Logo';
 
@@ -61,8 +61,11 @@ const AdminLayout: React.FC = () => {
       { label: 'Blogs', path: '/admin/blogs', icon: Rss },
       { label: 'Magazines', path: '/admin/magazines', icon: BookOpen },
       { label: 'News', path: '/admin/news', icon: Newspaper },
+      { label: 'Govt Schemes', path: '/admin/schemes', icon: Landmark },
+      { label: 'Farmer Connect', path: '/admin/farmer-connect', icon: Tractor },
       { label: 'Inquiries', path: '/admin/inquiries', icon: MessageSquare },
       { label: 'Notifications', path: '/admin/broadcast', icon: Megaphone },
+      { label: 'WhatsApp', path: '/admin/whatsapp', icon: MessageSquare },
       { label: 'Coupons', path: '/admin/coupons', icon: Tag },
       { label: 'Store Products', path: '/admin/products', icon: ShoppingBag },
       { label: 'Editorial Board', path: '/admin/board', icon: Award },
@@ -89,8 +92,11 @@ const AdminLayout: React.FC = () => {
       { label: 'Inquiries', path: '/admin/inquiries', icon: MessageSquare }, // Reply to messages
       { label: 'News', path: '/admin/news', icon: Newspaper }, // Publish News
       { label: 'Blogs', path: '/admin/blogs', icon: Rss }, // Publish Blogs
+      { label: 'Govt Schemes', path: '/admin/schemes', icon: Landmark },
+      { label: 'Farmer Connect', path: '/admin/farmer-connect', icon: Tractor },
       { label: 'Leadership', path: '/admin/leadership', icon: Crown }, // Manage Leadership
       { label: 'Notifications', path: '/admin/broadcast', icon: Megaphone }, // Send alerts
+      { label: 'WhatsApp', path: '/admin/whatsapp', icon: MessageSquare }, // WhatsApp Notifications
     ];
   }
 
@@ -186,7 +192,7 @@ const AdminLayout: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 h-screen overflow-y-auto bg-admin-bg relative w-full text-admin-text">
+      <main className="flex-1 h-screen overflow-y-auto overflow-x-hidden bg-admin-bg relative w-full text-admin-text">
         <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-admin-border px-6 lg:px-8 py-4 flex justify-between items-center h-20 shadow-sm">
           <div className="flex items-center gap-4">
              <button 

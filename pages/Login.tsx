@@ -3,19 +3,20 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../App';
 import { mockBackend } from '../services/mockBackend';
-import { CheckCircle2, User, Lock, Mail, Users, LogIn, Globe, Smartphone, Camera, Loader2 } from 'lucide-react';
+import { CheckCircle2, User, Lock, Mail, Users, LogIn, Globe, Smartphone, Camera, Loader2, Calendar } from 'lucide-react';
 
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [dob, setDob] = useState('');
   const [profession, setProfession] = useState('Student');
   const [customProfession, setCustomProfession] = useState('');
   // New Fields
   const [country, setCountry] = useState('IN');
   const [mobile, setMobile] = useState('');
-  const [userType, setUserType] = useState<'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION'>('INDIVIDUAL');
+  const [userType, setUserType] = useState<'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION' | 'FARMER'>('INDIVIDUAL');
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   
   const [error, setError] = useState('');
@@ -123,6 +124,7 @@ const Login: React.FC = () => {
         // Register the user
         const newUser = await mockBackend.register({
           name,
+          dob,
           email,
           occupation: finalProfession,
           role: 'USER',
@@ -234,6 +236,19 @@ const Login: React.FC = () => {
                       />
                     </div>
                   </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest ml-1">Date of Birth</label>
+                    <div className="relative">
+                       <Calendar size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-300" />
+                       <input 
+                        type="date" 
+                        className="w-full pl-12 pr-4 py-4 bg-stone-50 border border-stone-200 rounded-2xl focus:ring-2 focus:ring-agri-secondary/20 focus:border-agri-secondary outline-none transition-all text-sm font-medium"
+                        required
+                        value={dob}
+                        onChange={e => setDob(e.target.value)}
+                      />
+                    </div>
+                  </div>
 
                   <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1">
@@ -279,6 +294,7 @@ const Login: React.FC = () => {
                         <option value="INDIVIDUAL">Individual</option>
                         <option value="INSTITUTE">Institute</option>
                         <option value="ORGANISATION">Organisation</option>
+                        <option value="FARMER">Farmer</option>
                       </select>
                     </div>
                   </div>

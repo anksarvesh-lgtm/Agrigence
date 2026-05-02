@@ -99,7 +99,7 @@ const Blogs: React.FC = () => {
                     </div>
 
                     <p className="text-stone-600 text-sm leading-relaxed mb-8 line-clamp-3 flex-1">
-                       {blog.excerpt || blog.content.substring(0, 150)}...
+                       {blog.excerpt || (blog.content ? blog.content.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...' : '')}
                     </p>
 
                     <div className="flex items-center justify-between">

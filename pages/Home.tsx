@@ -5,7 +5,7 @@ import {
   ArrowRight, Calendar, User, 
   ChevronRight, Bookmark, Star, Quote,
   Megaphone, ShoppingBag, BookOpen, FileText, PenTool, ExternalLink, Wrench,
-  Calculator, Droplets, Leaf, Activity, CheckCircle, Shield, Newspaper, Store, Info, MessageSquare
+  Calculator, Droplets, Leaf, Activity, CheckCircle, Shield, Newspaper, Store, Info, MessageSquare, Users, Landmark
 } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
 import { NewsItem, Article, Magazine, Product, Feedback, SiteSettings, HomepageSection } from '../types';
@@ -22,6 +22,7 @@ const Home: React.FC = () => {
   const [magazines, setMagazines] = useState<Magazine[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
+  const [visitorCount, setVisitorCount] = useState<number>(0);
 
   useEffect(() => {
     const unsubSettings = mockBackend.subscribeToSettings(setSettings);
@@ -43,6 +44,7 @@ const Home: React.FC = () => {
     const unsubMagazines = mockBackend.subscribeToMagazines(data => setMagazines(data.slice(0, 3)));
     const unsubProducts = mockBackend.subscribeToProducts(data => setProducts(data.slice(0, 4)));
     const unsubFeedback = mockBackend.subscribeToFeedback(data => setFeedbacks(data.filter(f => f.status === 'APPROVED').slice(0, 3)));
+    const unsubVisitors = mockBackend.subscribeToVisitors(data => setVisitorCount(data.length));
 
     return () => {
         unsubSettings();
@@ -51,6 +53,7 @@ const Home: React.FC = () => {
         unsubMagazines();
         unsubProducts();
         unsubFeedback();
+        unsubVisitors();
     };
   }, []);
 
@@ -179,15 +182,27 @@ const Home: React.FC = () => {
             <p className="text-lg md:text-xl text-white/70 font-light leading-relaxed mb-10 max-w-xl">
               Merging deep agricultural wisdom with cutting-edge digital intelligence. Empowering the global farming community through data-driven innovation.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-               <Link to="/tools" className="group relative px-8 py-4 bg-agri-secondary text-agri-primary font-bold text-sm tracking-widest overflow-hidden rounded-xl transition-all hover:scale-105 active:scale-95">
+            <div className="flex flex-wrap gap-4 mt-8 items-center">
+               <Link to="/kisan" className="group relative px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-[#2d5a27] text-white font-black text-sm tracking-widest overflow-hidden rounded-xl transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(45,90,39,0.5)] border border-emerald-400/30">
+                 <span className="relative z-10 flex items-center gap-2 drop-shadow-md">
+                   <Landmark size={18} /> AGRIGENCE HUB <span className="ml-1 bg-amber-500 text-white text-[9px] px-2 py-0.5 rounded-full animate-pulse">HUB</span>
+                 </span>
+                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+               </Link>
+               <Link to="/tools" className="group relative px-6 py-3.5 bg-agri-secondary text-agri-primary font-bold text-xs tracking-widest overflow-hidden rounded-xl transition-all hover:scale-105 active:scale-95">
                  <span className="relative z-10 flex items-center gap-2">
-                   <Wrench size={18} /> EXPLORE ECOSYSTEM
+                   <Wrench size={16} /> ECOSYSTEM
                  </span>
                  <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                </Link>
-               <Link to="/blogs" className="group px-8 py-4 bg-white/5 backdrop-blur-xl border border-white/10 text-white font-bold text-sm tracking-widest rounded-xl hover:bg-white/10 transition-all flex items-center gap-2">
-                 <BookOpen size={18} /> RESEARCH LAB
+               <Link to="/blogs" className="group px-6 py-3.5 bg-white/10 backdrop-blur-xl border border-white/10 text-white font-bold text-xs tracking-widest rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
+                 <BookOpen size={16} /> RESEARCH LAB
+               </Link>
+               <Link to="/farmer-connect" className="group px-6 py-3.5 bg-white/10 backdrop-blur-xl border border-white/10 text-white font-bold text-xs tracking-widest rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
+                 <Users size={16} /> FARMER VERSE
+               </Link>
+               <Link to="/govt-schemes" className="group px-6 py-3.5 bg-white/10 backdrop-blur-xl border border-white/10 text-white font-bold text-xs tracking-widest rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
+                 <Landmark size={16} /> GOVT SCHEMES
                </Link>
             </div>
           </motion.div>
@@ -196,9 +211,9 @@ const Home: React.FC = () => {
             initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={{ duration: 1.2, delay: 0.3 }}
-            className="hidden lg:block relative"
+            className="relative lg:block"
           >
-            <div className="relative z-10 glossy glossy-card rounded-[3rem] p-2 border border-white/20 aspect-square max-w-md mx-auto overflow-hidden">
+            <div className="relative z-10 glossy glossy-card rounded-[3rem] p-2 border border-white/20 aspect-square max-w-md mx-auto overflow-hidden hidden lg:block">
                <OptimizedImage 
                  src="https://images.unsplash.com/photo-1586771107445-d3af22d1031c?q=80&w=800&auto=format&fit=crop" 
                  className="w-full h-full object-cover rounded-[2.8rem]" 
@@ -221,18 +236,18 @@ const Home: React.FC = () => {
                   </div>
                </div>
             </div>
-            {/* Floating elements */}
+            {/* Floating elements - Hidden on mobile if they crowd the space */}
             <motion.div 
               animate={{ y: [0, -20, 0] }}
               transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-              className="absolute -top-10 -right-10 w-32 h-32 glossy rounded-3xl flex items-center justify-center border border-white/20 z-20"
+              className="absolute top-20 -left-10 w-24 h-24 glossy rounded-3xl hidden lg:flex items-center justify-center border border-white/20 z-20"
             >
-              <Droplets size={40} className="text-blue-400" />
+              <Droplets size={32} className="text-blue-400" />
             </motion.div>
             <motion.div 
               animate={{ y: [0, 20, 0] }}
               transition={{ repeat: Infinity, duration: 6, ease: "easeInOut", delay: 1 }}
-              className="absolute -bottom-10 -left-10 w-40 h-40 glossy rounded-full flex items-center justify-center border border-white/20 z-20"
+              className="absolute -bottom-10 -left-10 w-40 h-40 glossy rounded-full hidden lg:flex items-center justify-center border border-white/20 z-20"
             >
               <Leaf size={48} className="text-emerald-400" />
             </motion.div>
@@ -377,6 +392,32 @@ const Home: React.FC = () => {
       </section>
 
 
+      {/* 3.1 GOVERNMENT SCHEMES ROW */}
+      <section className="py-24 relative z-10 bg-white">
+        <div className="container mx-auto px-6">
+          <div onClick={() => navigate('/govt-schemes')} className="cursor-pointer relative overflow-hidden bg-gradient-to-br from-agri-primary to-emerald-900 rounded-[3rem] p-12 md:p-16 lg:p-20 shadow-2xl group w-full">
+            <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 transition-transform duration-700">
+               <Landmark size={200} className="text-white" />
+            </div>
+            <div className="relative z-10 max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-agri-secondary text-[10px] font-black uppercase tracking-[0.2em] mb-6 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                Financial & Agricultural Aid
+              </div>
+              <h2 className="text-4xl md:text-6xl font-serif font-black text-white tracking-tighter mb-6 leading-tight">
+                Empowering Farmers with <span className="text-agri-secondary">Government Subsidies</span>
+              </h2>
+              <p className="text-white/80 font-medium md:text-xl md:leading-relaxed mb-10 max-w-2xl">
+                Access a continuously updated catalog of central scheme guidelines. Apply for PM-KISAN, crop insurance, equipment subsidies, and more directly through verified official portals.
+              </p>
+              <button className="bg-agri-secondary text-agri-primary px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-white hover:text-agri-primary transition-all shadow-lg hover:shadow-xl group-hover:scale-105">
+                 Browse Subsidy Portal <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 4. BLOGS & EXPERT INSIGHTS (Editorial Style) */}
       <section className="py-32 relative z-10 bg-white">
         <div className="container mx-auto px-6">
@@ -396,7 +437,7 @@ const Home: React.FC = () => {
                 onClick={() => navigate(`/blog/${blog.id}`)}
                 className="group cursor-pointer"
               >
-                <div className="aspect-[4/5] relative overflow-hidden rounded-[2rem] mb-8 glossy-card">
+                <div className="aspect-[16/9] relative overflow-hidden rounded-[2rem] mb-8 glossy-card">
                   <OptimizedImage 
                     src={blog.featuredImage || blog.fileUrl || `https://images.unsplash.com/photo-1586771107445-d3af22d1031c?q=80&w=800&auto=format&fit=crop&sig=${i}`} 
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
@@ -416,7 +457,9 @@ const Home: React.FC = () => {
                   </div>
                   <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{blog.authorName} • {new Date(blog.submissionDate).toLocaleDateString()}</span>
                 </div>
-                <p className="text-stone-600 text-sm leading-relaxed line-clamp-3 mb-6">{blog.excerpt || blog.content?.substring(0, 150)}...</p>
+                <p className="text-stone-600 text-sm leading-relaxed line-clamp-3 mb-6">
+                  {blog.excerpt || (blog.content ? blog.content.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...' : '')}
+                </p>
                 <div className="w-full h-px bg-stone-100 group-hover:bg-agri-secondary transition-colors"></div>
               </motion.div>
             )) : (
@@ -476,59 +519,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* 6. OUR MISSION (Split Layout Style) */}
-      <section className="py-32 relative z-10 overflow-hidden">
-        <div className="container mx-auto px-6">
-          <div className="bg-agri-primary rounded-[4rem] overflow-hidden grid lg:grid-cols-2 shadow-2xl">
-            <div className="relative min-h-[500px]">
-               <OptimizedImage 
-                 src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop" 
-                 className="w-full h-full object-cover" 
-                 alt="Agriculture Mission" 
-               />
-               <div className="absolute inset-0 bg-agri-primary/40 mix-blend-multiply"></div>
-               <div className="absolute inset-0 bg-gradient-to-r from-agri-primary to-transparent"></div>
-               <div className="absolute bottom-12 left-12">
-                  <div className="flex items-center gap-4 text-white">
-                    <div className="w-16 h-16 rounded-full bg-agri-secondary flex items-center justify-center text-agri-primary">
-                      <Shield size={32} />
-                    </div>
-                    <div>
-                      <h4 className="text-2xl font-serif font-bold">Verified Data</h4>
-                      <p className="text-white/60 text-sm">Scientifically validated resources.</p>
-                    </div>
-                  </div>
-               </div>
-            </div>
-            <div className="p-12 md:p-24 flex flex-col justify-center text-white">
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-8 h-px bg-agri-secondary"></div>
-                <span className="text-xs font-bold uppercase tracking-[0.4em] text-agri-secondary">Our Core Purpose</span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-serif font-bold mb-10 leading-tight tracking-tighter">Empowering the <br /> <span className="italic font-normal">Next Generation</span></h2>
-              <p className="text-lg text-white/70 leading-relaxed mb-12 font-light max-w-lg">
-                {settings?.missionText || "Agrigence is dedicated to building a trusted digital ecosystem for agricultural knowledge, research publishing, and academic excellence. We bridge the gap between scientific research, student learning, and field application."}
-              </p>
-              
-              <div className="grid grid-cols-2 gap-12 mb-12">
-                <div>
-                  <div className="text-5xl font-serif font-bold text-agri-secondary mb-2">10k+</div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Active Contributors</p>
-                </div>
-                <div>
-                  <div className="text-5xl font-serif font-bold text-agri-secondary mb-2">500+</div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-white/40">Published Papers</p>
-                </div>
-              </div>
-
-              <Link to="/about-contact" className="group inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest text-agri-secondary hover:text-white transition-colors">
-                LEARN MORE ABOUT OUR IMPACT <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* 7. STORE SECTION (Minimal Grid Style) */}
       <section className="py-32 relative z-10 bg-white">
         <div className="container mx-auto px-6">
@@ -546,7 +536,7 @@ const Home: React.FC = () => {
             {products.length > 0 ? products.map((prod, i) => (
               <div 
                 key={i}
-                onClick={() => navigate(`/product/${prod.id}`)}
+                onClick={() => navigate(`/products`)}
                 className="bg-white p-10 flex flex-col hover:bg-stone-50 transition-colors cursor-pointer group"
               >
                 <div className="aspect-square relative mb-10 p-4">
@@ -661,7 +651,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* 10. TRUST SIGNALS */}
-      <section className="py-32 relative z-10 bg-stone-900 text-white overflow-hidden">
+      <section className="py-32 relative z-10 bg-stone-900 text-white overflow-hidden dark:bg-stone-900">
         <div className="absolute inset-0 opacity-5 pointer-events-none">
            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent"></div>
         </div>
@@ -695,11 +685,59 @@ const Home: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-3xl font-serif font-bold text-agri-secondary mb-4">Agrigence</h3>
-                <p className="text-stone-400 text-lg font-light leading-relaxed">Our dedicated team of scientists and agronomists ensures every tool, article, and resource meets the highest standards of scientific accuracy.</p>
+                <p className="text-stone-400 text-lg font-light leading-relaxed mb-6">Our dedicated team of scientists and agronomists ensures every tool, article, and resource meets the highest standards of scientific accuracy.</p>
+                
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="flex items-center gap-4 bg-white dark:bg-stone-800 w-fit px-6 py-4 rounded-2xl shadow-xl border border-stone-200 dark:border-white/10"
+                >
+                  <div className="bg-green-100 p-3 rounded-xl text-green-700 dark:bg-agri-secondary/20 dark:text-agri-secondary">
+                    <Activity size={20} className="animate-pulse" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest leading-none mb-1.5">Real-time Global Visits</p>
+                    <p className="font-serif font-black text-agri-primary dark:text-white leading-none text-2xl">
+                      {visitorCount.toLocaleString()}
+                    </p>
+                  </div>
+                </motion.div>
               </div>
             </div>
           </div>
           
+        </div>
+      </section>
+
+      {/* 11. OUR MISSION (Simple Layout Style) */}
+      <section className="py-24 bg-white dark:bg-stone-50 relative z-10 border-t border-stone-100 dark:border-stone-800">
+        <div className="container mx-auto px-6 max-w-4xl text-center">
+          <div className="flex justify-center items-center gap-4 mb-8">
+            <div className="w-8 h-px bg-agri-secondary"></div>
+            <span className="text-xs font-bold uppercase tracking-[0.4em] text-agri-secondary">Our Mission</span>
+            <div className="w-8 h-px bg-agri-secondary"></div>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-serif font-bold mb-8 text-agri-primary dark:text-stone-900 tracking-tighter">Empowering the Next Generation</h2>
+          <p className="text-xl text-stone-600 dark:text-stone-500 leading-relaxed mb-10 font-light">
+            {settings?.missionText || "Agrigence is dedicated to building a trusted digital ecosystem for agricultural knowledge, research publishing, and academic excellence. We bridge the gap between scientific research, student learning, and field application."}
+          </p>
+          <Link to="/about-contact" className="group inline-flex items-center gap-4 text-sm font-bold uppercase tracking-widest text-agri-secondary hover:text-agri-primary dark:hover:text-stone-900 transition-colors">
+            LEARN MORE ABOUT OUR IMPACT <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+          </Link>
+        </div>
+      </section>
+      {/* 12. CONTACT / LINKS (Simple Style) */}
+      <section className="py-12 bg-stone-50 dark:bg-stone-950 relative z-10 border-t border-stone-200 dark:border-white/10">
+        <div className="container mx-auto px-6 max-w-4xl text-center flex flex-col sm:flex-row items-center justify-center gap-6">
+          <a href="https://www.agrigence.in/" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-8 py-4 bg-agri-primary text-white rounded-xl hover:bg-agri-primary/90 transition-colors font-medium shadow-sm w-full sm:w-auto">
+            <span>Visit Website</span>
+            <ArrowRight size={18} />
+          </a>
+          <a href="mailto:info@agrigence.in" className="flex items-center justify-center gap-2 px-8 py-4 bg-white text-agri-primary border border-agri-primary rounded-xl hover:bg-stone-50 transition-colors font-medium shadow-sm w-full sm:w-auto">
+            <span>Contact Us</span>
+            <ArrowRight size={18} />
+          </a>
         </div>
       </section>
     </div>

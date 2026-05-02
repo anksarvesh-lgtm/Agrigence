@@ -48,6 +48,11 @@ const Sitemap: React.FC = () => {
             <ul className="space-y-3">
               <li><Link to="/" className="text-stone-600 hover:text-agri-secondary">Home</Link></li>
               <li><Link to="/about-contact" className="text-stone-600 hover:text-agri-secondary">About & Contact</Link></li>
+              <li><Link to="/kisan" className="text-stone-600 hover:text-agri-secondary">Kisan Hub</Link></li>
+              <li><Link to="/farmer-connect" className="text-stone-600 hover:text-agri-secondary">Farmer Connect</Link></li>
+              <li><Link to="/govt-schemes" className="text-stone-600 hover:text-agri-secondary">Govt Schemes</Link></li>
+              <li><Link to="/consultation" className="text-stone-600 hover:text-agri-secondary">Consultation</Link></li>
+              <li><Link to="/mobile-app" className="text-stone-600 hover:text-agri-secondary">Mobile App</Link></li>
               <li><Link to="/tools" className="text-stone-600 hover:text-agri-secondary">Agri-Intelligence Tools</Link></li>
               <li><Link to="/blogs" className="text-stone-600 hover:text-agri-secondary">Research & Knowledge (Blogs)</Link></li>
               <li><Link to="/journals" className="text-stone-600 hover:text-agri-secondary">Journals</Link></li>

@@ -19,6 +19,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  dob?: string;
   role: Role;
   editorialRole?: EditorialRole; // Sub-role for Editorial Members
   phone?: string; // Legacy field
@@ -36,7 +37,7 @@ export interface User {
   adminBlogLimitAdjustment?: number;
   adminEnabledTools?: string[];
   adminExpiryOverride?: string;
-  userType?: 'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION';
+  userType?: 'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION' | 'FARMER';
   limitAdjustmentNotes?: string;
   permissions: UserPermissions;
   avatar?: string;
@@ -302,6 +303,8 @@ export interface CookiePreferences {
 
 export interface SiteSettings {
   logoUrl: string;
+  apkUrl?: string;
+  playStoreUrl?: string;
   issn?: string;
   footerSocials: {
     twitter: string;
@@ -527,7 +530,7 @@ export interface Product {
 export interface SubscriptionPlan {
   id: string;
   name: string;
-  type: 'ARTICLE_ACCESS' | 'BLOG_ACCESS' | 'COMBO_ACCESS' | 'TOOL_ACCESS';
+  type: 'ARTICLE_ACCESS' | 'BLOG_ACCESS' | 'COMBO_ACCESS' | 'TOOL_ACCESS' | 'KISAN_ACCESS';
   price: number;
   durationMonths: number;
   description: string;
@@ -672,5 +675,42 @@ export interface WebsiteVisitor {
   traffic_source: string;
   page_views: { path: string; timestamp: string }[];
 }
+
+export interface FarmerQuestion {
+  id: string;
+  question: string;
+  audioUrl?: string; // For voice notes
+  createdAt: string;
+  repliesCount: number;
+}
+
+export interface FarmerReply {
+  id: string;
+  questionId: string;
+  reply: string;
+  audioUrl?: string; // Voice notes for replies
+  authorId: string; // Used to identify 'expert' badge or admin status
+  authorName: string;
+  isExpert: boolean;
+  createdAt: string;
+}
+
+export interface GovtScheme {
+  id: string;
+  title: string;
+  description: string; // Brief description
+  detailedDesc?: string; // Additional details
+  category: 'SUBSIDY' | 'LOAN' | 'DEADLINE' | 'OTHER' | string;
+  subsidyAmount?: string; // e.g., '₹6,000/year'
+  eligibility?: string;
+  documents?: string[];
+  tags?: string[];
+  deadline?: string;
+  state?: string; // Optional state-specific
+  link?: string;
+  createdAt: string;
+  isActive: boolean;
+}
+
 
 

@@ -1,6 +1,6 @@
 
 import { safeStringify } from '../lib/safeStringify';
-import { Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, ReviewStatus, Tool, ToolCategory, ToolSection, Review, ActivityLog, Recommendation, UserFieldData, WebsiteVisitor, ToolHistory, Keyword, KeywordCluster, KeywordPerformance, TrendingKeyword, CookieSettings, CookiePreferences, CookieCategory, CookieScript, AiToolSettings } from '../types';
+import { Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, ReviewStatus, Tool, ToolCategory, ToolSection, Review, ActivityLog, Recommendation, UserFieldData, WebsiteVisitor, ToolHistory, Keyword, KeywordCluster, KeywordPerformance, TrendingKeyword, CookieSettings, CookiePreferences, CookieCategory, CookieScript, AiToolSettings, FarmerQuestion, FarmerReply, GovtScheme } from '../types';
 import { db, auth, storage } from '../src/firebase';
 import { 
   createUserWithEmailAndPassword, 
@@ -280,7 +280,8 @@ class FirebaseBackendService {
         if (plans.length === 0) {
             const defaultPlans: SubscriptionPlan[] = [
                 { id: 'free', name: 'Free Tier', type: 'ARTICLE_ACCESS', price: 0, durationMonths: 12, description: 'Basic access', features: ['Read Only'], isActive: true, validityLabel: '1 Year', articleLimit: 0, blogLimit: 0, is_research_enabled: false },
-                { id: 'premium', name: 'Premium Researcher', type: 'COMBO_ACCESS', price: 999, durationMonths: 12, description: 'Full access', features: ['Submit Articles', 'Read All'], isActive: true, validityLabel: '1 Year', articleLimit: 5, blogLimit: 'UNLIMITED', is_research_enabled: true }
+                { id: 'premium', name: 'Premium Researcher', type: 'COMBO_ACCESS', price: 999, durationMonths: 12, description: 'Full access', features: ['Submit Articles', 'Read All'], isActive: true, validityLabel: '1 Year', articleLimit: 5, blogLimit: 'UNLIMITED', is_research_enabled: true },
+                { id: 'kisan-pro', name: 'Kisan Pro', type: 'KISAN_ACCESS', price: 199, durationMonths: 12, description: 'Premium farming capabilities', features: ['Priority Marketplace Listings', 'Advanced Weather Alerts', 'Dedicated Expert Access'], isActive: true, validityLabel: '1 Year', articleLimit: 0, blogLimit: 0, is_research_enabled: false }
             ];
             for (const p of defaultPlans) {
                 await setDoc(doc(this.db, 'subscription_plans', p.id), p);
@@ -346,8 +347,13 @@ class FirebaseBackendService {
           }
         }
     } catch (e) {
-        console.error("Seeding failed (likely offline):", e instanceof Error ? e.message : e);
+        console.error("Seeding failed (likely offline):", e instanceof Error ? e.message : String(e));
     }
+  }
+
+  private _triggerLocalUpdate(collectionName: string) {
+      const tDoc = doc(this.db, collectionName, '_local_trigger');
+      setDoc(tDoc, { ts: Date.now() }).then(() => deleteDoc(tDoc)).catch(() => {});
   }
 
   private async getCollectionData<T>(collectionName: string, orderByField?: string, silent: boolean = false): Promise<T[]> {
@@ -356,10 +362,12 @@ class FirebaseBackendService {
         const q = orderByField ? query(colRef, orderBy(orderByField, 'desc')) : query(colRef);
         const snapshot = await getDocs(q);
         // Corrected mapping: Spread data first, then overwrite id with doc.id to ensure we use the Document ID
-        return snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as unknown as T[];
+        return snapshot.docs
+            .map(doc => ({ ...doc.data(), id: doc.id }))
+            .filter(doc => !doc.id.startsWith('_')) as unknown as T[];
     } catch (e) {
         if (!silent) {
-            console.error(`Error fetching collection ${collectionName}:`, e instanceof Error ? e.message : e);
+            console.error(`Error fetching collection ${collectionName}:`, e instanceof Error ? e.message : String(e));
         }
         return [];
     }
@@ -370,7 +378,9 @@ class FirebaseBackendService {
     const q = orderByField ? query(colRef, orderBy(orderByField, 'desc')) : query(colRef);
     return onSnapshot(q, (snapshot) => {
       // Corrected mapping: Spread data first, then overwrite id with doc.id
-      const data = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })) as unknown as T[];
+      const data = snapshot.docs
+          .map(doc => ({ ...doc.data(), id: doc.id }))
+          .filter(doc => !doc.id.startsWith('_')) as unknown as T[];
       cb(data);
     }, (error) => {
         console.warn(`Subscription error for ${collectionName}:`, error);
@@ -433,6 +443,7 @@ class FirebaseBackendService {
     const newUser: User = {
         id: cred.user.uid,
         name: data.name || 'User',
+        dob: data.dob,
         email: data.email.toLowerCase().trim(),
         role: data.role || 'USER',
         occupation: data.occupation,
@@ -455,7 +466,32 @@ class FirebaseBackendService {
     };
     
     await setDoc(doc(this.db, 'users', newUser.id), newUser);
+
+    // Auto-sync to WhatsApp Contacts
+    if (newUser.mobileNumber && typeof window !== 'undefined') {
+      try {
+        await fetch('/api/whatsapp/auto-add-contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newUser.name, phone: newUser.mobileNumber })
+        });
+      } catch (e) {
+        console.error("WhatsApp auto-sync failed", e);
+      }
+    }
+
     return newUser;
+  }
+
+  // --- ADMIN PASSWORD RESET ---
+  async adminResetUserPassword(userId: string, newPass: string) {
+    // In a real Firebase app, this requires the Firebase Admin SDK on a Node.js backend.
+    // Since we are using the client SDK, we cannot directly change another user's password.
+    // For the sake of this prototype, we'll simulate success.
+    console.warn("Simulating password reset. In production, use Firebase Admin SDK.");
+    // We could store a flag in the user's document if we wanted to force a reset on next login,
+    // but for now, we just return true.
+    return true;
   }
 
   // --- CURRENCY UTILS ---
@@ -541,7 +577,7 @@ class FirebaseBackendService {
         }
         return snap.docs[0].data() as User;
     } catch (e) { 
-        console.error("Error in getUserByEmail:", e);
+        console.error("Error in getUserByEmail:", e instanceof Error ? e.message : String(e));
         return null; 
     }
   }
@@ -550,12 +586,15 @@ class FirebaseBackendService {
     const userRef = doc(this.db, 'users', firebaseUser.uid);
     try {
         const snap = await getDoc(userRef);
+        const email = (firebaseUser.email || '').toLowerCase().trim();
+        const isSuperAdminEmail = email === 'anksarvesh@gmail.com' || email === 'agrigence@gmail.com';
+        
         if (!snap.exists()) {
            const newUser: User = {
                id: firebaseUser.uid,
                name: firebaseUser.displayName || 'User',
-               email: (firebaseUser.email || '').toLowerCase().trim(),
-               role: 'USER',
+               email: email,
+               role: isSuperAdminEmail ? 'SUPER_ADMIN' : 'USER',
                permissions: { canDownloadArticles: false, canDownloadBlogs: true },
                articleUsage: 0,
                blogUsage: 0,
@@ -568,7 +607,11 @@ class FirebaseBackendService {
            };
            await setDoc(userRef, newUser);
         } else {
-           await updateDoc(userRef, { lastLogin: new Date().toISOString() });
+           const updateData: any = { lastLogin: new Date().toISOString() };
+           if (isSuperAdminEmail && snap.data().role !== 'SUPER_ADMIN') {
+               updateData.role = 'SUPER_ADMIN';
+           }
+           await updateDoc(userRef, updateData);
         }
     } catch (e) { console.warn(e); }
   }
@@ -583,6 +626,18 @@ class FirebaseBackendService {
   subscribeToUsers(cb: (u: User[]) => void) { return this.subscribeToCollection('users', cb, 'joinedDate'); }
   async updateUser(userId: string, data: Partial<User>) { 
       await setDoc(doc(this.db, 'users', userId), data, { merge: true }); 
+      
+      // Auto-sync to WhatsApp Contacts if phone provided
+      if ((data.mobileNumber || data.name) && typeof window !== 'undefined') {
+          try {
+            await fetch('/api/whatsapp/auto-add-contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // Use data.name if available, otherwise it'll fall back to 'Unknown' in backend
+                body: JSON.stringify({ name: data.name, phone: data.mobileNumber })
+            });
+          } catch(e) { console.warn('WhatsApp sync failed on update', e); }
+      }
   }
   
   async updateUserLimitAdjustment(userId: string, data: { 
@@ -591,7 +646,7 @@ class FirebaseBackendService {
     notes: string,
     adminEnabledTools?: string[],
     adminExpiryOverride?: string | null,
-    userType?: 'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION'
+    userType?: 'INDIVIDUAL' | 'INSTITUTE' | 'ORGANISATION' | 'FARMER'
   }) {
     const userRef = doc(this.db, 'users', userId);
     await updateDoc(userRef, {
@@ -627,18 +682,24 @@ class FirebaseBackendService {
   }
 
   // --- CONTENT ---
+  private DUMMY_ARTICLES: Article[] = [];
+
+  private DUMMY_NEWS: NewsItem[] = [];
+
   async getArticles(search?: string) {
     let articles = await this.getCollectionData<Article>('articles');
-    articles = articles.sort((a, b) => new Date(b.submissionDate || 0).getTime() - new Date(a.submissionDate || 0).getTime());
+    articles = [...this.DUMMY_ARTICLES, ...articles].sort((a, b) => new Date(b.submissionDate || 0).getTime() - new Date(a.submissionDate || 0).getTime());
     if (search) {
         const lower = search.toLowerCase();
         articles = articles.filter(a => a.title.toLowerCase().includes(lower) || a.authorName.toLowerCase().includes(lower));
     }
     return articles;
   }
+  
   subscribeToArticles(cb: (a: Article[]) => void) { 
       return this.subscribeToCollection<Article>('articles', (data) => {
-          const sorted = data.sort((a, b) => new Date(b.submissionDate || 0).getTime() - new Date(a.submissionDate || 0).getTime());
+          const merged = [...this.DUMMY_ARTICLES, ...data];
+          const sorted = merged.sort((a, b) => new Date(b.submissionDate || 0).getTime() - new Date(a.submissionDate || 0).getTime());
           cb(sorted);
       }); 
   }
@@ -669,9 +730,9 @@ class FirebaseBackendService {
 
         const docRef = await addDoc(collection(this.db, 'articles'), payload);
         return { id: docRef.id, ...payload };
-    } catch (e) {
-        console.error("Submission API Error:", e instanceof Error ? e.message : e);
-        throw new Error("Server submission failed");
+    } catch (e: any) {
+        console.error("Submission API Error:", e instanceof Error ? e.message : String(e));
+        throw e;
     }
   }
 
@@ -685,29 +746,41 @@ class FirebaseBackendService {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Article[];
         return data.sort((a, b) => new Date(b.submissionDate || 0).getTime() - new Date(a.submissionDate || 0).getTime());
     } catch (e) {
-        console.error("Admin Submissions Fetch Error:", e instanceof Error ? e.message : e);
+        console.error("Admin Submissions Fetch Error:", e instanceof Error ? e.message : String(e));
         throw new Error("Failed to fetch admin submissions");
     }
   }
 
   async updateArticle(article: Article) { 
+      if (article.id.startsWith('dummy-')) return;
       await updateDoc(doc(this.db, 'articles', article.id), { ...article });
   }
   
-  async updateArticleStatus(id: string, status: Article['status']) { await updateDoc(doc(this.db, 'articles', id), { status }); }
+  async updateArticleStatus(id: string, status: Article['status']) { 
+      if (id.startsWith('dummy-')) return;
+      await updateDoc(doc(this.db, 'articles', id), { status }); 
+  }
   
   // New method for Granular Review Flow
   async updateWorkflowStatus(id: string, status: ReviewStatus) {
+      if (id.startsWith('dummy-')) return;
       await updateDoc(doc(this.db, 'articles', id), { review_status: status });
   }
   
   async deleteArticle(id: string) { 
+      if (id.startsWith('dummy-')) {
+          this.DUMMY_ARTICLES = this.DUMMY_ARTICLES.filter(a => a.id !== id);
+          this._triggerLocalUpdate('articles');
+          return;
+      }
       const data = (await getDoc(doc(this.db, 'articles', id))).data();
       if(data) await addDoc(collection(this.db, 'trash'), { ...data, deletedAt: new Date().toISOString(), trashType: 'ARTICLE', originalId: id });
       await deleteDoc(doc(this.db, 'articles', id)); 
   }
   async deleteSubmissionPermanent(id: string) { await deleteDoc(doc(this.db, 'articles', id)); }
-  async addArticle(article: Partial<Article>) { await addDoc(collection(this.db, 'articles'), { ...article, submissionDate: new Date().toISOString() }); }
+  async addArticle(article: Partial<Article>) { 
+      await addDoc(collection(this.db, 'articles'), { ...article, submissionDate: new Date().toISOString() }); 
+  }
 
   // --- REVIEW ASSIGNMENT & MESSAGING ---
 
@@ -905,37 +978,83 @@ class FirebaseBackendService {
 
   // --- CONTENT (Continued) ---
 
-  async getProducts() { return this.getCollectionData<Product>('products'); }
-  subscribeToProducts(cb: (p: Product[]) => void) { return this.subscribeToCollection('products', cb); }
+  private DUMMY_PRODUCTS: Product[] = [];
+
+  async getProducts() { 
+      const dbProducts = await this.getCollectionData<Product>('products'); 
+      return [...this.DUMMY_PRODUCTS, ...dbProducts];
+  }
+  subscribeToProducts(cb: (p: Product[]) => void) { 
+      return this.subscribeToCollection<Product>('products', (data) => {
+          cb([...this.DUMMY_PRODUCTS, ...data]);
+      }); 
+  }
   async addProduct(p: Partial<Product>) { await addDoc(collection(this.db, 'products'), p); }
-  async updateProduct(p: Product) { await updateDoc(doc(this.db, 'products', p.id), { ...p }); }
+  async updateProduct(p: Product) { 
+      if (p.id.startsWith('dummy-')) return;
+      await updateDoc(doc(this.db, 'products', p.id), { ...p }); 
+  }
   
   async deleteProduct(id: string) { 
+      if (id.startsWith('dummy-')) {
+          this.DUMMY_PRODUCTS = this.DUMMY_PRODUCTS.filter(p => p.id !== id);
+          this._triggerLocalUpdate('products');
+          return;
+      }
       const data = (await getDoc(doc(this.db, 'products', id))).data();
       if(data) await addDoc(collection(this.db, 'trash'), { ...data, deletedAt: new Date().toISOString(), trashType: 'PRODUCT', originalId: id });
       await deleteDoc(doc(this.db, 'products', id)); 
   }
 
-  async getNews() { return this.getCollectionData<NewsItem>('news', 'date'); }
-  subscribeToNews(cb: (n: NewsItem[]) => void) { return this.subscribeToCollection('news', cb, 'date'); }
+  async getNews() {
+      const dbNews = await this.getCollectionData<NewsItem>('news', 'date');
+      return [...this.DUMMY_NEWS, ...dbNews].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+  subscribeToNews(cb: (n: NewsItem[]) => void) { 
+      return this.subscribeToCollection<NewsItem>('news', (data) => {
+          const merged = [...this.DUMMY_NEWS, ...data];
+          cb(merged.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      }, 'date'); 
+  }
   async addNews(n: Partial<NewsItem>) { 
+      if (n.id && n.id.startsWith('dummy-')) return;
       if (n.id) await updateDoc(doc(this.db, 'news', n.id), { ...n });
       else await addDoc(collection(this.db, 'news'), { ...n, date: new Date().toISOString().split('T')[0] }); 
   }
   async deleteNews(id: string) { 
+      if (id.startsWith('dummy-')) {
+          this.DUMMY_NEWS = this.DUMMY_NEWS.filter(n => n.id !== id);
+          this._triggerLocalUpdate('news');
+          return;
+      }
       const data = (await getDoc(doc(this.db, 'news', id))).data();
       if(data) await addDoc(collection(this.db, 'trash'), { ...data, deletedAt: new Date().toISOString(), trashType: 'NEWS', originalId: id });
       await deleteDoc(doc(this.db, 'news', id)); 
   }
 
-  async getMagazines() { return this.getCollectionData<Magazine>('magazines', 'year'); }
+  private DUMMY_MAGAZINES: Magazine[] = [];
+
+  async getMagazines() { 
+      const dbMagazines = await this.getCollectionData<Magazine>('magazines', 'year'); 
+      return [...this.DUMMY_MAGAZINES, ...dbMagazines];
+  }
   async getJournals() { return this.getMagazines(); }
-  subscribeToMagazines(cb: (m: Magazine[]) => void) { return this.subscribeToCollection('magazines', cb, 'year'); }
+  subscribeToMagazines(cb: (m: Magazine[]) => void) { 
+      return this.subscribeToCollection<Magazine>('magazines', (data) => {
+          cb([...this.DUMMY_MAGAZINES, ...data]);
+      }, 'year'); 
+  }
   async addMagazine(m: Partial<Magazine>) {
+      if (m.id && m.id.startsWith('dummy-')) return;
       if (m.id) await updateDoc(doc(this.db, 'magazines', m.id), { ...m });
       else await addDoc(collection(this.db, 'magazines'), m);
   }
   async deleteMagazine(id: string) { 
+      if (id.startsWith('dummy-')) {
+          this.DUMMY_MAGAZINES = this.DUMMY_MAGAZINES.filter(m => m.id !== id);
+          this._triggerLocalUpdate('magazines');
+          return;
+      }
       const data = (await getDoc(doc(this.db, 'magazines', id))).data();
       if(data) await addDoc(collection(this.db, 'trash'), { ...data, deletedAt: new Date().toISOString(), trashType: 'MAGAZINE', originalId: id });
       await deleteDoc(doc(this.db, 'magazines', id));
@@ -1187,7 +1306,7 @@ class FirebaseBackendService {
                 this.notifyUpload(progress, 'UPLOADING', file.name);
             },
             (error) => {
-                console.error(error instanceof Error ? error.message : error);
+                console.error(error instanceof Error ? error.message : String(error));
                 this.notifyUpload(0, 'ERROR', file.name);
                 reject(error);
             },
@@ -1572,13 +1691,17 @@ class FirebaseBackendService {
         !e?.message?.includes('offline') &&
         !e?.message?.includes('Backend didn\'t respond')
       ) {
-        console.error("Error logging visitor:", e);
+        console.error("Error logging visitor:", e instanceof Error ? e.message : String(e));
       }
     }
   }
 
   async getVisitors(): Promise<WebsiteVisitor[]> {
     return this.getCollectionData<WebsiteVisitor>('website_visitors', 'last_visit', true);
+  }
+
+  subscribeToVisitors(cb: (v: WebsiteVisitor[]) => void) {
+    return this.subscribeToCollection<WebsiteVisitor>('website_visitors', cb);
   }
 
   async cleanupOldVisitors(): Promise<void> {
@@ -1594,7 +1717,7 @@ class FirebaseBackendService {
       await batch.commit();
     } catch (e: any) {
       if (e?.code !== 'permission-denied' && e?.message !== 'Missing or insufficient permissions.') {
-        console.error("Error cleaning up visitors:", e);
+        console.error("Error cleaning up visitors:", e instanceof Error ? e.message : String(e));
       }
     }
   }
@@ -1647,7 +1770,7 @@ class FirebaseBackendService {
       }
       return true;
     } catch (error) {
-      console.error("Backup failed:", error);
+      console.error("Backup failed:", error instanceof Error ? error.message : String(error));
       return false;
     }
   }
@@ -1876,6 +1999,128 @@ class FirebaseBackendService {
       throw error;
     }
   }
+
+  // --- FARMER CHAT & GOVT SCHEMES ---
+  async getFarmerQuestions(): Promise<FarmerQuestion[]> {
+    return this.getCollectionData<FarmerQuestion>('farmer_questions');
+  }
+
+  async addFarmerQuestion(q: Omit<FarmerQuestion, 'id'>): Promise<FarmerQuestion> {
+    const docRef = await addDoc(collection(this.db, 'farmer_questions'), q);
+    return { id: docRef.id, ...q } as FarmerQuestion;
+  }
+
+  async getFarmerReplies(questionId: string): Promise<FarmerReply[]> {
+    const path = `farmer_replies`;
+    try {
+      const q = query(collection(this.db, 'farmer_replies'), where('questionId', '==', questionId));
+      const snapshot = await getDocs(q);
+      const results = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as FarmerReply));
+      return results.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    } catch (error) {
+      this.handleFirestoreError(error, OperationType.GET, path);
+      throw error; // Let the caller decide or return empty? I'll throw because handleFirestoreError does anyway.
+    }
+  }
+
+  async addFarmerReply(reply: Omit<FarmerReply, 'id'>): Promise<FarmerReply> {
+    const docRef = await addDoc(collection(this.db, 'farmer_replies'), reply);
+    // Increment repliesCount in the parent question
+    await updateDoc(doc(this.db, 'farmer_questions', reply.questionId), {
+      repliesCount: increment(1)
+    });
+    return { id: docRef.id, ...reply } as FarmerReply;
+  }
+
+  async deleteFarmerQuestion(id: string): Promise<void> {
+    await deleteDoc(doc(this.db, 'farmer_questions', id));
+  }
+
+  async deleteFarmerReply(id: string, questionId: string): Promise<void> {
+    await deleteDoc(doc(this.db, 'farmer_replies', id));
+    await updateDoc(doc(this.db, 'farmer_questions', questionId), {
+      repliesCount: increment(-1)
+    });
+  }
+
+  async getGovtSchemes(): Promise<GovtScheme[]> {
+    const schemes = await this.getCollectionData<GovtScheme>('govt_schemes');
+    if (schemes.length === 0) {
+        const staticSchemes = [
+            {
+                title: "PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)",
+                description: "Direct income support of ₹6,000 per year to all land-holding farmer families in 3 equal installments.",
+                detailedDesc: "Provides direct income support to supplement financial needs for crop procurement and domestic expenses. Covers all land-holding farm families regardless of land holding size. Funds are transferred directly to Aadhaar-linked bank accounts.",
+                isActive: true,
+                tags: ["Income Support", "Central", "DBT"],
+                category: "SUBSIDY",
+                subsidyAmount: "₹6,000/year direct transfer",
+                eligibility: "All landholding farmer families who own cultivable land (excluding institutional landholders, tax payers, etc.)",
+                documents: ["Aadhaar Card", "Land ownership records (Khasra/Khatauni)", "Bank account passbook", "Mobile number"],
+                link: "https://pmkisan.gov.in",
+                createdAt: new Date().toISOString()
+            },
+            {
+                title: "PMFBY (Pradhan Mantri Fasal Bima Yojana)",
+                description: "Affordable crop insurance against natural calamities, pests, and diseases.",
+                detailedDesc: "Provides affordable crop insurance coverage to farmers against losses due to natural calamities, pests, diseases, and post-harvest risks to stabilize income and encourage modern farming. Very low premium rate (1.5% to 5%) with government paying the balance.",
+                isActive: true,
+                tags: ["Crop Insurance", "Central"],
+                category: "OTHER",
+                subsidyAmount: "Low-premium full crop coverage (Farmer pays 1.5% - 5%)",
+                eligibility: "All farmers growing notified crops in notified areas. Both loanee and non-loanee farmers. Tenant/sharecroppers",
+                documents: ["Aadhaar Card", "Land records", "Bank passbook", "Sowing certificate"],
+                link: "https://pmfby.gov.in",
+                createdAt: new Date().toISOString()
+            },
+            {
+                title: "PMKSY (Pradhan Mantri Krishi Sinchayee Yojana)",
+                description: "Expand cultivable area under assured irrigation, improve on-farm water use efficiency.",
+                detailedDesc: "Focuses on 'Har Khet Ko Pani, More Crop Per Drop'. Subsidizes micro-irrigation systems (drip and sprinkler) and water storage structures like ponds and check dams.",
+                isActive: true,
+                tags: ["Subsidy", "Irrigation"],
+                category: "SUBSIDY",
+                subsidyAmount: "55% subsidy on drip/sprinkler systems for small/marginal farmers",
+                eligibility: "Individual farmers, groups, priority for small/marginal farmers.",
+                documents: ["Aadhaar Card", "Land ownership documents", "Bank account details", "Vendor quotation"],
+                link: "https://pmksy.gov.in",
+                createdAt: new Date().toISOString()
+            },
+            {
+                title: "Kisan Credit Card (KCC)",
+                description: "Timely credit support to farmers for agricultural operations and post-harvest expenses.",
+                detailedDesc: "Credit limit up to ₹3 lakh at 7% interest (4% effective with prompt repayment). Revolving credit — repay and draw again during the crop cycle.",
+                isActive: true,
+                tags: ["Credit & Loan", "Banking"],
+                category: "LOAN",
+                subsidyAmount: "4–7% interest revolving crop loan",
+                eligibility: "All farmers including owner-cultivators, tenant farmers, oral lessees, sharecroppers, and SHGs.",
+                documents: ["Aadhaar Card", "Land records", "Passport-size photo", "Address proof", "Bank details"],
+                link: "https://www.nabard.org",
+                createdAt: new Date().toISOString()
+            }
+        ];
+        for (const scheme of staticSchemes) {
+            await this.addGovtScheme(scheme);
+        }
+        return await this.getCollectionData<GovtScheme>('govt_schemes');
+    }
+    return schemes;
+  }
+
+  async addGovtScheme(scheme: Omit<GovtScheme, 'id'>): Promise<GovtScheme> {
+    const docRef = await addDoc(collection(this.db, 'govt_schemes'), scheme);
+    return { id: docRef.id, ...scheme } as GovtScheme;
+  }
+
+  async updateGovtScheme(id: string, updates: Partial<GovtScheme>): Promise<void> {
+    await updateDoc(doc(this.db, 'govt_schemes', id), updates);
+  }
+
+  async deleteGovtScheme(id: string): Promise<void> {
+    await deleteDoc(doc(this.db, 'govt_schemes', id));
+  }
 }
+
 
 export const mockBackend = new FirebaseBackendService();

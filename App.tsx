@@ -46,7 +46,9 @@ import MySubscription from './pages/MySubscription';
 import ToolHistoryDetail from './pages/ToolHistoryDetail';
 import ToolsPage from './pages/ToolsPage';
 import Sitemap from './pages/Sitemap';
-
+import FarmerConnect from './pages/FarmerConnect';
+import { GovSchemes } from './pages/KisanHub/GovSchemes';
+import MobileAppView from './pages/MobileAppView';
 
 // Lazy loaded tools
 const SeedRatePage = React.lazy(() => import('./tools/Tool01SeedRate/SeedRatePage'));
@@ -95,11 +97,32 @@ import SubmissionAdminPanel from './extensions/submission-admin/SubmissionAdminP
 import ReviewerDashboard from './pages/ReviewerDashboard'; // New Page
 import AdsTxtManager from './pages/admin/AdsTxtManager';
 import CookieManager from './pages/admin/CookieManager';
+import SchemesManagement from './pages/admin/SchemesManagement';
+import WhapiDashboard from './pages/admin/WhapiDashboard';
+import FarmerConnectManagement from './pages/admin/FarmerConnectManagement';
 import CookieConsentManager from './components/CookieConsentManager';
+import AddDobModal from './components/AddDobModal';
 
 import DashboardHome from './pages/DashboardHome';
 import PipelineBuilder from './pages/PipelineBuilder';
 import AnovaEngine from './pages/AnovaEngine';
+
+import KisanLayout from './pages/KisanHub/KisanLayout';
+import HubDashboard from './pages/KisanHub/HubDashboard';
+import MandiBhav from './pages/KisanHub/MandiBhav';
+import Khatabook from './pages/KisanHub/Khatabook';
+import SOPChecklist from './pages/KisanHub/SOPChecklist';
+import { KisanWeather } from './pages/KisanHub/KisanWeather';
+import { EquipmentRental } from './pages/KisanHub/EquipmentRental';
+import { FarmerMarketplace } from './pages/KisanHub/FarmerMarketplace';
+import { LandListing } from './pages/KisanHub/LandListing';
+import { KisanDashboard } from './pages/KisanHub/KisanDashboard';
+import { PostRequirement } from './pages/KisanHub/PostRequirement';
+import { MyRequirements } from './pages/KisanHub/MyRequirements';
+import { MyListings } from './pages/KisanHub/MyListings';
+import { ListYourItem } from './pages/KisanHub/ListYourItem';
+
+
 
 // Auth Context
 interface AuthContextType {
@@ -108,15 +131,18 @@ interface AuthContextType {
   login: (u: User) => void;
   logout: () => void;
   isLoading: boolean;
+  showDobModal: boolean;
+  setShowDobModal: (show: boolean) => void;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, planDetails: null, login: () => {}, logout: () => {}, isLoading: true });
+const AuthContext = createContext<AuthContextType>({ user: null, planDetails: null, login: () => {}, logout: () => {}, isLoading: true, showDobModal: false, setShowDobModal: () => {} });
 export const useAuth = () => useContext(AuthContext);
 
 const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [planDetails, setPlanDetails] = useState<SubscriptionPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showDobModal, setShowDobModal] = useState(false);
 
   useEffect(() => {
     // Listen for Auth state changes from Firebase
@@ -157,11 +183,18 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
                  clearInterval(cleanupInterval);
                  cleanupInterval = null;
                }
+
+               // 4. Check for DOB
+               if (!userData.dob) {
+                 setShowDobModal(true);
+               } else {
+                 setShowDobModal(false);
+               }
              }
           });
 
         } catch (error: any) {
-          console.error("Failed to sync user profile", error.message || error);
+          console.error("Failed to sync user profile", error instanceof Error ? error.message : String(error));
           setUser(null);
         }
       } else {
@@ -172,6 +205,7 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
           cleanupInterval = null;
         }
         setUser(null);
+        setShowDobModal(false);
       }
       setIsLoading(false);
     });
@@ -191,10 +225,11 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => 
     await mockBackend.logout();
     setUser(null);
     setPlanDetails(null);
+    setShowDobModal(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, planDetails, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, planDetails, login, logout, isLoading, showDobModal, setShowDobModal }}>
       {children}
     </AuthContext.Provider>
   );
@@ -222,8 +257,18 @@ const App: React.FC = () => {
 
   return (
     <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+};
+
+const AppContent: React.FC = () => {
+  const { showDobModal, setShowDobModal } = useAuth();
+  return (
+    <>
       <GlobalUploadIndicator />
       <CookieConsentManager />
+      {showDobModal && <AddDobModal onClose={() => setShowDobModal(false)} />}
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
         <VisitorTracker />
@@ -273,6 +318,10 @@ const App: React.FC = () => {
               <Route path="tools/statistical-analysis" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><StatisticalAnalysisPage /></React.Suspense>} />
               <Route path="tools/auto-graph" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><GraphPage /></React.Suspense>} />
               
+              <Route path="farmer-connect" element={<FarmerConnect />} />
+              <Route path="govt-schemes" element={<GovSchemes hideBack={true} />} />
+              <Route path="mobile-app" element={<MobileAppView />} />
+
               {/* USER DASHBOARD */}
               <Route path="dashboard" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Dashboard /></ProtectedRoute>} />
               <Route path="dashboard/subscription" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><MySubscription /></ProtectedRoute>} />
@@ -299,6 +348,23 @@ const App: React.FC = () => {
                <Route path="history" element={<ReviewerDashboard />} /> 
             </Route>
 
+            <Route path="/kisan" element={<KisanLayout />}>
+              <Route index element={<HubDashboard />} />
+              <Route path="mandi" element={<MandiBhav />} />
+              <Route path="ledger" element={<ProtectedRoute><Khatabook /></ProtectedRoute>} />
+              <Route path="sop" element={<ProtectedRoute><SOPChecklist /></ProtectedRoute>} />
+              <Route path="weather" element={<KisanWeather />} />
+              <Route path="equipment" element={<EquipmentRental />} />
+              <Route path="marketplace" element={<FarmerMarketplace />} />
+              <Route path="land" element={<LandListing />} />
+              <Route path="dashboard" element={<ProtectedRoute><KisanDashboard /></ProtectedRoute>} />
+              <Route path="schemes" element={<GovSchemes />} />
+              <Route path="post-requirement" element={<ProtectedRoute><PostRequirement /></ProtectedRoute>} />
+              <Route path="my-requirements" element={<ProtectedRoute><MyRequirements /></ProtectedRoute>} />
+              <Route path="my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
+              <Route path="list-item" element={<ProtectedRoute><ListYourItem /></ProtectedRoute>} />
+            </Route>
+
             <Route path="/analytics" element={<DashboardHome />} />
             <Route path="/analytics/pipeline" element={<PipelineBuilder />} />
             <Route path="/analytics/anova" element={<AnovaEngine />} />
@@ -323,6 +389,7 @@ const App: React.FC = () => {
               <Route path="broadcast" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><NotificationManager /></ProtectedRoute>} />
               <Route path="web-intelligence" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><WebIntelligence /></ProtectedRoute>} />
               <Route path="visitors" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><VisitorAnalytics /></ProtectedRoute>} />
+              <Route path="whatsapp" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><WhapiDashboard /></ProtectedRoute>} />
               
               {/* SUPER ADMIN RESTRICTED ROUTES (System Configuration) */}
               <Route path="users" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><UserManagement /></ProtectedRoute>} />
@@ -345,11 +412,13 @@ const App: React.FC = () => {
               <Route path="tracker" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminManager /></ProtectedRoute>} />
               <Route path="cookies" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><CookieManager /></ProtectedRoute>} />
               <Route path="ads-txt" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdsTxtManager /></ProtectedRoute>} />
+              <Route path="schemes" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><SchemesManagement /></ProtectedRoute>} />
+              <Route path="farmer-connect" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><FarmerConnectManagement /></ProtectedRoute>} />
             </Route>
           </Routes>
         </ConfirmationProvider>
       </BrowserRouter>
-    </AuthProvider>
+    </>
   );
 };
 

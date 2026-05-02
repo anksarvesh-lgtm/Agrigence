@@ -100,6 +100,36 @@ const Settings: React.FC = () => {
                   </div>
               </div>
 
+              <div>
+                  <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Android App (APK) - Optional</label>
+                  <p className="text-xs text-gray-400 mb-2">Upload the Android APK for users to download from the footer.</p>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-6">
+                      <div className="flex-1">
+                        <input type="file" id="apk-up" className="hidden" accept=".apk" onChange={handleFileUpload('apkUrl')} disabled={!!uploadingField} />
+                        <label htmlFor="apk-up" className={`w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-4 text-[10px] font-black cursor-pointer transition-all flex justify-between items-center text-gray-600 ${!!uploadingField ? 'opacity-50 pointer-events-none' : ''}`}>
+                           <div className="flex items-center gap-2">
+                              {uploadingField === 'apkUrl' ? <Loader2 size={14} className="animate-spin"/> : <Upload size={14} />} 
+                              {uploadingField === 'apkUrl' ? 'UPLOADING APK...' : (settings.apkUrl ? 'REPLACE APK (' + settings.apkUrl.split('/').pop() + ')' : 'UPLOAD APK')}
+                           </div>
+                           {settings.apkUrl && <span className="text-green-500 shrink-0">URL PRESENT</span>}
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div>
+                        <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Google Play Store Link</label>
+                        <input 
+                            type="text" 
+                            className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-900 text-xs outline-none focus:border-agri-secondary" 
+                            placeholder="https://play.google.com/store/apps/details?id=..." 
+                            value={settings.playStoreUrl || ''} 
+                            onChange={e => setSettings({...settings, playStoreUrl: e.target.value})} 
+                        />
+                    </div>
+                  </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                  <div>
                     <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Primary Color</label>

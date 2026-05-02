@@ -99,7 +99,7 @@ export const ReviewerLayout: React.FC = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 h-screen overflow-y-auto bg-stone-50 relative w-full">
+      <main className="flex-1 h-screen overflow-y-auto overflow-x-hidden bg-stone-50 relative w-full">
         <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-stone-200 px-6 py-4 flex justify-between items-center h-20 shadow-sm lg:hidden">
              <button 
                className="text-stone-500 p-2 hover:bg-stone-100 rounded-lg transition-colors" 

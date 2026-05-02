@@ -37,7 +37,6 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const confirm = (options: ConfirmOptions): Promise<boolean> => {
     return new Promise((resolve) => {
-      // Fix: Explicitly type position to allow align to be 'left' | 'right'
       let position: { top: number; left: number; align: 'left' | 'right' } = { 
         top: window.innerHeight / 2, 
         left: window.innerWidth / 2, 
@@ -94,44 +93,42 @@ export const ConfirmationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       {children}
       <AnimatePresence>
         {state.isOpen && (
-          <>
-            <div 
-              className="fixed inset-0 z-[9998] bg-transparent" 
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
               onClick={() => handleClose(false)}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 5 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.1 } }}
-              style={{ 
-                position: 'fixed', 
-                top: state.position.top, 
-                left: state.position.left,
-                transform: state.position.align === 'right' ? 'translateX(-100%)' : 'none'
-              }}
-              className="z-[9999] w-72 bg-white rounded-2xl shadow-2xl border border-stone-100 p-5 flex flex-col gap-4 font-sans"
+              className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 flex flex-col gap-6 font-sans border border-stone-100"
             >
-               <p className="text-sm font-bold text-stone-800 leading-relaxed">{state.message}</p>
-               <div className="flex justify-end gap-3">
+               <p className="text-base font-bold text-stone-800 leading-relaxed text-center">{state.message}</p>
+               <div className="flex justify-center gap-3">
                   <button 
                     onClick={() => handleClose(false)}
-                    className="px-4 py-2 rounded-xl bg-stone-50 hover:bg-stone-100 text-stone-500 text-xs font-black uppercase tracking-widest transition-colors"
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-black uppercase tracking-widest transition-colors"
                   >
                     Cancel
                   </button>
                   <button 
                     onClick={() => handleClose(true)}
-                    className={`px-5 py-2 rounded-xl text-white text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-black/5 hover:shadow-xl ${
-                        state.type === 'danger' ? 'bg-red-500 hover:bg-red-600' : 'bg-agri-primary hover:bg-agri-secondary'
+                    className={`flex-1 px-4 py-2.5 rounded-xl text-white text-xs font-black uppercase tracking-widest transition-all shadow-lg hover:shadow-xl ${
+                        state.type === 'danger' ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20' : 'bg-agri-primary hover:bg-agri-secondary shadow-agri-primary/20'
                     }`}
                   >
                     Confirm
                   </button>
                </div>
             </motion.div>
-          </>
+          </div>
         )}
       </AnimatePresence>
     </ConfirmationContext.Provider>
   );
 };
+

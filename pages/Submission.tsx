@@ -8,6 +8,7 @@ import { createMetaFile } from '../extensions/submission-tracking/meta-handler';
 import { sendNotification } from '../extensions/notifications/service';
 import OptimizedImage from '../components/OptimizedImage';
 import SEO from '../components/SEO';
+import * as mammoth from 'mammoth';
 
 const Submission: React.FC = () => {
   const { user, login } = useAuth();
@@ -85,9 +86,22 @@ const Submission: React.FC = () => {
     
     try {
       let fileUrl = '';
+      let extractedHtml = '';
+      
       // Upload file to get base64 string if in file mode
       if (submissionMode === 'FILE' && file) {
         fileUrl = await mockBackend.uploadFile(file, 'submissions');
+        
+        // If it's a blog post and docx, extract contents for immediate reading
+        if (contentType === 'BLOG') {
+           try {
+             const arrayBuffer = await file.arrayBuffer();
+             const result = await mammoth.convertToHtml({ arrayBuffer });
+             extractedHtml = result.value;
+           } catch(e) {
+             console.warn("Failed to extract docx contents", e);
+           }
+        }
       }
 
       const result = await mockBackend.submitArticle({
@@ -98,7 +112,7 @@ const Submission: React.FC = () => {
         type: contentType,
         submissionDate: new Date().toISOString(),
         fileUrl: fileUrl,
-        content: submissionMode === 'TEXT' ? textContent : ''
+        content: submissionMode === 'TEXT' ? textContent : (extractedHtml || '')
       });
       
       if (result) {

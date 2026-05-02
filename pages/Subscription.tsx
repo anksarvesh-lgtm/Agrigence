@@ -8,7 +8,7 @@ import {
   PenTool, ChevronRight, Zap, Smartphone, CheckCircle, Tag, CreditCard, Lock, Globe
 } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { applyCoupon, CouponResult } from '../extensions/coupons/engine';
 import { sendNotification } from '../extensions/notifications/service';
@@ -59,6 +59,9 @@ const Subscription: React.FC = () => {
 
   // Toggle between Payment Modes
   const [paymentMode, setPaymentMode] = useState<'ONLINE' | 'MANUAL'>('ONLINE');
+
+  const [searchParams] = useSearchParams();
+  const filterType = searchParams.get('type');
 
   // Derived Settings
   const selectedCountryObj = COUNTRIES.find(c => c.code === billingCountry) || COUNTRIES[0];
@@ -363,6 +366,7 @@ const Subscription: React.FC = () => {
   const articlePlans = plans.filter(p => p.type === 'ARTICLE_ACCESS');
   const blogPlans = plans.filter(p => p.type === 'BLOG_ACCESS');
   const toolPlans = plans.filter(p => p.type === 'TOOL_ACCESS');
+  const kisanPlans = plans.filter(p => p.type === 'KISAN_ACCESS');
   const comboPlan = plans.find(p => p.type === 'COMBO_ACCESS');
 
   const PlanCard: React.FC<{ plan: SubscriptionPlan }> = ({ plan }) => {
@@ -378,6 +382,7 @@ const Subscription: React.FC = () => {
             {plan.type === 'ARTICLE_ACCESS' ? <FileText size={80} /> : 
              plan.type === 'BLOG_ACCESS' ? <PenTool size={80} /> :
              plan.type === 'TOOL_ACCESS' ? <Zap size={80} /> :
+             plan.type === 'KISAN_ACCESS' ? <Star size={80} /> :
              <Star size={80} />}
         </div>
         
@@ -458,7 +463,7 @@ const Subscription: React.FC = () => {
       </div>
 
       <div className="container mx-auto px-6 py-16">
-        {comboPlan && (
+        {filterType !== 'kisan' && comboPlan && (
           <div className="max-w-4xl mx-auto mb-24 relative group">
              <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-10">
                 <span className="bg-agri-secondary text-agri-primary px-8 py-2 rounded-full shadow-2xl font-black text-[10px] uppercase tracking-[0.3em] flex items-center gap-2">
@@ -514,29 +519,46 @@ const Subscription: React.FC = () => {
           </div>
         )}
 
-        <div className="mb-24">
-           <div className="flex items-center gap-4 mb-12">
-              <div className="h-px flex-1 bg-stone-200"></div>
-              <h2 className="text-2xl font-serif font-bold text-agri-primary px-8">Article Submission Plans</h2>
-              <div className="h-px flex-1 bg-stone-200"></div>
-           </div>
-           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {articlePlans.map(plan => <PlanCard key={plan.id} plan={plan} />)}
-           </div>
-        </div>
+        {filterType !== 'kisan' && (
+          <>
+            <div className="mb-24">
+               <div className="flex items-center gap-4 mb-12">
+                  <div className="h-px flex-1 bg-stone-200"></div>
+                  <h2 className="text-2xl font-serif font-bold text-agri-primary px-8">Article Submission Plans</h2>
+                  <div className="h-px flex-1 bg-stone-200"></div>
+               </div>
+               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {articlePlans.map(plan => <PlanCard key={plan.id} plan={plan} />)}
+               </div>
+            </div>
 
-        <div className="mb-24">
-           <div className="flex items-center gap-4 mb-12">
-              <div className="h-px flex-1 bg-stone-200"></div>
-              <h2 className="text-2xl font-serif font-bold text-agri-primary px-8">Blog Publishing Plans</h2>
-              <div className="h-px flex-1 bg-stone-200"></div>
-           </div>
-           <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {blogPlans.map(plan => <PlanCard key={plan.id} plan={plan} />)}
-           </div>
-        </div>
+            <div className="mb-24">
+               <div className="flex items-center gap-4 mb-12">
+                  <div className="h-px flex-1 bg-stone-200"></div>
+                  <h2 className="text-2xl font-serif font-bold text-agri-primary px-8">Blog Publishing Plans</h2>
+                  <div className="h-px flex-1 bg-stone-200"></div>
+               </div>
+               <div className="grid md:grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                  {blogPlans.map(plan => <PlanCard key={plan.id} plan={plan} />)}
+               </div>
+            </div>
+          </>
+        )}
 
-        {toolPlans.length > 0 && (
+        {kisanPlans.length > 0 && (
+          <div className="mb-24">
+             <div className="flex items-center gap-4 mb-12">
+                <div className="h-px flex-1 bg-stone-200"></div>
+                <h2 className="text-2xl font-serif font-bold text-agri-primary px-8">Kisan Membership Plans</h2>
+                <div className="h-px flex-1 bg-stone-200"></div>
+             </div>
+             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {kisanPlans.map(plan => <PlanCard key={plan.id} plan={plan} />)}
+             </div>
+          </div>
+        )}
+
+        {filterType !== 'kisan' && toolPlans.length > 0 && (
           <div className="mb-24">
              <div className="flex items-center gap-4 mb-12">
                 <div className="h-px flex-1 bg-stone-200"></div>

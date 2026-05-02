@@ -1,27 +1,33 @@
 export const safeStringify = (data: any, indent?: number) => {
-  try {
-    const seen = new WeakSet();
-    return JSON.stringify(data, (key, value) => {
-      if (typeof value === 'object' && value !== null) {
-        // Handle common circular objects or complex SDK objects
-        if (value instanceof HTMLElement || value instanceof Window) return '[Circular/DOM]';
-        
-        // Detect circularity
-        if (seen.has(value)) return '[Circular]';
-        seen.add(value);
-
-        // Handle objects with problematic toJSON (like some Firebase internal objects)
-        // If an object has toJSON, JSON.stringify calls it first.
-        // We can't easily intercept toJSON here, but we can check if the value 
-        // looks like a Firebase object and handle it if it's causing issues.
-        if (value.constructor && (value.constructor.name === 'Y2' || value.constructor.name === 'Ka')) {
-          return `[Firebase ${value.constructor.name}]`;
+  const seen = new WeakSet();
+  
+  const replacer = (key: string, value: any) => {
+    if (typeof value === 'object' && value !== null) {
+      if (value instanceof HTMLElement || value instanceof Window) return '[DOM]';
+      
+      // Some Firebase or 3rd party classes throw internally. Detect them.
+      if (value.constructor) {
+        const cn = value.constructor.name;
+        // Y2, Ka, etc. are minified Firestore classes usually forming cycles
+        if (cn === 'Y2' || cn === 'Ka' || cn === 'Firestore' || cn === 'DocumentReference' || cn === 'CollectionReference' || cn === 'Query') {
+           return `[Firebase ${cn}]`;
         }
       }
-      return value;
-    }, indent);
+
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+
+  try {
+    return JSON.stringify(data, replacer, indent);
   } catch (err) {
-    console.error('safeStringify failed:', err);
-    return '[Unstringifiable Object]';
+    // Fallback if standard JSON.stringify throws immediately due to .toJSON returning a circular object
+    const fallbackString = typeof data === 'object' && data !== null ? Object.keys(data).join(', ') : 'unknown';
+    console.warn('safeStringify fallback executed:', err instanceof Error ? err.message : String(err));
+    return `[Complex Object with keys: ${fallbackString}]`;
   }
 };

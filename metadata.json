@@ -1,5 +1,8 @@
 {
   "name": "Agrigence",
   "description": "Agrigence: Where Agri-Intelligence Meets Agricultural Generation. A professional agriculture journal publication platform with subscription management, article workflows, editorial oversight, and specialized tools.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
 }

@@ -304,7 +304,7 @@ const SEOSettings: React.FC = () => {
                       </div>
                       <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl border border-blue-100">
                           <span className="text-xs font-bold text-blue-800">Sitemap URL</span>
-                          <code className="text-xs bg-white px-3 py-1 rounded border border-blue-100 text-blue-600">https://agrigence.com/sitemap.xml</code>
+                          <code className="text-xs bg-white px-3 py-1 rounded border border-blue-100 text-blue-600">https://www.agrigence.in/sitemap.xml</code>
                       </div>
                   </div>
               )}

@@ -4,9 +4,11 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../App';
 import { mockBackend } from '../../services/mockBackend';
 import { Magazine, Article } from '../../types';
-import { FileText, BookOpen, Plus, X, Upload, Save, FileCheck, Image as ImageIcon, Trash2, Globe, Star, Calendar, Bookmark, File, Loader2, Bold, Italic, Underline, Heading1, Heading2, List, Eye, Edit3, AlertTriangle, ShieldCheck, Activity } from 'lucide-react';
+import { FileText, BookOpen, Plus, X, Upload, Save, FileCheck, Image as ImageIcon, Trash2, Globe, Star, Calendar, Bookmark, File as FileIcon, Loader2, Bold, Italic, Underline, Heading1, Heading2, List, Eye, Edit3, AlertTriangle, ShieldCheck, Activity } from 'lucide-react';
 import { useConfirm } from '../../components/ContextualConfirm';
 import JoditEditor from 'jodit-react';
+
+import * as mammoth from 'mammoth';
 
 const ContentManagement: React.FC = () => {
   const location = useLocation();
@@ -61,19 +63,78 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
       return () => unsub();
     }, [type]);
 
+    const uploadBase64ImagesInHTML = async (html: string): Promise<string> => {
+        if (!html || !html.includes('data:image/')) return html;
+        
+        setIsUploading(true);
+        try {
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            
+            const images = div.querySelectorAll('img[src^="data:image/"]');
+            
+            for (let i = 0; i < images.length; i++) {
+                const img = images[i] as HTMLImageElement;
+                const src = img.getAttribute('src');
+                if (src && src.startsWith('data:image/')) {
+                    try {
+                        const arr = src.split(',');
+                        const mimeMatch = arr[0].match(/:(.*?);/);
+                        if (!mimeMatch) continue;
+                        const mime = mimeMatch[1];
+                        const bstr = atob(arr[1]);
+                        let n = bstr.length;
+                        const u8arr = new Uint8Array(n);
+                        while (n--) {
+                            u8arr[n] = bstr.charCodeAt(n);
+                        }
+                        const ext = mime.split('/')[1] || 'png';
+                        const file = new File([u8arr], `inline-${Date.now()}-${i}.${ext}`, { type: mime });
+                        
+                        const url = await mockBackend.uploadFile(file, 'articles');
+                        img.setAttribute('src', url);
+                    } catch (e) {
+                        console.error('Failed to upload inline image:', e);
+                    }
+                }
+            }
+            return div.innerHTML;
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const handleSave = async () => {
         if (!editingArticle.title) return alert("Title is required");
-        if (editingArticle.id) await mockBackend.updateArticle(editingArticle as Article);
-        else await mockBackend.addArticle({
+        try {
+            let finalContent = editingArticle.content || '';
+            if (finalContent.includes('data:image/')) {
+                finalContent = await uploadBase64ImagesInHTML(finalContent);
+            }
+
+            const payload = {
                 ...editingArticle,
+                content: finalContent,
                 type: type === 'articles' ? 'ARTICLE' : 'BLOG',
                 status: editingArticle.status || 'PUBLISHED',
                 authorName: editingArticle.authorName || 'Admin'
-            } as Article);
-        
-        setIsModalOpen(false);
-        setEditingArticle({});
-        setShowPreview(false);
+            };
+
+            const payloadStr = JSON.stringify(payload);
+            const sizeInBytes = new Blob([payloadStr]).size;
+            if (sizeInBytes > 1000000) {
+                 return alert("The content is still too large (" + Math.round(sizeInBytes/1024) + " KB). Please remove large inline images and try again.");
+            }
+
+            if (editingArticle.id) await mockBackend.updateArticle(payload as Article);
+            else await mockBackend.addArticle(payload as Article);
+            
+            setIsModalOpen(false);
+            setEditingArticle({});
+            setShowPreview(false);
+        } catch (e: any) {
+            alert(e.message || "Failed to save article.");
+        }
     };
 
     const handleDeleteArticle = async (id: string, e: React.MouseEvent) => {
@@ -98,6 +159,38 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
             setIsUploading(false);
         }
       }
+    };
+
+    const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if(!file) return;
+        if(file.size > 5 * 1024 * 1024) {
+             return alert("File must be less than 5MB");
+        }
+        setIsUploading(true);
+        try {
+            const url = await mockBackend.uploadFile(file, 'articles/docs');
+            
+            // Extract text from the docx file
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.convertToHtml({ arrayBuffer });
+            const extractedHtml = result.value;
+            
+            setEditingArticle({
+                ...editingArticle, 
+                fileUrl: url,
+                content: extractedHtml || editingArticle.content // Set content if extracted
+            });
+            
+            if (result.messages && result.messages.length > 0) {
+                console.warn("Mammoth extraction messages:", result.messages);
+            }
+            
+        } catch (e: any) {
+            alert(e.message || "Failed to upload document");
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     return (
@@ -286,7 +379,16 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
                                                 showWordsCounter: false,
                                                 toolbarAdaptive: false
                                             }}
-                                            onBlur={newContent => setEditingArticle({...editingArticle, content: newContent})}
+                                            onBlur={newContent => {
+                                                if (typeof newContent === 'string') {
+                                                    setEditingArticle({...editingArticle, content: newContent});
+                                                }
+                                            }}
+                                            onChange={newContent => {
+                                                if (typeof newContent === 'string') {
+                                                    setEditingArticle({...editingArticle, content: newContent});
+                                                }
+                                            }}
                                         />
                                      ) : (
                                         <div className="w-full bg-white p-6 h-[600px] overflow-y-auto">
@@ -327,6 +429,27 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
                                      <input type="file" id="art-img" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
                                   </div>
                                </div>
+
+                               {type === 'blogs' && (
+                               <div>
+                                  <label className="text-[10px] uppercase font-bold text-admin-secondary mb-4 block tracking-widest">Document Attachment (.docx)</label>
+                                  <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-admin-border shadow-sm group">
+                                     <div className="flex items-center gap-3">
+                                         <FileIcon size={20} className={editingArticle.fileUrl ? "text-agri-secondary" : "text-admin-muted"} />
+                                         <div className="flex flex-col max-w-[120px]">
+                                            <span className="text-[10px] font-bold text-admin-text uppercase truncate">
+                                                {editingArticle.fileUrl ? 'DOC_LOADED' : 'NO_DOC_QUEUED'}
+                                            </span>
+                                            <span className="text-[9px] text-admin-muted uppercase">Max: 5MB</span>
+                                         </div>
+                                     </div>
+                                     <label className="px-4 py-2 bg-admin-hover text-admin-text rounded-lg text-[10px] font-bold uppercase tracking-widest cursor-pointer hover:bg-admin-border transition-colors">
+                                        Upload
+                                        <input type="file" className="hidden" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onChange={handleDocUpload} disabled={isUploading} />
+                                     </label>
+                                  </div>
+                               </div>
+                               )}
 
                                <div className="flex items-center justify-between p-6 bg-white rounded-2xl border border-admin-border shadow-sm">
                                   <div>
@@ -427,7 +550,7 @@ const MagazineManager = () => {
                                 </button>
                                 {mag.pdfUrl && (
                                     <a href={mag.pdfUrl} target="_blank" rel="noreferrer" className="p-4 bg-agri-secondary text-white rounded-2xl hover:scale-110 transition-transform shadow-2xl">
-                                        <File size={20} />
+                                        <FileIcon size={20} />
                                     </a>
                                 )}
                             </div>
@@ -531,7 +654,7 @@ const MagazineManager = () => {
                                   <div className="space-y-4">
                                      <div className="flex items-center justify-between p-4 bg-admin-bg rounded-2xl border border-admin-border">
                                         <div className="flex items-center gap-3">
-                                            <File size={20} className={editingMag.pdfUrl ? 'text-green-500' : 'text-admin-muted'} />
+                                            <FileIcon size={20} className={editingMag.pdfUrl ? 'text-green-500' : 'text-admin-muted'} />
                                             <span className="text-[10px] font-bold text-admin-secondary uppercase truncate max-w-[120px]">
                                                 {uploadingField === 'pdfUrl' ? 'UPLOADING...' : editingMag.pdfUrl ? 'PROTOCOL_LOADED' : 'NO_FILE_QUEUED'}
                                             </span>
