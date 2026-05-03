@@ -5,7 +5,7 @@ import { mockBackend } from '../services/mockBackend';
 import { NewsItem } from '../types';
 import { Loader2, ArrowLeft, Calendar, ExternalLink, Megaphone } from 'lucide-react';
 import SocialShare from '../components/SocialShare';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 
 const NewsView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,14 +51,11 @@ const NewsView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFCFB]">
-      <Helmet>
-        <title>{newsItem.title} | Agrigence</title>
-        <meta property="og:title" content={newsItem.title} />
-        <meta property="og:description" content={newsItem.description ? newsItem.description.substring(0, 150) : ''} />
-        <meta property="og:image" content={newsItem.thumbnail || "https://www.agrigence.in/logo.png"} />
-        <meta property="og:url" content={window.location.href} />
-        <meta name="twitter:card" content="summary_large_image" />
-      </Helmet>
+      <SEO 
+        title={`${newsItem.title} | Agrigence`}
+        description={newsItem.description ? newsItem.description.substring(0, 150) : ''}
+        image={newsItem.thumbnail || "https://agrigence.in/logo.png"}
+      />
       <div className="container mx-auto px-6 py-8">
         <button onClick={() => navigate('/news')} className="flex items-center gap-2 text-stone-500 hover:text-[#0F392B] transition-colors font-bold text-sm uppercase tracking-widest">
            <ArrowLeft size={16} /> Back to News
@@ -97,9 +94,10 @@ const NewsView: React.FC = () => {
             </div>
         )}
 
-        <div className="prose prose-stone prose-lg max-w-none mb-12">
-           {formatContent(newsItem.content || "Full details are available in the attached resources or contact our press office.")}
-        </div>
+        <div 
+          className="prose prose-stone prose-lg max-w-none mb-12 font-serif text-stone-700 leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: newsItem.content || "Full details are available in the attached resources or contact our press office." }}
+        />
 
         {newsItem.relevantLink && (
             <div className="bg-[#0F392B]/5 border border-[#0F392B]/10 rounded-2xl p-8 mb-12 flex flex-col md:flex-row items-center justify-between gap-6">

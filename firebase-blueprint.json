@@ -33,12 +33,53 @@
         }
       },
       "required": ["userId", "toolName", "timestamp", "inputData", "outputData", "status"]
+    },
+    "Blog": {
+      "title": "Blog Post",
+      "description": "Daily trending agricultural blog posts",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "metaDescription": { "type": "string" },
+        "content": { "type": "string" },
+        "schema": { "type": "object" },
+        "keyword": { "type": "string" },
+        "type": { "type": "string" },
+        "status": { "type": "string" },
+        "author": { "type": "string" },
+        "publishedAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "featuredImage": { "type": "string" }
+      },
+      "required": ["title", "slug", "content", "publishedAt"]
+    },
+    "CropPlan": {
+      "title": "Crop Plan",
+      "description": "AI-generated crop planning and suggestions",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "input": { "type": "object" },
+        "recommendations": { "type": "string" },
+        "crops": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["userId", "timestamp", "input", "recommendations", "crops"]
     }
   },
   "firestore": {
     "/tool_history/{historyId}": {
       "schema": "ToolHistory",
       "description": "Collection of tool usage logs"
+    },
+    "/blogs/{blogId}": {
+      "schema": "Blog",
+      "description": "Collection of AI-generated blog posts"
+    },
+    "/crop_plans/{planId}": {
+      "schema": "CropPlan",
+      "description": "User-specific crop plans"
     }
   }
 }

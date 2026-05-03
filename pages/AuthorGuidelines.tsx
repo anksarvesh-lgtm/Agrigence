@@ -3,20 +3,10 @@ import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, FileText, CheckCircle, AlertTriangle, Scale, Mail, Globe, Anchor, ChevronRight, Hash, Clock, ShieldCheck } from 'lucide-react';
 
+import SEO from '../components/SEO';
+
 const AuthorGuidelines: React.FC = () => {
   
-  useEffect(() => {
-    document.title = "Author Guidelines | Agrigence";
-    // Basic SEO meta tag injection for SPA context
-    let metaDescription = document.querySelector('meta[name="description"]');
-    if (!metaDescription) {
-        metaDescription = document.createElement('meta');
-        metaDescription.setAttribute('name', 'description');
-        document.head.appendChild(metaDescription);
-    }
-    metaDescription.setAttribute('content', 'Comprehensive submission standards, formatting rules, ethics policy, and peer-review workflows for authors publishing with Agrigence.');
-  }, []);
-
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -48,6 +38,10 @@ const AuthorGuidelines: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFCFB]">
+      <SEO 
+        title="Author Guidelines & Submission Standards | Agrigence"
+        description="Comprehensive submission standards, formatting rules, ethics policy, and peer-review workflows for authors publishing with Agrigence."
+      />
       {/* Hero Header */}
       <div className="bg-[#3D2B1F] text-white py-20 px-6 relative overflow-hidden">
         <div className="absolute inset-0">

@@ -4,6 +4,7 @@ import { motion, useScroll, useSpring, useTransform, AnimatePresence } from 'fra
 import { mockBackend } from '../services/mockBackend';
 import { Mail, MapPin, Award, Quote, BookOpen, AlertCircle, Leaf } from 'lucide-react';
 import { EditorialMember } from '../types';
+import SEO from '../components/SEO';
 
 const GrassRunner: React.FC<{ start: { x: number, y: number }, end: { x: number, y: number }, delay?: number }> = ({ start, end, delay = 0 }) => {
   // Create an organic curve between start and end
@@ -150,6 +151,10 @@ const EditorialBoard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAF8] pb-32 overflow-hidden relative" ref={containerRef}>
+      <SEO 
+        title="Editorial Board | Agrigence"
+        description="Meet the esteemed members of our editorial board, a global network of scholarly excellence in agriculture and innovation."
+      />
       {/* Hero Section */}
       <div className="relative h-[50vh] flex items-center justify-center bg-agri-primary overflow-hidden">
         <div className="absolute inset-0 opacity-20">

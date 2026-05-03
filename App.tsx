@@ -7,6 +7,8 @@ import { auth } from './src/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { Mail, LogOut, CheckCircle } from 'lucide-react';
 
+import { HelmetProvider } from 'react-helmet-async';
+
 // Layouts and Pages
 import Layout from './components/Layout';
 import AdminLayout from './layouts/AdminLayout';
@@ -49,6 +51,9 @@ import Sitemap from './pages/Sitemap';
 import FarmerConnect from './pages/FarmerConnect';
 import { GovSchemes } from './pages/KisanHub/GovSchemes';
 import MobileAppView from './pages/MobileAppView';
+import MandiCityPage from './pages/MandiCityPage';
+import SchemeDetailPage from './pages/SchemeDetailPage';
+import CropAdvisoryPage from './pages/CropAdvisoryPage';
 
 // Lazy loaded tools
 const SeedRatePage = React.lazy(() => import('./tools/Tool01SeedRate/SeedRatePage'));
@@ -92,6 +97,7 @@ import NotificationManager from './pages/admin/NotificationManager';
 import TrashManager from './pages/admin/TrashManager';
 import WebIntelligence from './pages/admin/WebIntelligence';
 import VisitorAnalytics from './pages/admin/VisitorAnalytics';
+import AIContentGenerator from './pages/admin/AIContentGenerator';
 import AdminManager from './extensions/submission-tracking/AdminManager';
 import SubmissionAdminPanel from './extensions/submission-admin/SubmissionAdminPanel';
 import ReviewerDashboard from './pages/ReviewerDashboard'; // New Page
@@ -121,8 +127,11 @@ import { PostRequirement } from './pages/KisanHub/PostRequirement';
 import { MyRequirements } from './pages/KisanHub/MyRequirements';
 import { MyListings } from './pages/KisanHub/MyListings';
 import { ListYourItem } from './pages/KisanHub/ListYourItem';
+import CropPlanner from './pages/KisanHub/CropPlanner';
 
 
+
+import KisanLogin from './pages/KisanHub/KisanLogin';
 
 // Auth Context
 interface AuthContextType {
@@ -245,6 +254,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: strin
   return <>{children}</>;
 };
 
+const KisanProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
+  
+  if (isLoading) return <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center font-serif text-[#92745B]">Validating Farm Credentials...</div>;
+  if (!user) return <Navigate to="/kisan/login" state={{ from: location }} replace />;
+
+  return <>{children}</>;
+};
+
 const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
@@ -257,7 +276,9 @@ const App: React.FC = () => {
 
   return (
     <AuthProvider>
-      <AppContent />
+      <HelmetProvider>
+        <AppContent />
+      </HelmetProvider>
     </AuthProvider>
   );
 };
@@ -321,6 +342,11 @@ const AppContent: React.FC = () => {
               <Route path="farmer-connect" element={<FarmerConnect />} />
               <Route path="govt-schemes" element={<GovSchemes hideBack={true} />} />
               <Route path="mobile-app" element={<MobileAppView />} />
+              
+              {/* Programmatic SEO Pages */}
+              <Route path="mandi-bhav/:city" element={<MandiCityPage />} />
+              <Route path="scheme/:slug" element={<SchemeDetailPage />} />
+              <Route path="crop/:slug" element={<CropAdvisoryPage />} />
 
               {/* USER DASHBOARD */}
               <Route path="dashboard" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Dashboard /></ProtectedRoute>} />
@@ -349,20 +375,22 @@ const AppContent: React.FC = () => {
             </Route>
 
             <Route path="/kisan" element={<KisanLayout />}>
+              <Route path="login" element={<KisanLogin />} />
               <Route index element={<HubDashboard />} />
               <Route path="mandi" element={<MandiBhav />} />
-              <Route path="ledger" element={<ProtectedRoute><Khatabook /></ProtectedRoute>} />
-              <Route path="sop" element={<ProtectedRoute><SOPChecklist /></ProtectedRoute>} />
+              <Route path="ledger" element={<KisanProtectedRoute><Khatabook /></KisanProtectedRoute>} />
+              <Route path="sop" element={<KisanProtectedRoute><SOPChecklist /></KisanProtectedRoute>} />
               <Route path="weather" element={<KisanWeather />} />
               <Route path="equipment" element={<EquipmentRental />} />
               <Route path="marketplace" element={<FarmerMarketplace />} />
               <Route path="land" element={<LandListing />} />
-              <Route path="dashboard" element={<ProtectedRoute><KisanDashboard /></ProtectedRoute>} />
+              <Route path="dashboard" element={<KisanProtectedRoute><KisanDashboard /></KisanProtectedRoute>} />
               <Route path="schemes" element={<GovSchemes />} />
-              <Route path="post-requirement" element={<ProtectedRoute><PostRequirement /></ProtectedRoute>} />
-              <Route path="my-requirements" element={<ProtectedRoute><MyRequirements /></ProtectedRoute>} />
-              <Route path="my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
-              <Route path="list-item" element={<ProtectedRoute><ListYourItem /></ProtectedRoute>} />
+              <Route path="post-requirement" element={<KisanProtectedRoute><PostRequirement /></KisanProtectedRoute>} />
+              <Route path="my-requirements" element={<KisanProtectedRoute><MyRequirements /></KisanProtectedRoute>} />
+              <Route path="my-listings" element={<KisanProtectedRoute><MyListings /></KisanProtectedRoute>} />
+              <Route path="list-item" element={<KisanProtectedRoute><ListYourItem /></KisanProtectedRoute>} />
+              <Route path="crop-planner" element={<CropPlanner />} />
             </Route>
 
             <Route path="/analytics" element={<DashboardHome />} />
@@ -389,6 +417,7 @@ const AppContent: React.FC = () => {
               <Route path="broadcast" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><NotificationManager /></ProtectedRoute>} />
               <Route path="web-intelligence" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><WebIntelligence /></ProtectedRoute>} />
               <Route path="visitors" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><VisitorAnalytics /></ProtectedRoute>} />
+              <Route path="ai-content" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><AIContentGenerator /></ProtectedRoute>} />
               <Route path="whatsapp" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><WhapiDashboard /></ProtectedRoute>} />
               
               {/* SUPER ADMIN RESTRICTED ROUTES (System Configuration) */}

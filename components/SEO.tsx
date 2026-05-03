@@ -7,52 +7,65 @@ interface SEOProps {
   url?: string;
   image?: string;
   type?: string;
-  schema?: object;
+  schema?: object | object[];
   keywords?: string;
 }
 
 const SEO: React.FC<SEOProps> = ({ 
   title, 
   description, 
-  url = 'https://www.agrigence.in', 
-  image = 'https://www.agrigence.in/logo.png', 
+  url, 
+  image = 'https://agrigence.in/logo.png', 
   type = 'website',
   schema,
-  keywords = 'agriculture, farming, agritech, research, education, tools'
+  keywords = 'agriculture, farming, agritech, india, mandi bhav, gov schemes, crop advisory'
 }) => {
+  const currentUrl = (url || (typeof window !== 'undefined' ? window.location.href : 'https://agrigence.in')).replace(/\/$/, '');
+  
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Agrigence",
+    "url": "https://agrigence.in",
+    "logo": "https://agrigence.in/logo.png",
+    "sameAs": [
+      "https://facebook.com/agrigence",
+      "https://twitter.com/agrigence",
+      "https://linkedin.com/company/agrigence"
+    ]
+  };
+
+  const schemas = Array.isArray(schema) ? [organizationSchema, ...schema] : (schema ? [organizationSchema, schema] : [organizationSchema]);
+
   return (
     <Helmet>
-      <title>{title}</title>
-      <meta name="description" content={description} />
-      <meta name="keywords" content={keywords} />
+      <title data-rh="true">{title}</title>
+      <meta data-rh="true" name="robots" content="index, follow" />
+      <meta data-rh="true" name="description" content={description} />
+      <meta data-rh="true" name="keywords" content={keywords} />
+      
+      <link data-rh="true" rel="canonical" href={currentUrl} />
       
       {/* Open Graph / Facebook */}
-      <meta property="og:type" content={type} />
-      <meta property="og:url" content={url} />
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
-      <meta property="og:image" content={image} />
+      <meta data-rh="true" property="og:type" content={type} />
+      <meta data-rh="true" property="og:url" content={currentUrl} />
+      <meta data-rh="true" property="og:title" content={title} />
+      <meta data-rh="true" property="og:description" content={description} />
+      <meta data-rh="true" property="og:image" content={image} />
 
       {/* Twitter */}
-      <meta property="twitter:card" content="summary_large_image" />
-      <meta property="twitter:url" content={url} />
-      <meta property="twitter:title" content={title} />
-      <meta property="twitter:description" content={description} />
-      <meta property="twitter:image" content={image} />
+      <meta data-rh="true" name="twitter:card" content="summary_large_image" />
+      <meta data-rh="true" name="twitter:url" content={currentUrl} />
+      <meta data-rh="true" name="twitter:title" content={title} />
+      <meta data-rh="true" name="twitter:description" content={description} />
+      <meta data-rh="true" name="twitter:image" content={image} />
 
       {/* Structured Data */}
-      {schema && (
-        <script type="application/ld+json">
-          {(() => {
-            try {
-              return JSON.stringify(schema);
-            } catch (e) {
-              console.error("Failed to stringify schema", e);
-              return '{}';
-            }
-          })()}
+      {schemas.map((s, i) => (
+        <script key={i} data-rh="true" type="application/ld+json">
+          {JSON.stringify(s)}
         </script>
-      )}
+      ))}
     </Helmet>
   );
 };

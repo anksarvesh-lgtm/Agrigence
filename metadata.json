@@ -1,8 +1,7 @@
 {
   "name": "Agrigence",
-  "description": "Agrigence: Where Agri-Intelligence Meets Agricultural Generation. A professional agriculture journal publication platform with subscription management, article workflows, editorial oversight, and specialized tools.",
+  "description": "Agrigence (https://agrigence.in) is a production-ready agriculture platform for Indian farmers, optimized for SEO and AI answer engines. Features daily Mandi Bhav, Government Schemes, and Crop Advisory with structured data for maximum discoverability.",
   "requestFramePermissions": [
-    "microphone",
     "geolocation"
   ]
 }

@@ -52,6 +52,7 @@ const AdminLayout: React.FC = () => {
     menuItems = [
       { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
       { label: 'Web Intelligence', path: '/admin/web-intelligence', icon: Activity },
+      { label: 'AI Content', path: '/admin/ai-content', icon: Bot },
       { label: 'All Submissions', path: '/admin/submissions', icon: FolderOpen },
       { label: 'Status Tracker', path: '/admin/tracker', icon: Activity },
       { label: 'Users', path: '/admin/users', icon: Users },
@@ -87,6 +88,7 @@ const AdminLayout: React.FC = () => {
     menuItems = [
       { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
       { label: 'Web Intelligence', path: '/admin/web-intelligence', icon: Activity },
+      { label: 'AI Content', path: '/admin/ai-content', icon: Bot },
       { label: 'Submissions', path: '/admin/submissions', icon: FolderOpen }, // Verify & Assign
       { label: 'Payments', path: '/admin/payments', icon: ShieldCheck }, // Approve Payments
       { label: 'Inquiries', path: '/admin/inquiries', icon: MessageSquare }, // Reply to messages

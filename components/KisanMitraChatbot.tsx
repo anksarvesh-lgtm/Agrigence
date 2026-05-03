@@ -17,13 +17,32 @@ export const KisanMitraChatbot: React.FC = () => {
     {
        id: 'welcome',
        role: 'model',
-       text: 'Namaste! I am Kisan Mitra, your personal agriculture expert. How can I assist you with your farming today? (e.g. crop advice, weather, mandi prices, or pest control)'
+       text: 'Namaste! I am Kisan Mitra, your personal agriculture expert. How can I assist you today?\n\nI can help with:\n- 🌾 **Crop Advice & Pest Control**\n- 🌦️ **Weather & Mandi Prices**\n- 🎓 **Exam Prep (Previous Year Questions)**\n- 🚜 **Equipment Rentals & Marketplace**'
     }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+
+  const quickActions = [
+    { label: 'ICAR JRF PYQs', icon: '🎓' },
+    { label: 'Soil Science MCQs', icon: '🧪' },
+    { label: 'Agronomy Questions', icon: '🌾' },
+    { label: 'Mandi Prices', icon: '💰' }
+  ];
+
+  const handleQuickAction = (action: string) => {
+    let query = "";
+    if (action === 'ICAR JRF PYQs') query = "Give me some ICAR JRF Previous Year Questions from Agronomy.";
+    if (action === 'Soil Science MCQs') query = "Show me some PYQs related to Soil Science (ICAR/AFO).";
+    if (action === 'Agronomy Questions') query = "Give me some Agronomy PYQs with explanations.";
+    if (action === 'Mandi Prices') query = "What are the latest Mandi prices for Wheat in my state?";
+    
+    setInput(query);
+    setShowQuickActions(false);
+  };
 
 
   const scrollToBottom = () => {
@@ -191,6 +210,23 @@ export const KisanMitraChatbot: React.FC = () => {
                         </div>
                     </motion.div>
                 ))}
+
+                {showQuickActions && messages.length === 1 && (
+                    <div className="flex flex-wrap gap-2 pt-2">
+                        {quickActions.map((action, idx) => (
+                            <motion.button
+                                key={idx}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.1 * idx }}
+                                onClick={() => handleQuickAction(action.label)}
+                                className="px-4 py-2 bg-white border border-stone-200 rounded-full text-sm font-medium text-stone-700 hover:border-[#2d5a27] hover:text-[#2d5a27] hover:bg-emerald-50 transition-all shadow-sm"
+                            >
+                                <span className="mr-1">{action.icon}</span> {action.label}
+                            </motion.button>
+                        ))}
+                    </div>
+                )}
                 {isLoading && (
                     <motion.div 
                         initial={{ opacity: 0 }}

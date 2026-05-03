@@ -5,7 +5,7 @@ import { mockBackend } from '../services/mockBackend';
 import { Article } from '../types';
 import { Loader2, ArrowLeft, Calendar, Clock } from 'lucide-react';
 import SocialShare from '../components/SocialShare';
-import { Helmet } from 'react-helmet-async';
+import SEO from '../components/SEO';
 
 const BlogView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,14 +43,11 @@ const BlogView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#FDFCFB]">
-      <Helmet>
-        <title>{article.title} | Agrigence</title>
-        <meta property="og:title" content={article.title} />
-        <meta property="og:description" content={article.content ? article.content.replace(/<[^>]*>?/gm, '').substring(0, 150) : ''} />
-        <meta property="og:image" content={article.featuredImage || "https://www.agrigence.in/logo.png"} />
-        <meta property="og:url" content={window.location.href} />
-        <meta name="twitter:card" content="summary_large_image" />
-      </Helmet>
+      <SEO 
+        title={`${article.title} | Agrigence`}
+        description={article.content ? article.content.replace(/<[^>]*>?/gm, '').substring(0, 150) : ''}
+        image={article.featuredImage || "https://agrigence.in/logo.png"}
+      />
       <div className="container mx-auto px-6 py-8">
         <button onClick={() => navigate('/blogs')} className="flex items-center gap-2 text-stone-500 hover:text-[#3D2B1F] transition-colors font-bold text-sm uppercase tracking-widest">
            <ArrowLeft size={16} /> Back to Blogs

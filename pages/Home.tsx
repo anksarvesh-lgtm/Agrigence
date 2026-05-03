@@ -176,8 +176,8 @@ const Home: React.FC = () => {
               </div>
             </motion.div>
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-serif font-bold mb-8 leading-[0.9] text-white tracking-tighter">
-              Future <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-agri-secondary via-amber-200 to-emerald-400">Harvest</span>
+              Agrigence <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-agri-secondary via-amber-200 to-emerald-400">Future Harvest</span>
             </h1>
             <p className="text-lg md:text-xl text-white/70 font-light leading-relaxed mb-10 max-w-xl">
               Merging deep agricultural wisdom with cutting-edge digital intelligence. Empowering the global farming community through data-driven innovation.

@@ -1,0 +1,202 @@
+[
+  {
+    "id": 1,
+    "exam": "ICAR JRF",
+    "subject": "Agronomy",
+    "year": "2021",
+    "question": "Which crop is known as the 'King of Cereals'?",
+    "options": ["Rice", "Wheat", "Maize", "Barley"],
+    "answer": "Wheat",
+    "explanation": "Wheat (Triticum aestivum) is called the King of Cereals due to its extensive cultivation and nutritional importance worldwide."
+  },
+  {
+    "id": 2,
+    "exam": "ICAR JRF",
+    "subject": "Agronomy",
+    "year": "2021",
+    "question": "The Central Rice Research Institute (CRRI) is located at?",
+    "options": ["New Delhi", "Hyderabad", "Cuttack", "Manila"],
+    "answer": "Cuttack",
+    "explanation": "CRRI is located in Cuttack, Odisha. It was established in 1946."
+  },
+  {
+    "id": 3,
+    "exam": "ASRB NET",
+    "subject": "Horticulture",
+    "year": "2020",
+    "question": "Golden Revolution in India is related to the production of?",
+    "options": ["Gold", "Horticulture and Honey", "Oilseeds", "Pulses"],
+    "answer": "Horticulture and Honey",
+    "explanation": "The Golden Revolution (1991-2003) focused on the development of horticulture and honey production in India."
+  },
+  {
+    "id": 4,
+    "exam": "Agriculture Field Officer (AFO)",
+    "subject": "General Agriculture",
+    "year": "2019",
+    "question": "Who is known as the Father of Green Revolution in the World?",
+    "options": ["M.S. Swaminathan", "Norman E. Borlaug", "Verghese Kurien", "William Gaud"],
+    "answer": "Norman E. Borlaug",
+    "explanation": "Dr. Norman E. Borlaug is known as the Father of Green Revolution globally. M.S. Swaminathan is the Father of Green Revolution in India."
+  },
+  {
+    "id": 5,
+    "exam": "AFO",
+    "subject": "Soil Science",
+    "year": "2022",
+    "question": "Khaira disease in Rice is caused by the deficiency of which nutrient?",
+    "options": ["Nitrogen", "Zinc", "Iron", "Boron"],
+    "answer": "Zinc",
+    "explanation": "Khaira disease is a common physiological disorder in rice caused by zinc deficiency, first reported by Y.L. Nene."
+  },
+  {
+    "id": 6,
+    "exam": "ICAR SRF",
+    "subject": "Plant Pathology",
+    "year": "2021",
+    "question": "The first human-made cereal is?",
+    "options": ["Triticale", "Oats", "Bread Wheat", "Pusa Bold"],
+    "answer": "Triticale",
+    "explanation": "Triticale is the first man-made cereal, developed by crossing Wheat and Rye (Secale cereale)."
+  },
+  {
+    "id": 7,
+    "exam": "ASRB NET",
+    "subject": "Agronomy",
+    "year": "2020",
+    "question": "Atmospheric pressure is measured by?",
+    "options": ["Anemometer", "Barometer", "Hygrometer", "Pyranometer"],
+    "answer": "Barometer",
+    "explanation": "A Barometer is used to measure atmospheric pressure. Anemometer measures wind speed."
+  },
+  {
+    "id": 8,
+    "exam": "ICAR JRF",
+    "subject": "Soil Science",
+    "year": "2018",
+    "question": "What is the pH range of Alkaline soils?",
+    "options": ["Less than 7", "7", "More than 8.5", "6.5 to 7.5"],
+    "answer": "More than 8.5",
+    "explanation": "Alkaline or Sodic soils typically have a pH value greater than 8.5."
+  },
+  {
+    "id": 9,
+    "exam": "AFO",
+    "subject": "General Agriculture",
+    "year": "2021",
+    "question": "The 'Yellow Revolution' is associated with which of the following?",
+    "options": ["Banana", "Turmeric", "Oilseeds", "Eggs"],
+    "answer": "Oilseeds",
+    "explanation": "The Yellow Revolution refers to the sudden increase in the production of edible oilseeds, particularly mustard and sunflower."
+  },
+  {
+    "id": 10,
+    "exam": "ASRB NET",
+    "subject": "Entomology",
+    "year": "2019",
+    "question": "Which insect is known as the 'International Pest'?",
+    "options": ["Pink Bollworm", "Desert Locust", "Whitefly", "Aphids"],
+    "answer": "Desert Locust",
+    "explanation": "Desert Locust (Schistocerca gregaria) is considered an international pest because it migrates across international borders in large swarms."
+  },
+  {
+    "id": 11,
+    "exam": "ICAR JRF",
+    "subject": "Agronomy",
+    "year": "2022",
+    "question": "Which of the following is a C4 plant?",
+    "options": ["Rice", "Wheat", "Maize", "Potato"],
+    "answer": "Maize",
+    "explanation": "Maize, Sugarcane, and Sorghum are classic examples of C4 plants that have developed an efficient mechanism for CO2 fixation."
+  },
+  {
+    "id": 12,
+    "exam": "AFO",
+    "subject": "Animal Husbandry",
+    "year": "2020",
+    "question": "The gestation period of a Buffalo is approximately?",
+    "options": ["280 days", "310 days", "150 days", "114 days"],
+    "answer": "310 days",
+    "explanation": "The average gestation period for a river buffalo is around 310 days, while for a cow it is about 280-285 days."
+  },
+  {
+    "id": 13,
+    "exam": "ICAR JRF",
+    "subject": "Horticulture",
+    "year": "2021",
+    "question": "Which fruit is known as 'The Poor Man's Apple' in India?",
+    "options": ["Guava", "Banana", "Ziziphus (Ber)", "Papaya"],
+    "answer": "Guava",
+    "explanation": "Guava is often called the Poor Man's Apple due to its high nutritional value and low cost."
+  },
+  {
+    "id": 14,
+    "exam": "ASRB NET",
+    "subject": "Agricultural Economics",
+    "year": "2018",
+    "question": "The headquarter of NABARD is situated in?",
+    "options": ["New Delhi", "Mumbai", "Lucknow", "Chennai"],
+    "answer": "Mumbai",
+    "explanation": "The National Bank for Agriculture and Rural Development (NABARD) is headquartered in Mumbai, established in 1982."
+  },
+  {
+    "id": 15,
+    "exam": "AFO",
+    "subject": "General Agriculture",
+    "year": "2022",
+    "question": "Which state is the largest producer of Pulse in India?",
+    "options": ["Rajasthan", "Madhya Pradesh", "Maharashtra", "Uttar Pradesh"],
+    "answer": "Madhya Pradesh",
+    "explanation": "Madhya Pradesh is historically the leading producer of pulses in India, contributing significantly to the national output."
+  },
+  {
+    "id": 16,
+    "exam": "ICAR JRF",
+    "subject": "Soil Science",
+    "year": "2020",
+    "question": "The most widely used nitrogenous fertilizer in India is?",
+    "options": ["DAP", "Urea", "Ammonium Sulphate", "CAN"],
+    "answer": "Urea",
+    "explanation": "Urea is the most consumed nitrogenous fertilizer in India because of its high nitrogen content (46%) and affordability."
+  },
+  {
+    "id": 17,
+    "exam": "ASRB NET",
+    "subject": "Plant Physiology",
+    "year": "2019",
+    "question": "The pigment responsible for red color in Tomatoes is?",
+    "options": ["Anthocyanin", "Lycopene", "Carotene", "Xanthophyll"],
+    "answer": "Lycopene",
+    "explanation": "Lycopene is a bright red carotenoid hydrocarbon found in tomatoes and other red fruits."
+  },
+  {
+    "id": 18,
+    "exam": "AFO",
+    "subject": "Agri Extension",
+    "year": "2021",
+    "question": "'Lab to Land' program was started by which organization?",
+    "options": ["ICAR", "IARI", "SAUs", "Ministry of Agriculture"],
+    "answer": "ICAR",
+    "explanation": "The 'Lab to Land' program was launched by the Indian Council of Agricultural Research (ICAR) in 1979 to improve the socio-economic conditions of small and marginal farmers."
+  },
+  {
+    "id": 19,
+    "exam": "ICAR SRF",
+    "subject": "Genetics",
+    "year": "2022",
+    "question": "The term 'Genetics' was coined by?",
+    "options": ["Gregor Mendel", "W. Bateson", "Hugo de Vries", "T.H. Morgan"],
+    "answer": "W. Bateson",
+    "explanation": "William Bateson coined the term 'genetics' in 1905."
+  },
+  {
+    "id": 20,
+    "exam": "AFO",
+    "subject": "General Agriculture",
+    "year": "2021",
+    "question": "Operation Flood is related to?",
+    "options": ["Flood Control", "Milk Production", "Fish Production", "Wheat Production"],
+    "answer": "Milk Production",
+    "explanation": "Operation Flood, launched in 1970, was the world's largest dairy development program, making India the largest producer of milk."
+  }
+]

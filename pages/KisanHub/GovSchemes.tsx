@@ -124,7 +124,10 @@ export const GovSchemes: React.FC<{ hideBack?: boolean }> = ({ hideBack }) => {
                                     <div className="p-6 md:p-8 space-y-8">
                                         <div>
                                             <h4 className="text-[11px] font-black text-stone-400 uppercase tracking-widest mb-2">Overview</h4>
-                                            <p className="text-stone-700 font-medium leading-relaxed">{scheme.detailedDesc}</p>
+                                            <div 
+                                                className="prose prose-stone prose-sm max-w-none text-stone-700 font-medium leading-relaxed"
+                                                dangerouslySetInnerHTML={{ __html: scheme.detailedDesc }}
+                                            />
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

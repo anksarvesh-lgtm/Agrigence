@@ -18,7 +18,7 @@ const Footer: React.FC = () => {
   return (
     <footer className="bg-stone-900 text-stone-300 py-12 px-6 mt-auto">
       <div className="container mx-auto max-w-7xl">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           <div>
             <h3 className="text-xl font-serif font-bold text-white mb-4">Agrigence</h3>
             <p className="text-stone-400 text-sm leading-relaxed mb-6">
@@ -49,7 +49,6 @@ const Footer: React.FC = () => {
               <li><Link to="/journals" className="hover:text-agri-secondary transition-colors">Journals</Link></li>
               <li><Link to="/news" className="hover:text-agri-secondary transition-colors">News</Link></li>
               <li><Link to="/products" className="hover:text-agri-secondary transition-colors">Store</Link></li>
-              <li><Link to="/sitemap" className="hover:text-agri-secondary transition-colors">Sitemap</Link></li>
             </ul>
           </div>
 
@@ -71,6 +70,17 @@ const Footer: React.FC = () => {
                   <FileText size={14} /> Author Guidelines
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Resources</h3>
+            <ul className="space-y-2 text-sm">
+              <li><a href="https://icar.org.in/" target="_blank" rel="noopener noreferrer" className="hover:text-agri-secondary transition-colors">ICAR</a></li>
+              <li><a href="https://www.fao.org/home/en" target="_blank" rel="noopener noreferrer" className="hover:text-agri-secondary transition-colors">FAO</a></li>
+              <li><a href="https://agricoop.nic.in/" target="_blank" rel="noopener noreferrer" className="hover:text-agri-secondary transition-colors">Agriculture Dept. India</a></li>
+              <li><a href="https://enam.gov.in/web/" target="_blank" rel="noopener noreferrer" className="hover:text-agri-secondary transition-colors">e-NAM Portal</a></li>
+              <li><Link to="/sitemap" className="hover:text-agri-secondary transition-colors">Sitemap</Link></li>
             </ul>
           </div>
 

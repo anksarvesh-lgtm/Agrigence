@@ -3,7 +3,10 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
+import cron from 'node-cron';
 import { whatsappRouter } from './src/server/whatsapp/api.ts';
+import { mandiPrices, schemes, cropAdvisory } from './src/data/agrigence_engine.ts';
+import { processAndSaveMandiPage, MandiDataInput, processAndSaveDailyBlog } from './src/server/autoContentGenerator.ts';
 
 async function startServer() {
   const app = express();
@@ -24,18 +27,128 @@ async function startServer() {
     return doc;
   }
 
-  // Helper to inject meta tags
-  function injectMeta(html: string, title: string, description: string, image: string, url: string) {
-    return html
-      .replace(/<title>.*?<\/title>/, `<title>${title} | Agrigence</title>`)
-      .replace(/<meta property="og:title" content=".*?"\/>/, `<meta property="og:title" content="${title}"/>`)
-      .replace(/<meta property="og:description" content=".*?"\/>/, `<meta property="og:description" content="${description}"/>`)
-      .replace(/<meta property="og:image" content=".*?"\/>/, `<meta property="og:image" content="${image}"/>`)
-      .replace(/<meta property="og:url" content=".*?"\/>/, `<meta property="og:url" content="${url}"/>`);
+  // Helper to inject meta tags and Schema
+  function injectMeta(htmlContent: string, { title, description, image, url, schema, keywords }: { title: string, description: string, image: string, url: string, schema?: any, keywords?: string }) {
+    const orgSchema = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Agrigence",
+      "url": "https://agrigence.in",
+      "logo": "https://agrigence.in/logo.png"
+    };
+
+    const combinedSchemas = schema 
+      ? (Array.isArray(schema) ? [orgSchema, ...schema] : [orgSchema, schema])
+      : [orgSchema];
+
+    let metaTags = `
+    <title data-rh="true">${title} | Agrigence</title>
+    <meta data-rh="true" name="robots" content="index, follow">
+    <meta data-rh="true" name="description" content="${description}"/>
+    <meta data-rh="true" name="keywords" content="${keywords || 'agriculture, farming, agritech, india, mandi bhav, gov schemes'}"/>
+    <meta data-rh="true" property="og:title" content="${title} | Agrigence"/>
+    <meta data-rh="true" property="og:description" content="${description}"/>
+    <meta data-rh="true" property="og:image" content="${image}"/>
+    <meta data-rh="true" property="og:url" content="${url}"/>
+    <meta data-rh="true" property="og:type" content="website"/>
+    <meta data-rh="true" name="twitter:card" content="summary_large_image"/>
+    <meta data-rh="true" name="twitter:title" content="${title} | Agrigence"/>
+    <meta data-rh="true" name="twitter:description" content="${description}"/>
+    <meta data-rh="true" name="twitter:image" content="${image}"/>
+    <link data-rh="true" rel="canonical" href="${url}" />
+    ${combinedSchemas.map(s => `<script data-rh="true" type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n')}
+    `;
+
+    return htmlContent
+      .replace(/<title[^>]*>.*?<\/title>/g, '')
+      .replace(/<meta[^>]*name="robots"[^>]*\/?>/g, '')
+      .replace(/<meta[^>]*name="description"[^>]*\/?>/g, '')
+      .replace(/<meta[^>]*name="keywords"[^>]*\/?>/g, '')
+      .replace(/<meta[^>]*property="og:[^"]*"[^>]*\/?>/g, '')
+      .replace(/<meta[^>]*name="twitter:[^"]*"[^>]*\/?>/g, '')
+      .replace(/<link[^>]*rel="canonical"[^>]*\/?>/g, '')
+      .replace(/<script[^>]*type="application\/ld\+json"[^>]*>.*?<\/script>/g, '')
+      .replace('</head>', `${metaTags}</head>`);
   }
+
+  // --- Automation Cron Jobs ---
+  
+  // 1. Mandi Bhav Update: 6:00 AM Daily
+  cron.schedule('0 6 * * *', async () => {
+    console.log('Running daily Mandi Bhav content update...');
+    try {
+      const sampleMandiUpdate: MandiDataInput = {
+        city: 'Neemuch',
+        state: 'Madhya Pradesh',
+        crop: 'Soybean',
+        min_price: 4300,
+        max_price: 4950,
+        arrival: '3200 Quintals',
+        date: new Date().toISOString().split('T')[0]
+      };
+      await processAndSaveMandiPage(sampleMandiUpdate);
+    } catch (err) {
+      console.error('Mandi cron job failed:', err);
+    }
+  });
+
+  // 2. Daily Trending Blog Generator: 7:00 AM Daily
+  cron.schedule('0 7 * * *', async () => {
+    console.log('Running daily Trending Blog generation...');
+    try {
+      await processAndSaveDailyBlog();
+    } catch (err) {
+      console.error('Blog cron job failed:', err);
+    }
+  });
 
   // API routes
   app.use(express.json());
+
+  // Manual trigger endpoint for testing
+  app.post('/api/admin/generate-daily-blog', async (req, res) => {
+    try {
+      // In production, add auth check here
+      await processAndSaveDailyBlog();
+      res.json({ message: 'Blog generation process started successfully' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/admin/trigger-mandi-update', async (req, res) => {
+    try {
+      // For now we just trigger one sample, but in real case it would loop through all cities
+      const sampleMandiUpdate: MandiDataInput = {
+        city: 'Neemuch',
+        state: 'Madhya Pradesh',
+        crop: 'Soybean',
+        min_price: 4300,
+        max_price: 4950,
+        arrival: '3200 Quintals',
+        date: new Date().toISOString().split('T')[0]
+      };
+      await processAndSaveMandiPage(sampleMandiUpdate);
+      res.json({ message: 'Mandi update process started successfully' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/robots.txt', (req, res) => {
+    res.header('Content-Type', 'text/plain');
+    res.send(`User-agent: *
+Allow: /
+Allow: /api/
+Allow: /mandi-bhav/
+Allow: /scheme/
+Allow: /crop/
+
+User-agent: GPTBot
+Allow: /
+
+Sitemap: https://agrigence.in/sitemap.xml`);
+  });
 
   // === WhatsApp Engine API ===
   app.use('/api/whatsapp', whatsappRouter);
@@ -53,31 +166,54 @@ async function startServer() {
       }
       
       const ai = new GoogleGenAI({ apiKey });
-      
-      const SYSTEM_INSTRUCTION = `You are "Kisan Mitra", a highly knowledgeable, practical, and friendly agricultural assistant designed specifically for Indian farmers.
 
-Your primary goal is to provide accurate, actionable, and easy-to-understand farming advice that helps farmers increase yield, reduce cost, and make better decisions.
+      // Load PYQ data for context if query is relevant
+      let pyqContext = "";
+      const lowerMsg = message.toLowerCase();
+      if (lowerMsg.includes('pyq') || lowerMsg.includes('previous year') || lowerMsg.includes('exam') || lowerMsg.includes('question') || lowerMsg.includes('paper')) {
+        try {
+           const pyqData = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'src/data/agriculture_pyqs.json'), 'utf8'));
+           pyqContext = `\n\n-----------------------------------
+🎓 PREVIOUS YEAR QUESTIONS (PYQ) KNOWLEDGE BASE
+-----------------------------------
+You have access to the following agricultural competitive exam questions (ICAR JRF, ASRB NET, AFO, etc.):
+${JSON.stringify(pyqData, null, 2)}
+
+Use this data to:
+1. Provide specific previous year questions when asked.
+2. Quiz the user if they want to practice.
+3. Explain concepts using real exam examples.
+4. If a user asks for 'all PYQs', list a few key ones by category and offer more.`;
+        } catch (e) {
+           console.error("Error loading PYQ data:", e);
+        }
+      }
+      
+      const SYSTEM_INSTRUCTION = `You are "Kisan Mitra", a highly knowledgeable, practical, and friendly agricultural assistant designed specifically for Indian farmers and agriculture students.
+
+Your primary goal is to provide accurate, actionable, and easy-to-understand farming advice and educational support.
 
 -----------------------------------
 🌾 CORE BEHAVIOR
 -----------------------------------
 - Always respond in simple, clear English (or Hinglish tone if user uses Hindi words).
 - Avoid technical jargon unless necessary; explain simply.
-- Be practical, not theoretical.
+- Be practical, not theoretical for farmers; but be precise for students.
 - Focus on Indian farming conditions (climate, soil, crops, government schemes).
 - If location is known, tailor advice to that region.
-- Keep answers structured and easy to follow.
+- Keep answers structured and easy to follow.${pyqContext}
 
 -----------------------------------
 🌱 EXPERTISE AREAS
 -----------------------------------
-1. Crop Farming
-2. Soil & Fertility
+1. Crop Farming & Agronomy
+2. Soil & Fertility Science
 3. Pest & Disease Management
 4. Weather-Based Advisory
 5. Market & Mandi Guidance
 6. Government Schemes (India)
-7. Agri Business
+7. Agri Business & Economics
+8. Competitive Exam Prep (PYQs for ICAR, ASRB, AFO, etc.)
 
 -----------------------------------
 📊 RESPONSE FORMAT
@@ -136,7 +272,7 @@ Always structure answers like this:
       formattedContents.push({ role: 'user', parts: [{ text: message }] });
 
       const responseStream = await ai.models.generateContentStream({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-flash-latest',
           contents: formattedContents,
           config: {
               systemInstruction: SYSTEM_INSTRUCTION,
@@ -198,7 +334,7 @@ Always structure answers like this:
       `;
 
       const response = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
+          model: 'gemini-flash-latest',
           contents: prompt,
       });
       
@@ -336,7 +472,7 @@ Always structure answers like this:
 
   app.get('/sitemap.xml', async (req, res) => {
     try {
-      const baseUrl = 'https://www.agrigence.in';
+      const baseUrl = 'https://agrigence.in';
       const projectId = 'gen-lang-client-0276037966';
       
       const staticRoutes = [
@@ -357,11 +493,18 @@ Always structure answers like this:
         '/mobile-app',
         '/kisan',
         '/kisan/mandi',
+        '/kisan/ledger',
+        '/kisan/sop',
         '/kisan/weather',
         '/kisan/schemes',
         '/kisan/equipment',
         '/kisan/marketplace',
         '/kisan/land',
+        '/kisan/dashboard',
+        '/kisan/post-requirement',
+        '/kisan/my-requirements',
+        '/kisan/my-listings',
+        '/kisan/list-item',
         '/consultation',
         '/tools/seed-rate',
         '/tools/nutrient-req',
@@ -384,14 +527,24 @@ Always structure answers like this:
       let dynamicRoutes: string[] = [];
 
       try {
-        // Fetch Blogs
-        const blogsRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/blogs`);
+        // Add Mandi Routes
+        mandiPrices.forEach(p => dynamicRoutes.push(`/mandi-bhav/${p.city.toLowerCase()}`));
+        // Add Scheme Routes
+        schemes.forEach(s => dynamicRoutes.push(`/scheme/${s.slug}`));
+        // Add Crop Routes
+        cropAdvisory.forEach(c => dynamicRoutes.push(`/crop/${c.slug}`));
+
+        // Fetch Blogs (Now in articles collection)
+        const blogsRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/articles`);
         if (blogsRes.ok) {
           const blogsData = await blogsRes.json();
           if (blogsData.documents) {
             blogsData.documents.forEach((doc: any) => {
               const id = doc.name.split('/').pop();
-              dynamicRoutes.push(`/blog/${id}`);
+              // Only include if it's a blog type
+              if (doc.fields?.type?.stringValue === 'BLOG') {
+                dynamicRoutes.push(`/blog/${id}`);
+              }
             });
           }
         }
@@ -449,17 +602,74 @@ Always structure answers like this:
       
       const blogMatch = req.path.match(/^\/blog\/(.+)$/);
       const newsMatch = req.path.match(/^\/news\/(.+)$/);
+      const mandiMatch = req.path.match(/^\/mandi-bhav\/(.+)$/);
+      const schemeMatch = req.path.match(/^\/scheme\/(.+)$/);
+      const cropMatch = req.path.match(/^\/crop\/(.+)$/);
       
       if (blogMatch || newsMatch) {
-        const collection = blogMatch ? 'blogs' : 'news';
+        const collection = blogMatch ? 'articles' : 'news';
         const id = blogMatch ? blogMatch[1] : newsMatch![1];
         const doc = await getDoc(collection, id);
         if (doc) {
           const title = doc.title || 'Agrigence';
           const description = (doc.content || doc.description || '').substring(0, 150);
           const image = doc.featuredImage || doc.thumbnail || 'https://www.agrigence.in/logo.png';
-          html = injectMeta(html, title, description, image, `https://www.agrigence.in${req.path}`);
+          html = injectMeta(html, { title, description, image, url: `https://agrigence.in${req.path}` });
         }
+      } else if (mandiMatch) {
+        const city = mandiMatch[1];
+        const price = mandiPrices.find(p => p.city.toLowerCase() === city.toLowerCase());
+        if (price) {
+          const dateStr = new Date().toISOString().split('T')[0];
+          const title = `${price.city} Mandi Bhav Today (${dateStr}) | Latest ${price.crop} Prices`;
+          const description = `Today's latest Mandi Bhav for ${price.city} as of ${dateStr}. Current ${price.crop} price: ₹${price.min_price} - ₹${price.max_price}. Get real-time price trends and arrivals at Agrigence.`;
+          const schema = {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "name": `${price.city} ${price.crop} Market Prices`,
+            "description": description,
+            "url": `https://agrigence.in${req.path}`,
+            "publisher": { "@type": "Organization", "name": "Agrigence" }
+          };
+          html = injectMeta(html, { title, description, image: 'https://agrigence.in/mandi-meta.jpg', url: `https://agrigence.in${req.path}`, schema });
+        }
+      } else if (schemeMatch) {
+        const slug = schemeMatch[1];
+        const scheme = schemes.find(s => s.slug === slug);
+        if (scheme) {
+          const title = `${scheme.name} Eligibility & Benefits`;
+          const description = scheme.benefits.substring(0, 160);
+          const schema = {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "headline": title,
+            "description": description,
+            "publisher": { "@type": "Organization", "name": "Agrigence" }
+          };
+          html = injectMeta(html, { title, description, image: 'https://agrigence.in/scheme-meta.jpg', url: `https://agrigence.in${req.path}`, schema });
+        }
+      } else if (cropMatch) {
+        const slug = cropMatch[1];
+        const crop = cropAdvisory.find(c => c.slug === slug);
+        if (crop) {
+          const title = `${crop.name} Cultivation Guide & Advisory`;
+          const description = `Learn how to grow ${crop.name} with Agrigence. Best soil: ${crop.soil_type}, Season: ${crop.season}. Direct answer to yield optimization.`;
+          html = injectMeta(html, { title, description, image: 'https://agrigence.in/crop-meta.jpg', url: `https://agrigence.in${req.path}` });
+        }
+      } else if (req.path === '/' || req.path === '') {
+        html = injectMeta(html, { 
+          title: 'Agricultural Intelligence & Education Platform', 
+          description: 'Smart agricultural tools, academic resources, and research insights for farmers and students. Optimize your farming and studies with data-driven decisions.', 
+          image: 'https://agrigence.in/logo.png', 
+          url: 'https://agrigence.in' 
+        });
+      } else if (req.path === '/about-contact') {
+        html = injectMeta(html, { 
+          title: 'About Us & Contact', 
+          description: 'Learn about Agrigence, our mission, leadership, and how to get in touch with our team.', 
+          image: 'https://agrigence.in/logo.png', 
+          url: 'https://agrigence.in/about-contact' 
+        });
       }
       
       res.send(html);

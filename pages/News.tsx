@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { Calendar, ExternalLink, Megaphone, ArrowRight } from 'lucide-react';
 import { NewsItem } from '../types';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 const News: React.FC = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -20,6 +21,10 @@ const News: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-agri-bg">
+      <SEO 
+        title="Latest Agricultural News & Events | Agrigence"
+        description="Stay updated with the latest breakthroughs in agricultural research, Agrigence events, and industry announcements."
+      />
       
       {/* Header */}
       <div className="bg-[#0F392B] text-white py-16 px-6 relative overflow-hidden">
