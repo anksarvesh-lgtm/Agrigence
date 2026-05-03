@@ -66,6 +66,12 @@ export const KisanDashboard: React.FC = () => {
                                     {user.email}
                                 </p>
                             </div>
+                            <div className="pt-2">
+                                <p className="text-[10px] font-black text-stone-300 uppercase tracking-widest mb-1 flex items-center gap-1"><ShieldCheck size={10} /> Farm ID</p>
+                                <p className="text-[11px] font-mono font-bold text-[#92745B] bg-stone-50 p-2.5 rounded-xl border border-stone-100 break-all select-all">
+                                    {user.farmId || 'Generating...'}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

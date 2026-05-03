@@ -3,19 +3,6 @@ import { db } from '../firebase.ts';
 import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
 
 
-let aiClient: any = null;
-
-function getAIClient() {
-  if (!aiClient) {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("GEMINI_API_KEY is not defined in the environment.");
-    }
-    aiClient = new GoogleGenAI({ apiKey });
-  }
-  return aiClient;
-}
-
 // --- Types ---
 export interface MandiDataInput {
   city: string;
@@ -356,9 +343,14 @@ GOAL: Generate 1 HIGH-QUALITY blog that can rank on Google India using the most 
 // --- AI Call Helpers ---
 async function generateHtmlContent(prompt: string): Promise<string> {
   try {
-    const ai = getAIClient();
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.warn("Skipping AI HTML generation: Gemini API key not configured in environment.");
+      return "<!-- AI Generation Skipped: Key Missing -->";
+    }
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: 'gemini-flash-latest',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
     });
     let html = response.text || '';
@@ -373,9 +365,14 @@ async function generateHtmlContent(prompt: string): Promise<string> {
 
 async function generateJsonContent(prompt: string): Promise<any> {
     try {
-      const ai = getAIClient();
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        console.warn("Skipping AI JSON generation: Gemini API key not configured in environment.");
+        return null;
+      }
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: 'gemini-flash-latest',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
       });
       let text = response.text || '';

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, User, Bot, Loader2, Maximize2, Minimize2, Paperclip, Mic } from 'lucide-react';
 import { useAuth } from '../App';
 import ReactMarkdown from 'react-markdown';
+import { GoogleGenAI } from "@google/genai";
+import pyqData from '../src/data/agriculture_pyqs.json';
 
 interface Message {
   id: string;
@@ -53,6 +55,42 @@ export const KisanMitraChatbot: React.FC = () => {
     scrollToBottom();
   }, [messages, isOpen]);
 
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'speechRecognition' in window)) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).speechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(prev => prev ? `${prev} ${transcript}` : transcript);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error:", event.error);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, []);
+
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+    } else {
+      recognitionRef.current?.start();
+      setIsListening(true);
+    }
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
     
@@ -61,43 +99,61 @@ export const KisanMitraChatbot: React.FC = () => {
     
     const historyToSend = messages.filter(m => m.id !== 'welcome').map(m => ({
       role: m.role,
-      text: m.text
+      parts: [{ text: m.text }]
     }));
 
     setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', text: currentInput }]);
     setIsLoading(true);
 
     try {
-        let prefix = "";
-        if (messages.length === 1 && user) {
-             prefix = `[System Note: The user's name is ${user.name}. Keep responses natural.]\n\n`;
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error("Gemini API key not configured");
+        const ai = new GoogleGenAI({ apiKey });
+
+        let pyqContext = "";
+        const lowerMsg = currentInput.toLowerCase();
+        if (lowerMsg.includes('pyq') || lowerMsg.includes('previous year') || lowerMsg.includes('exam')) {
+           pyqContext = `\n\n- Access to PYQs: ${JSON.stringify(pyqData.slice(0, 20))}... (and more in database)`;
         }
 
-        const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: prefix + currentInput, history: historyToSend })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Error: ${response.statusText}`);
-        }
+        const SYSTEM_INSTRUCTION = `You are "Kisan Mitra", a highly knowledgeable, practical, and friendly agricultural assistant for the Agrigence platform (agrigence.in).
+        
+        Your personality: Supportive, respectful, and speaks like a helpful village elder with deep scientific knowledge. 
+        
+        -----------------------------------
+        🌍 LANGUAGE & MULTILINGUAL RULES
+        -----------------------------------
+        - You are multilingual. If the user asks in Hindi, Marathi, Gujarati, Telugu, etc., respond in that same language.
+        - If the user uses "Hinglish", respond in Hinglish.
+        - Always ensure the tone is culturally appropriate for Indian farmers.
+        
+        -----------------------------------
+        🌾 AGRI-DOMAINS & WEBSITE DATA
+        -----------------------------------
+        - USE DATA FROM Agrigence: Guide users to specific sections like Mandi Bhav, Government Schemes, Crop Planner, Soil Analyzer, and Khatabook.
+        - CROPS: Provide guidance for Rice, Wheat, Soybean, Cotton, Mustard, Horticulture crops, etc.
+        - PEST CONTROL: Suggest sustainable and biological solutions alongside standard practices.
+        - MANDI: If users ask for prices, guide them to the 'Mandi Bhav' tool.
+        - SCHEMES: Guide to PM-Kisan, Fasal Bima Yojana, etc.
+        ${pyqContext}`;
 
         const tempId = Date.now().toString();
         setMessages(prev => [...prev, { id: tempId, role: 'model', text: '' }]);
 
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let fullText = '';
+        const responseStream = await ai.models.generateContentStream({
+            model: 'gemini-3-flash-preview',
+            contents: [...historyToSend, { role: 'user', parts: [{ text: currentInput }] }],
+            config: {
+                systemInstruction: SYSTEM_INSTRUCTION,
+                temperature: 0.7
+            }
+        });
 
-        if (reader) {
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                if (value) {
-                    fullText += decoder.decode(value, { stream: true });
-                    setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, text: fullText } : msg));
-                }
+        let fullText = '';
+        for await (const chunk of responseStream) {
+            if (chunk.text) {
+                fullText += chunk.text;
+                setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, text: fullText } : msg));
             }
         }
 
@@ -274,9 +330,11 @@ export const KisanMitraChatbot: React.FC = () => {
                           </button>
                       ) : (
                           <button 
-                             className="w-12 h-12 bg-[#2d5a27] text-white rounded-full flex items-center justify-center shadow-md hover:bg-emerald-800 transition-all shrink-0 ml-auto group"
+                             onClick={toggleListening}
+                             className={`w-12 h-12 rounded-full flex items-center justify-center shadow-md transition-all shrink-0 ml-auto group ${isListening ? 'bg-rose-500 animate-pulse text-white' : 'bg-[#2d5a27] text-white hover:bg-emerald-800'}`}
+                             title={isListening ? "Stop Listening" : "Start Voice Input"}
                           >
-                             <Mic size={20} className="group-hover:scale-110 transition-transform" />
+                             <Mic size={20} className={isListening ? 'scale-110' : 'group-hover:scale-110 transition-transform'} />
                           </button>
                       )}
                    </div>

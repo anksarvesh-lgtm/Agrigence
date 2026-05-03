@@ -108,6 +108,7 @@ import WhapiDashboard from './pages/admin/WhapiDashboard';
 import FarmerConnectManagement from './pages/admin/FarmerConnectManagement';
 import CookieConsentManager from './components/CookieConsentManager';
 import AddDobModal from './components/AddDobModal';
+import { KisanMitraChatbot } from './components/KisanMitraChatbot';
 
 import DashboardHome from './pages/DashboardHome';
 import PipelineBuilder from './pages/PipelineBuilder';
@@ -132,6 +133,8 @@ import CropPlanner from './pages/KisanHub/CropPlanner';
 
 
 import KisanLogin from './pages/KisanHub/KisanLogin';
+
+import SoilAnalyzer from './pages/KisanHub/SoilAnalyzer';
 
 // Auth Context
 interface AuthContextType {
@@ -289,6 +292,7 @@ const AppContent: React.FC = () => {
     <>
       <GlobalUploadIndicator />
       <CookieConsentManager />
+      <KisanMitraChatbot />
       {showDobModal && <AddDobModal onClose={() => setShowDobModal(false)} />}
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
@@ -391,6 +395,7 @@ const AppContent: React.FC = () => {
               <Route path="my-listings" element={<KisanProtectedRoute><MyListings /></KisanProtectedRoute>} />
               <Route path="list-item" element={<KisanProtectedRoute><ListYourItem /></KisanProtectedRoute>} />
               <Route path="crop-planner" element={<CropPlanner />} />
+              <Route path="soil-analyzer" element={<SoilAnalyzer />} />
             </Route>
 
             <Route path="/analytics" element={<DashboardHome />} />

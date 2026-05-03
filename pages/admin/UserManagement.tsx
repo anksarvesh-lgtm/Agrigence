@@ -236,6 +236,7 @@ const UserManagement: React.FC = () => {
                       <div>
                         <p className="font-bold text-admin-text">{user.name}</p>
                         <p className="text-xs text-admin-secondary">{user.email}</p>
+                        {user.farmId && <p className="text-[9px] font-mono text-agri-secondary mt-1">Farm ID: {user.farmId}</p>}
                       </div>
                     </div>
                   </td>

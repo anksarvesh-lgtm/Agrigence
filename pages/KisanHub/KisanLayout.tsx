@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, IndianRupee, FileCheck, Menu, X, Landmark, CloudLightning, ArrowLeft, Languages, LayoutDashboard, Database, Smartphone, User, Tractor, Store, Map, FileText, ClipboardList, Package, Plus, Sprout } from 'lucide-react';
+import { Home, IndianRupee, FileCheck, Menu, X, Landmark, CloudLightning, ArrowLeft, Languages, LayoutDashboard, Database, Smartphone, User, Tractor, Store, Map, FileText, ClipboardList, Package, Plus, Sprout, Beaker, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LanguageProvider, useLanguage, Language } from '../../lib/LanguageContext';
 import Logo from '../../components/Logo';
@@ -13,6 +13,40 @@ const KisanLayoutContent: React.FC = () => {
   const navigate = useNavigate();
 
   const [settings, setSettings] = useState<any>(null);
+
+  const navSections = [
+    {
+      title: 'Farm Management',
+      items: [
+        { to: '/kisan', label: 'Dashboard', icon: LayoutDashboard, end: true },
+        { to: '/kisan/ledger', label: 'Khatabook', icon: IndianRupee },
+        { to: '/kisan/equipment', label: 'My Assets', icon: Tractor },
+      ]
+    },
+    {
+      title: 'Advisory Services',
+      items: [
+        { to: '/kisan/crop-planner', label: 'AI Crop Planner', icon: Sprout },
+        { to: '/kisan/soil-analyzer', label: 'Soil Analyzer', icon: Beaker },
+        { to: '/kisan/weather', label: 'Weather Alerts', icon: CloudLightning },
+        { to: '/kisan/sop', label: 'Expert SOPs', icon: ClipboardList },
+      ]
+    },
+    {
+      title: 'Marketplace',
+      items: [
+        { to: '/kisan/mandi', label: 'Mandi Rates', icon: Smartphone },
+        { to: '/kisan/marketplace', label: 'Kisan Market', icon: Store },
+      ]
+    },
+    {
+      title: 'Resources',
+      items: [
+        { to: '/kisan/schemes', label: 'Govt Schemes', icon: Landmark },
+        { to: '/kisan/land', label: 'Land Records', icon: Map },
+      ]
+    }
+  ];
 
   React.useEffect(() => {
     const unsub = mockBackend.subscribeToSettings(setSettings);
@@ -46,18 +80,23 @@ const KisanLayoutContent: React.FC = () => {
 
             {/* Desktop Navigation */}
             <div className="hidden lg:flex flex-1 items-center justify-center mx-8">
-              <nav className="flex space-x-1 items-center bg-black/10 p-1 rounded-2xl">
-                <NavLink to="/kisan" end className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
-                  <LayoutDashboard size={18} /> Dashboard
+              <nav className="flex space-x-1 items-center bg-black/10 p-1 rounded-2xl relative">
+                <NavLink to="/kisan" end className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+                  Dashboard
                 </NavLink>
-                <NavLink to="/kisan/mandi" className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+                
+                {/* Reorganized Dropdowns can be added here, for now a simplified direct row */}
+                <NavLink to="/kisan/crop-planner" className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+                   Crop Planner
+                </NavLink>
+                <NavLink to="/kisan/mandi" className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
                    Mandi Bhav
                 </NavLink>
-                <NavLink to="/kisan/marketplace" className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
-                   Marketplace
+                <NavLink to="/kisan/schemes" className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+                   Schemes
                 </NavLink>
-                <NavLink to="/kisan/crop-planner" className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
-                   Crop Planner
+                <NavLink to="/kisan/marketplace" className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+                   Marketplace
                 </NavLink>
               </nav>
             </div>
@@ -122,30 +161,32 @@ const KisanLayoutContent: React.FC = () => {
                   </button>
                 </div>
 
-                <nav className="flex-1 space-y-2">
-                   {[
-                     { to: '/kisan', label: 'Dashboard', icon: LayoutDashboard },
-                     { to: '/kisan/weather', label: t('nav.weather'), icon: CloudLightning },
-                     { to: '/kisan/mandi', label: t('nav.mandi'), icon: Smartphone },
-                     { to: '/kisan/marketplace', label: 'Marketplace', icon: Store },
-                     { to: '/kisan/equipment', label: 'Equipment Rental', icon: Tractor },
-                     { to: '/kisan/crop-planner', label: 'Crop Planner', icon: Sprout },
-                     { to: '/kisan/schemes', label: 'Govt Schemes', icon: Landmark },
-                   ].map((item) => (
-                     <NavLink 
-                        key={item.to} 
-                        to={item.to} 
-                        end={item.to === '/kisan'}
-                        onClick={() => setIsOpen(false)} 
-                        className={({isActive}) => `flex items-center gap-4 px-4 py-4 rounded-2xl text-base font-bold transition-all ${isActive ? 'bg-[#92745B] text-white shadow-lg' : 'text-stone-600 hover:bg-stone-50'}`}
-                      >
-                        {({ isActive }) => (
-                          <>
-                            <item.icon size={22} className={isActive ? 'text-white' : 'text-[#92745B]'} />
-                            {item.label}
-                          </>
-                        )}
-                     </NavLink>
+                <nav className="flex-1 space-y-8 overflow-y-auto pr-2 custom-scrollbar">
+                   {navSections.map((section, sIdx) => (
+                     <div key={sIdx} className="space-y-3">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-stone-400 pl-4">{section.title}</h3>
+                        <div className="space-y-1">
+                          {section.items.map((item) => (
+                            <NavLink 
+                              key={item.to} 
+                              to={item.to} 
+                              end={item.end}
+                              onClick={() => setIsOpen(false)} 
+                              className={({isActive}) => `flex items-center justify-between group px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${isActive ? 'bg-[#92745B] text-white shadow-lg' : 'text-stone-600 hover:bg-stone-50'}`}
+                            >
+                              {({ isActive }) => (
+                                <>
+                                  <div className="flex items-center gap-3">
+                                    <item.icon size={20} className={isActive ? 'text-white' : 'text-[#92745B] group-hover:scale-110 transition-transform'} />
+                                    {item.label}
+                                  </div>
+                                  {!isActive && <ChevronRight size={14} className="text-stone-300 opacity-0 group-hover:opacity-100 transition-all" />}
+                                </>
+                              )}
+                            </NavLink>
+                          ))}
+                        </div>
+                     </div>
                    ))}
                 </nav>
 

@@ -8,13 +8,13 @@ import {
 } from 'lucide-react';
 import { db } from '../../src/firebase';
 import { collection, query, orderBy, limit, getDocs, doc, setDoc } from 'firebase/firestore';
-import { GoogleGenAI } from "@google/genai";
 import { 
   generateDailyBlogPrompt, 
   generateDailyNewsAndInnovationsPrompt,
   generateDailySchemesAndSubsidiesPrompt
 } from '../../src/server/autoContentGenerator';
 import { addDoc } from 'firebase/firestore';
+import { GoogleGenAI } from "@google/genai";
 
 const AIContentGenerator: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -24,9 +24,6 @@ const AIContentGenerator: React.FC = () => {
   const [recentBlogs, setRecentBlogs] = useState<any[]>([]);
   const [recentNews, setRecentNews] = useState<any[]>([]);
   const [recentSchemes, setRecentSchemes] = useState<any[]>([]);
-
-  // Initialize AI for frontend use
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
   useEffect(() => {
     fetchAllRecent();
@@ -83,13 +80,19 @@ const AIContentGenerator: React.FC = () => {
     setMessage('Connecting to Gemini AI Engine (Frontend)...');
     
     try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) throw new Error("Gemini API key not configured");
+      const ai = new GoogleGenAI({ apiKey });
+
       const prompt = generateDailyBlogPrompt();
-      const response = await ai.models.generateContent({
-        model: 'gemini-flash-latest',
-        contents: prompt,
+      const result = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt
       });
 
-      let text = response.text || '';
+      if (!result.text) throw new Error("Failed to generate content from AI engine.");
+      
+      let text = result.text;
       // Strip markdown formatting
       text = text.replace(/^```json\n/, '').replace(/\n```$/, '').trim();
       const blogData = JSON.parse(text);
@@ -139,21 +142,27 @@ const AIContentGenerator: React.FC = () => {
     setMessage('Generating Daily News & Tech Innovations...');
     
     try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) throw new Error("Gemini API key not configured");
+      const ai = new GoogleGenAI({ apiKey });
+
       const prompt = generateDailyNewsAndInnovationsPrompt();
-      const response = await ai.models.generateContent({
-        model: 'gemini-flash-latest',
-        contents: prompt,
+      const result = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt
       });
 
-      let text = response.text || '';
-      text = text.replace(/^```json\n/, '').replace(/\n```$/, '').trim();
-      const data = JSON.parse(text);
+      if (!result.text) throw new Error("Failed to generate content from AI engine.");
 
-      if (!data || !data.news_items) {
+      let text = result.text;
+      text = text.replace(/^```json\n/, '').replace(/\n```$/, '').trim();
+      const jsonData = JSON.parse(text);
+
+      if (!jsonData || !jsonData.news_items) {
         throw new Error("Failed to generate valid news data.");
       }
 
-      for (const item of data.news_items) {
+      for (const item of jsonData.news_items) {
         const newsDoc = {
           ...item,
           date: new Date().toISOString().split('T')[0],
@@ -163,7 +172,7 @@ const AIContentGenerator: React.FC = () => {
       }
 
       setStatus('success');
-      setMessage(`Successfully generated ${data.news_items.length} news items!`);
+      setMessage(`Successfully generated ${jsonData.news_items.length} news items!`);
       fetchRecentNews();
     } catch (error: any) {
       console.error("News Gen Error:", error);
@@ -180,13 +189,19 @@ const AIContentGenerator: React.FC = () => {
     setMessage('Generating Daily Schemes & Subsidies...');
     
     try {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) throw new Error("Gemini API key not configured");
+      const ai = new GoogleGenAI({ apiKey });
+
       const prompt = generateDailySchemesAndSubsidiesPrompt();
-      const response = await ai.models.generateContent({
-        model: 'gemini-flash-latest',
-        contents: prompt,
+      const result = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt
       });
 
-      let text = response.text || '';
+      if (!result.text) throw new Error("Failed to generate content from AI engine.");
+
+      let text = result.text;
       text = text.replace(/^```json\n/, '').replace(/\n```$/, '').trim();
       const data = JSON.parse(text);
 

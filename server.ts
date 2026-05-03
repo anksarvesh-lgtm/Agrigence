@@ -153,205 +153,30 @@ Sitemap: https://agrigence.in/sitemap.xml`);
   // === WhatsApp Engine API ===
   app.use('/api/whatsapp', whatsappRouter);
 
-  // === AI Scheme Extractor API && Chat API ===
-  // Note: Using dynamic import as requested previously
-  app.post('/api/chat', async (req, res) => {
-    try {
-      const { message, history } = req.body;
-      const { GoogleGenAI } = await import('@google/genai');
-      const apiKey = process.env.GEMINI_API_KEY;
-      
-      if (!apiKey) {
-         return res.status(500).json({ error: 'Gemini API key not configured' });
-      }
-      
-      const ai = new GoogleGenAI({ apiKey });
-
-      // Load PYQ data for context if query is relevant
-      let pyqContext = "";
-      const lowerMsg = message.toLowerCase();
-      if (lowerMsg.includes('pyq') || lowerMsg.includes('previous year') || lowerMsg.includes('exam') || lowerMsg.includes('question') || lowerMsg.includes('paper')) {
-        try {
-           const pyqData = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'src/data/agriculture_pyqs.json'), 'utf8'));
-           pyqContext = `\n\n-----------------------------------
-🎓 PREVIOUS YEAR QUESTIONS (PYQ) KNOWLEDGE BASE
------------------------------------
-You have access to the following agricultural competitive exam questions (ICAR JRF, ASRB NET, AFO, etc.):
-${JSON.stringify(pyqData, null, 2)}
-
-Use this data to:
-1. Provide specific previous year questions when asked.
-2. Quiz the user if they want to practice.
-3. Explain concepts using real exam examples.
-4. If a user asks for 'all PYQs', list a few key ones by category and offer more.`;
-        } catch (e) {
-           console.error("Error loading PYQ data:", e);
-        }
-      }
-      
-      const SYSTEM_INSTRUCTION = `You are "Kisan Mitra", a highly knowledgeable, practical, and friendly agricultural assistant designed specifically for Indian farmers and agriculture students.
-
-Your primary goal is to provide accurate, actionable, and easy-to-understand farming advice and educational support.
-
------------------------------------
-🌾 CORE BEHAVIOR
------------------------------------
-- Always respond in simple, clear English (or Hinglish tone if user uses Hindi words).
-- Avoid technical jargon unless necessary; explain simply.
-- Be practical, not theoretical for farmers; but be precise for students.
-- Focus on Indian farming conditions (climate, soil, crops, government schemes).
-- If location is known, tailor advice to that region.
-- Keep answers structured and easy to follow.${pyqContext}
-
------------------------------------
-🌱 EXPERTISE AREAS
------------------------------------
-1. Crop Farming & Agronomy
-2. Soil & Fertility Science
-3. Pest & Disease Management
-4. Weather-Based Advisory
-5. Market & Mandi Guidance
-6. Government Schemes (India)
-7. Agri Business & Economics
-8. Competitive Exam Prep (PYQs for ICAR, ASRB, AFO, etc.)
-
------------------------------------
-📊 RESPONSE FORMAT
------------------------------------
-Always structure answers like this:
-1. Short Direct Answer
-2. Step-by-Step Guidance
-3. Tips (if applicable)
-4. Warning / Mistakes to Avoid (if needed)
-
------------------------------------
-📍 LOCATION HANDLING
------------------------------------
-- If user mentions location -> give region-specific advice.
-- If not -> ask: "Which state or district are you farming in?"
-
------------------------------------
-🚀 NEW ECOSYSTEM MODULES (GUIDANCE)
------------------------------------
-- If user asks about Equipment Rental, guide them to use 'Equip Rentals' tab to search for tractors/tools nearby.
-- If they ask where to sell or buy crops directly, guide them to 'Marketplace'.
-- If they ask about buying/leasing land, point them to 'Land Leasing'.
-- If they ask about subsidies, PM-Kisan, or crop insurance, guide them to 'Gov Schemes'.
-- If they want to post what they need (e.g., "I need a tractor", "I need seeds"), guide them to 'Post Requirement'.
-- If they want to list their own assets for rent or sale (e.g., "I want to rent my tractor", "I want to sell my crop"), guide them to 'List Your Item'.
-- Users can manage their active needs in 'My Requirements' and their listed items in 'My Inventory'.
-
------------------------------------
-🧠 INTELLIGENCE RULES
------------------------------------
-- If unsure -> say "Based on general Indian farming practices..."
-- Never hallucinate government data.
-- Prefer practical field advice over textbook knowledge.
-- If question is unclear -> ask follow-up question.
-
------------------------------------
-🌿 PERSONALITY
------------------------------------
-- Supportive and respectful
-- Speak like a helpful agri expert, not a robot
-- Avoid long paragraphs
-- Use bullet points
-
------------------------------------
-❌ STRICTLY AVOID
------------------------------------
-- No medical or legal advice
-- No unrelated topics
-- No over-complex explanations
-- No guessing exact prices`;
-
-      const formattedContents = (history || []).map((msg: any) => ({
-        role: msg.role === 'model' ? 'model' : 'user',
-        parts: [{ text: msg.text }]
-      }));
-      formattedContents.push({ role: 'user', parts: [{ text: message }] });
-
-      const responseStream = await ai.models.generateContentStream({
-          model: 'gemini-flash-latest',
-          contents: formattedContents,
-          config: {
-              systemInstruction: SYSTEM_INSTRUCTION,
-              temperature: 0.7
-          }
-      });
-      
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-      res.setHeader('Transfer-Encoding', 'chunked');
-      
-      for await (const chunk of responseStream) {
-          res.write(chunk.text);
-      }
-      res.end();
-      
-    } catch (e: any) {
-       console.error("Chat error:", e);
-       if (!res.headersSent) {
-          res.status(500).json({ error: e.message || 'Failed to generate chat response' });
-       } else {
-          res.end();
-       }
-    }
+  // Note: AI functionalities have been migrated to the frontend to fix API key issues.
+  app.post('/api/chat', (req, res) => {
+    res.status(410).json({ error: 'Endpoint migrated to frontend. Use frontend SDK directly.' });
   });
 
-  app.post('/api/extract-scheme-data', async (req, res) => {
-    try {
-      const { text } = req.body;
-      if (!text) return res.status(400).json({ error: 'Text is required' });
+  app.post('/api/extract-scheme-data', (req, res) => {
+    res.status(410).json({ error: 'Endpoint migrated to frontend.' });
+  });
 
-      // Dynamic import to avoid early initialization issues or bundle errors
-      const { GoogleGenAI } = await import('@google/genai');
-      const apiKey = process.env.GEMINI_API_KEY;
-      
-      if (!apiKey) {
-         return res.status(500).json({ error: 'Gemini API key not configured' });
-      }
-      
-      const ai = new GoogleGenAI({ apiKey });
-      
-      const prompt = `
-      Extract the following scheme details from the provided text and strictly output ONLY valid JSON.
-      The JSON should match this TypeScript interface:
-      {
-        "title": "string (The name of the scheme)",
-        "description": "string (Short description, 1-2 lines)",
-        "detailedDesc": "string (Detailed explanation of the scheme)",
-        "category": "string (Must be one of: SUBSIDY, LOAN, DEADLINE, OTHER)",
-        "subsidyAmount": "string (Core benefit or amount, e.g. '₹6,000/year' or '50% subsidy')",
-        "eligibility": "string (Who is eligible to apply)",
-        "documents": ["string", "string"] (Array of required document names),
-        "tags": ["string", "string"] (Array of tags related to agriculture)
-      }
+  // === AI Analysis & Generation Endpoints (Migrated to Frontend) ===
+  app.post('/api/ai/analyze-soil', (req, res) => {
+    res.status(410).json({ error: 'Endpoint migrated to frontend.' });
+  });
 
-      Text to parse:
-      """
-      ${text}
-      """
-      `;
+  app.post('/api/ai/analyze-weather', (req, res) => {
+    res.status(410).json({ error: 'Endpoint migrated to frontend.' });
+  });
 
-      const response = await ai.models.generateContent({
-          model: 'gemini-flash-latest',
-          contents: prompt,
-      });
-      
-      let aiText = response.text || '';
-      // Clean up markdown markers if present
-      if (aiText.includes('\`\`\`json')) {
-         aiText = aiText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
-      } else if (aiText.includes('\`\`\`')) {
-         aiText = aiText.replace(/\`\`\`/g, '').trim();
-      }
+  app.post('/api/ai/generate-planner-plan', (req, res) => {
+    res.status(410).json({ error: 'Endpoint migrated to frontend.' });
+  });
 
-      const jsonData = JSON.parse(aiText);
-      res.json(jsonData);
-    } catch (e: any) {
-       console.error("AI Extractor error:", e);
-       res.status(500).json({ error: e.message || 'Failed to extract data' });
-    }
+  app.post('/api/ai/generate-admin-content', (req, res) => {
+    res.status(410).json({ error: 'Endpoint migrated to frontend.' });
   });
 
   // === Razorpay Integration for Mobile App ===

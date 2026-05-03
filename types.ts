@@ -41,6 +41,7 @@ export interface User {
   limitAdjustmentNotes?: string;
   permissions: UserPermissions;
   avatar?: string;
+  farmId?: string;
   profilePhotoUrl?: string;
   bio?: string;
   isVerified?: boolean;

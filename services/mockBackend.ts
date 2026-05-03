@@ -1,5 +1,6 @@
 
 import { safeStringify } from '../lib/safeStringify';
+import { v4 as uuidv4 } from 'uuid';
 import { Article, EditorialMember, Magazine, NewsItem, User, Product, SubscriptionPlan, PaymentRecord, Coupon, SiteSettings, LeadershipMember, Feedback, Inquiry, Notification, StaticPage, EmailTemplate, PlagiarismReport, OAIRecord, Reference, ReviewAssignment, ReviewMessage, Role, ReviewStatus, Tool, ToolCategory, ToolSection, Review, ActivityLog, Recommendation, UserFieldData, WebsiteVisitor, ToolHistory, Keyword, KeywordCluster, KeywordPerformance, TrendingKeyword, CookieSettings, CookiePreferences, CookieCategory, CookieScript, AiToolSettings, FarmerQuestion, FarmerReply, GovtScheme } from '../types';
 import { db, auth, storage } from '../src/firebase';
 import { 
@@ -454,6 +455,7 @@ class FirebaseBackendService {
         status: 'ACTIVE',
         subscriptionTier: 'Free',
         avatar: data.avatar,
+        farmId: uuidv4(),
         // New Fields
         country: data.country,
         mobileNumber: data.mobileNumber,
@@ -601,14 +603,21 @@ class FirebaseBackendService {
                joinedDate: new Date().toISOString(),
                status: 'ACTIVE',
                avatar: firebaseUser.photoURL || '',
+               farmId: uuidv4(),
                // Default Fallbacks
                currency: 'INR',
                country: 'IN'
            };
            await setDoc(userRef, newUser);
         } else {
+           const data = snap.data() as User;
            const updateData: any = { lastLogin: new Date().toISOString() };
-           if (isSuperAdminEmail && snap.data().role !== 'SUPER_ADMIN') {
+           
+           if (!data.farmId) {
+               updateData.farmId = uuidv4();
+           }
+
+           if (isSuperAdminEmail && data.role !== 'SUPER_ADMIN') {
                updateData.role = 'SUPER_ADMIN';
            }
            await updateDoc(userRef, updateData);

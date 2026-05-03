@@ -66,9 +66,37 @@
         "crops": { "type": "array", "items": { "type": "string" } }
       },
       "required": ["userId", "timestamp", "input", "recommendations", "crops"]
+    },
+    "SoilReport": {
+      "title": "Soil Report",
+      "description": "User's soil test data and AI analysis",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "location": { "type": "string" },
+        "soilData": {
+          "type": "object",
+          "properties": {
+            "ph": { "type": "number" },
+            "nitrogen": { "type": "number" },
+            "phosphorus": { "type": "number" },
+            "potassium": { "type": "number" },
+            "organicMatter": { "type": "number" },
+            "ec": { "type": "number" }
+          }
+        },
+        "analysis": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "COMPLETED"] }
+      },
+      "required": ["userId", "timestamp", "soilData", "analysis"]
     }
   },
   "firestore": {
+    "/soil_reports/{reportId}": {
+      "schema": "SoilReport",
+      "description": "User's soil analysis reports"
+    },
     "/tool_history/{historyId}": {
       "schema": "ToolHistory",
       "description": "Collection of tool usage logs"

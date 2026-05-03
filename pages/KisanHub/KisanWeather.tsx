@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { WeatherIcon } from '../../components/WeatherIcon';
-import { RefreshCw, MapPin, Droplet, Wind, CloudRain, Sun, Calendar, AlertCircle, TrendingUp, TrendingDown, ThermometerSun } from 'lucide-react';
+import { RefreshCw, MapPin, Droplet, Wind, CloudRain, Sun, Calendar, AlertCircle, TrendingUp, TrendingDown, ThermometerSun, Zap, Loader2 } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import { GoogleGenAI } from "@google/genai";
 
 export const KisanWeather: React.FC = () => {
     const { t } = useLanguage();
@@ -11,6 +13,8 @@ export const KisanWeather: React.FC = () => {
     const [city, setCity] = useState<string>('Detecting...');
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+    const [analyzing, setAnalyzing] = useState(false);
 
     const initWeatherSystem = () => {
         setRefreshing(true);
@@ -50,11 +54,46 @@ export const KisanWeather: React.FC = () => {
             const response = await fetch(url);
             const data = await response.json();
             setWeatherData(data);
+            getAIAdvice(data, city);
         } catch (e) {
             console.error("Weather fetch failed", e instanceof Error ? e.message : String(e));
         } finally {
             setLoading(false);
             setRefreshing(false);
+        }
+    };
+
+    const getAIAdvice = async (data: any, cityName: string) => {
+        setAnalyzing(true);
+        try {
+            const apiKey = process.env.GEMINI_API_KEY;
+            if (!apiKey) throw new Error("Gemini API key not configured");
+
+            const ai = new GoogleGenAI({ apiKey });
+            
+            const prompt = `You are a professional agricultural advisor. Based on the following weather data for ${cityName}, provide 4-5 concise, actionable agricultural recommendations and risk alerts for an Indian farmer. 
+            Focus on irrigation, pest risk, and harvesting/planting advice.
+            
+            Weather Data Summary:
+            Current Temp: ${data.current.temperature_2m}°C
+            Soil Moisture: ${data.hourly.soil_moisture_0_to_7cm[0] * 100}%
+            Relative Humidity: ${data.hourly.relative_humidity_2m[0]}%
+            Precipitation (Next 24h sum): ${data.hourly.precipitation.slice(0, 24).reduce((a: number, b: number) => a + b, 0)}mm
+            
+            Format the response as bullet points (use markdown). Keep it practical and specific to Indian conditions.`;
+
+            const result = await ai.models.generateContent({
+                model: 'gemini-3-flash-preview',
+                contents: prompt
+            });
+            
+            if (result.text) {
+                setAiAnalysis(result.text);
+            }
+        } catch (e) {
+            console.error("AI Analysis failed", e);
+        } finally {
+            setAnalyzing(false);
         }
     };
 
@@ -187,6 +226,52 @@ export const KisanWeather: React.FC = () => {
                     </div>
                 ))}
             </div>
+
+            {/* AI Agricultural Advisory */}
+            <AnimatePresence>
+                {(analyzing || aiAnalysis) && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] overflow-hidden shadow-2xl border border-emerald-100 relative group"
+                    >
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100/30 rounded-full blur-3xl -z-10 translate-x-1/3 -translate-y-1/3"></div>
+                        
+                        <div className="bg-gradient-to-r from-[#2d5a27] to-emerald-800 p-6 text-white flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-white/20 p-3 rounded-2xl">
+                                    <Zap size={24} className={analyzing ? "animate-pulse" : "fill-white"} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold">Kisan Mitra AI Advisory</h3>
+                                    <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em]">Risk Assessment & Crop Guidance</p>
+                                </div>
+                            </div>
+                            {analyzing && <Loader2 className="animate-spin text-white/50" size={20} />}
+                        </div>
+                        
+                        <div className="p-8 md:p-10">
+                            {analyzing ? (
+                                <div className="flex flex-col items-center justify-center py-12 gap-4">
+                                    <Loader2 className="animate-spin text-emerald-600" size={40} />
+                                    <p className="text-stone-500 font-bold uppercase tracking-widest text-xs">Gemini AI is analyzing your local climate...</p>
+                                </div>
+                            ) : (
+                                <div className="prose prose-stone max-w-none prose-p:text-stone-600 prose-li:text-stone-600 prose-strong:text-[#2d5a27]">
+                                    <ReactMarkdown>{aiAnalysis || ''}</ReactMarkdown>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <div className="px-8 py-4 bg-emerald-50/50 border-t border-emerald-100 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-[#2d5a27] font-bold text-[10px] uppercase tracking-widest">
+                                <TrendingUp size={14} /> Smart Recommendations Active
+                            </div>
+                            <span className="text-[10px] text-stone-400 font-medium">Updated just now</span>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* 7-Day Forecast (Smooth Carousel) */}
             <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white p-6 md:p-8 flex-1 relative overflow-hidden">

@@ -168,14 +168,17 @@ const HubDashboard: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-white p-8 rounded-[2.5rem] border-2 border-stone-100 hover:border-[#92745B]/30 transition-all cursor-pointer group">
+                            <div 
+                                onClick={() => navigate('/kisan/soil-analyzer')}
+                                className="bg-white p-8 rounded-[2.5rem] border-2 border-stone-100 hover:border-[#92745B]/30 hover:shadow-xl transition-all cursor-pointer group"
+                            >
                                 <div className="p-4 bg-stone-50 text-[#92745B] rounded-2xl inline-block mb-6 group-hover:bg-[#92745B] group-hover:text-white transition-colors">
                                     <ShieldCheck size={32} />
                                 </div>
                                 <h3 className="text-2xl font-black text-stone-900 mb-2">Soil Analyzer</h3>
                                 <p className="text-stone-500 font-medium mb-8 leading-relaxed">Upload soil test reports to get instant fertilization & input recommendations.</p>
                                 <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-[#92745B]">
-                                    Coming Soon <ChevronRight size={18} />
+                                    Start Analysis <ChevronRight size={18} className="group-hover:translate-x-2 transition-transform" />
                                 </div>
                             </div>
                         </div>

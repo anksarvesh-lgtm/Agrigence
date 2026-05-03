@@ -17,15 +17,16 @@ import {
   Save,
   RefreshCw,
   Search,
-  LayoutDashboard
+  LayoutDashboard,
+  Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../../src/firebase';
 import { collection, addDoc, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { useAuth } from '../../App';
 import Markdown from 'react-markdown';
-import { GoogleGenAI } from "@google/genai";
 import { auth } from '../../src/firebase';
+import { GoogleGenAI } from "@google/genai";
 
 // --- Error Handling ---
 enum OperationType {
@@ -190,7 +191,9 @@ const CropPlanner: React.FC = () => {
     setSuggestedCrops(filteredCrops);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) throw new Error("Gemini API key not configured");
+      const ai = new GoogleGenAI({ apiKey });
 
       const prompt = `
         You are an expert agricultural advisor for Indian farmers. 
@@ -219,18 +222,19 @@ const CropPlanner: React.FC = () => {
 
         Use professional, encouraging, and highly technical yet simple language suitable for a modern Indian farmer.
       `;
-      
-      const response = await (ai as any).models.generateContent({
-        model: 'gemini-flash-latest',
+
+      const result = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
         contents: prompt
       });
+
+      if (!result.text) throw new Error("Failed to generate content from AI.");
       
-      const text = response.text || '';
-      setResult(text);
+      setResult(result.text);
       setStep(3);
-    } catch (error) {
+    } catch (error: any) {
       console.error("AI Generation Error:", error);
-      setResult("Sorry, I encountered an error while planning your crops. Please try again.");
+      alert(error.message || "Sorry, I encountered an error while planning your crops. Please try again.");
     } finally {
       setIsGenerating(false);
     }
@@ -573,6 +577,5 @@ const CropPlanner: React.FC = () => {
 
 // Internal components for clean icons
 const History = ({ size, className }: { size: number, className?: string }) => <Clock size={size} className={className} />;
-const Sparkles = ({ size, className }: { size: number, className?: string }) => <TrendingUp size={size} className={className} />;
 
 export default CropPlanner;
