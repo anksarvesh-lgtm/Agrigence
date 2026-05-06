@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 interface PDFActionProps {
   title: string;
   fileUrl: string;
+  driveUrl?: string;
   variant?: 'inline' | 'button';
   // Optional ID for secure viewer routing
   id?: string;
@@ -18,7 +19,7 @@ interface PDFActionProps {
   className?: string;
 }
 
-const PDFAction: React.FC<PDFActionProps> = ({ title, fileUrl, variant = 'button', id, type, children, className }) => {
+const PDFAction: React.FC<PDFActionProps> = ({ title, fileUrl, driveUrl, variant = 'button', id, type, children, className }) => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
 
@@ -26,6 +27,12 @@ const PDFAction: React.FC<PDFActionProps> = ({ title, fileUrl, variant = 'button
     e.preventDefault();
     e.stopPropagation();
     
+    // Priority 1: Drive Link (Opens in new tab)
+    if (driveUrl && driveUrl !== '' && driveUrl !== '#') {
+        window.open(driveUrl, '_blank');
+        return;
+    }
+
     if (!fileUrl || fileUrl === '#') {
         alert("File not available.");
         return;

@@ -95,6 +95,7 @@ const Journals: React.FC = () => {
                         type="MAGAZINE" 
                         accessLevel={journal.downloadAccess} 
                         fileUrl={journal.pdfUrl} 
+                        driveUrl={journal.driveUrl}
                       />
                    </div>
                  </div>
@@ -111,6 +112,7 @@ const Journals: React.FC = () => {
                         type="MAGAZINE" 
                         accessLevel={journal.downloadAccess} 
                         fileUrl={journal.pdfUrl}
+                        driveUrl={journal.driveUrl}
                         variant="inline"
                       />
                    </div>
@@ -155,6 +157,7 @@ const Journals: React.FC = () => {
                       type={article.type as any || 'ARTICLE'}
                       accessLevel={article.downloadAccess}
                       fileUrl={article.fileUrl || '#'}
+                      driveUrl={article.driveUrl}
                       id={article.id}
                    />
                  </div>

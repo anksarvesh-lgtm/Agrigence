@@ -418,6 +418,7 @@ export interface Article {
   review_status?: ReviewStatus; // New Granular Status
   views?: number;
   fileUrl?: string;
+  driveUrl?: string;
   downloadAccess: DownloadAccessLevel;
   type: 'ARTICLE' | 'BLOG';
   isFeatured?: boolean;
@@ -458,6 +459,7 @@ export interface Magazine {
   coverUrl?: string;
   issue?: string;
   pdfUrl: string;
+  driveUrl?: string;
   description: string;
   status: 'DRAFT' | 'PUBLISHED';
   publishDate: string;

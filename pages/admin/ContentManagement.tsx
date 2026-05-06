@@ -279,6 +279,10 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
                                      </select>
                                   </div>
                                </div>
+                               <div>
+                                  <label className="text-[10px] uppercase font-bold text-admin-secondary mb-2 block tracking-widest">Drive Link (Optional)</label>
+                                  <input className="w-full bg-white border border-admin-inputBorder rounded-xl p-4 text-admin-text outline-none focus:border-admin-inputFocus focus:ring-1 focus:ring-admin-inputFocus" value={editingArticle.driveUrl || ''} onChange={e => setEditingArticle({...editingArticle, driveUrl: e.target.value})} placeholder="https://drive.google.com/..." />
+                               </div>
                                
                                {/* Plagiarism Report Box in Edit Modal */}
                                {editingArticle.plagiarismReport && (
@@ -626,6 +630,10 @@ const MagazineManager = () => {
                                      <option value="FREE">FREE ACCESS (PUBLIC)</option>
                                      <option value="SUBSCRIBERS_ONLY">SUBSCRIBERS ONLY (PRIVATE)</option>
                                   </select>
+                               </div>
+                               <div>
+                                  <label className="text-[10px] uppercase font-bold text-admin-secondary mb-2 block tracking-widest">Drive Link (Optional)</label>
+                                  <input className="w-full bg-white border border-admin-inputBorder rounded-2xl p-4 text-admin-text outline-none focus:border-admin-inputFocus focus:ring-1 focus:ring-admin-inputFocus" value={editingMag.driveUrl || ''} onChange={e => setEditingMag({...editingMag, driveUrl: e.target.value})} placeholder="https://drive.google.com/..." />
                                </div>
                             </div>
 
