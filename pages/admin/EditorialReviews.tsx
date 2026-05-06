@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import { Article, ReviewMessage } from '../../types';
 import { FileText, MessageCircle, CheckCircle, Clock, Eye, Send, ArrowLeft, User } from 'lucide-react';

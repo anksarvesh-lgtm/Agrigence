@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { KHETAI_SYSTEM_INSTRUCTION } from './../lib/khetai.ts';
 import { db } from '../firebase.ts'; 
 import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
 
@@ -341,17 +342,27 @@ GOAL: Generate 1 HIGH-QUALITY blog that can rank on Google India using the most 
 }
 
 // --- AI Call Helpers ---
+let googleAI: any = null;
+
+function getAI() {
+  if (googleAI) return googleAI;
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
+    throw new Error('GEMINI_API_KEY environment variable is required');
+  }
+  googleAI = new GoogleGenAI({ apiKey });
+  return googleAI;
+}
+
 async function generateHtmlContent(prompt: string): Promise<string> {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.warn("Skipping AI HTML generation: Gemini API key not configured in environment.");
-      return "<!-- AI Generation Skipped: Key Missing -->";
-    }
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = getAI();
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-1.5-flash',
       contents: prompt,
+      config: {
+        systemInstruction: KHETAI_SYSTEM_INSTRUCTION
+      }
     });
     let html = response.text || '';
     // Strip markdown formatting if the model accidentally included it
@@ -365,15 +376,13 @@ async function generateHtmlContent(prompt: string): Promise<string> {
 
 async function generateJsonContent(prompt: string): Promise<any> {
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        console.warn("Skipping AI JSON generation: Gemini API key not configured in environment.");
-        return null;
-      }
-      const ai = new GoogleGenAI({ apiKey });
+      const ai = getAI();
       const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-1.5-flash',
         contents: prompt,
+        config: {
+          systemInstruction: KHETAI_SYSTEM_INSTRUCTION
+        }
       });
       let text = response.text || '';
       // Strip markdown formatting if the model accidentally included it

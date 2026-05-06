@@ -4,7 +4,7 @@ import { Tractor, Search, MapPin, Star, Calendar, Trash2, EyeOff, Eye } from 'lu
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../src/firebase';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 
 export const EquipmentRental: React.FC = () => {
     const navigate = useNavigate();

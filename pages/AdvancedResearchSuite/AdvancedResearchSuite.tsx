@@ -35,7 +35,7 @@ export interface Dataset {
   createdAt: string;
 }
 
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { canAccessResearch, isPlanExpired } from '../../utils/planAccess';
 import DataStorageNotice from '../../components/DataStorageNotice';
 import { Lock } from 'lucide-react';

@@ -23,7 +23,7 @@ import {
 import { INMRequirement, INMSource, INMSettings, LPSolution } from './inmTypes';
 import { FERTILIZER_DATABASE } from '../Tool02Nutrient/fertilizerDatabase';
 import { runOptimization } from './inmModel';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import { isPlanExpired } from '../../utils/planAccess';
 

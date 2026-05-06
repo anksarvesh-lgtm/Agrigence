@@ -7,7 +7,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../src/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 
 export const ListYourItem: React.FC = () => {
     const navigate = useNavigate();

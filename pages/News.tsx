@@ -4,12 +4,11 @@ import { mockBackend } from '../services/mockBackend';
 import { motion } from 'framer-motion';
 import { Calendar, ExternalLink, Megaphone, ArrowRight } from 'lucide-react';
 import { NewsItem } from '../types';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 
 const News: React.FC = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const load = async () => {
@@ -34,6 +33,7 @@ const News: React.FC = () => {
               src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2070&auto=format&fit=crop" 
               alt="Agricultural News" 
               className="w-full h-full object-cover opacity-30"
+              referrerPolicy="no-referrer"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-[#0F392B] to-[#0F392B]/80"></div>
          </div>
@@ -52,41 +52,45 @@ const News: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
-              className="glossy glossy-card rounded-2xl overflow-hidden hover:border-agri-gold/50 transition-all group flex flex-col md:flex-row cursor-pointer"
-              onClick={() => navigate(`/news/${item.id}`)}
+              className="flex"
             >
-              {item.thumbnail && (
-                <div className="md:w-1/3 h-48 md:h-auto overflow-hidden">
-                  <img src={item.thumbnail} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="News Thumbnail" />
-                </div>
-              )}
-              <div className="p-8 flex-1 flex flex-col">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2 text-agri-gold font-bold text-xs uppercase tracking-widest">
-                    <Calendar size={14} />
-                    <span>{item.date}</span>
+              <Link 
+                to={`/news/${item.id}`}
+                className="glossy glossy-card rounded-2xl overflow-hidden hover:border-agri-gold/50 transition-all group flex flex-col md:flex-row w-full"
+              >
+                {item.thumbnail && (
+                  <div className="md:w-1/3 h-48 md:h-auto overflow-hidden">
+                    <img src={item.thumbnail} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="News Thumbnail" referrerPolicy="no-referrer" />
                   </div>
-                  {item.isBreaking && (
-                    <span className="bg-red-50 text-red-600 px-2 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1 animate-pulse">
-                      <Megaphone size={10} /> BREAKING
+                )}
+                <div className="p-8 flex-1 flex flex-col">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 text-agri-gold font-bold text-xs uppercase tracking-widest">
+                      <Calendar size={14} />
+                      <span>{item.date}</span>
+                    </div>
+                    {item.isBreaking && (
+                      <span className="bg-red-50 text-red-600 px-2 py-1 rounded text-[10px] font-black uppercase flex items-center gap-1 animate-pulse">
+                        <Megaphone size={10} /> BREAKING
+                      </span>
+                    )}
+                  </div>
+                  
+                  <h2 className="text-2xl font-serif font-bold text-[#0F392B] mb-4 group-hover:text-agri-secondary transition-colors leading-tight">{item.title}</h2>
+                  <p className="text-stone-600 leading-relaxed mb-6 line-clamp-3 flex-1">{item.description}</p>
+                  
+                  <div className="flex justify-between items-center pt-6 border-t border-stone-100 mt-auto">
+                    {item.relevantLink ? (
+                      <span className="inline-flex items-center gap-2 text-stone-400 font-bold text-xs uppercase tracking-widest">
+                          <ExternalLink size={14} /> Resource Attached
+                      </span>
+                    ) : <div />}
+                    <span className="flex items-center gap-2 text-sm font-bold text-[#0F392B] group-hover:text-agri-gold transition-colors uppercase tracking-widest">
+                        Read Full Story <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                     </span>
-                  )}
+                  </div>
                 </div>
-                
-                <h2 className="text-2xl font-serif font-bold text-[#0F392B] mb-4 group-hover:text-agri-secondary transition-colors leading-tight">{item.title}</h2>
-                <p className="text-stone-600 leading-relaxed mb-6 line-clamp-3 flex-1">{item.description}</p>
-                
-                <div className="flex justify-between items-center pt-6 border-t border-stone-100 mt-auto">
-                   {item.relevantLink ? (
-                     <span className="inline-flex items-center gap-2 text-stone-400 font-bold text-xs uppercase tracking-widest">
-                        <ExternalLink size={14} /> Resource Attached
-                     </span>
-                   ) : <div />}
-                   <button className="flex items-center gap-2 text-sm font-bold text-[#0F392B] group-hover:text-agri-gold transition-colors uppercase tracking-widest">
-                      Read Full Story <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                   </button>
-                </div>
-              </div>
+              </Link>
             </motion.div>
           ))}
         </div>

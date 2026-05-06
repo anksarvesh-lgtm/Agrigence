@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, User, Bot, Loader2, Maximize2, Minimize2, Paperclip, Mic } from 'lucide-react';
-import { useAuth } from '../App';
+import { MessageSquare, X, Send, User, Bot, Loader2, Maximize2, Minimize2, Paperclip, Mic, Settings, MapPin, Wind, Thermometer, Shovel } from 'lucide-react';
+import { useAuth } from '../src/authContext';
 import ReactMarkdown from 'react-markdown';
-import { GoogleGenAI } from "@google/genai";
 import pyqData from '../src/data/agriculture_pyqs.json';
+import { GoogleGenAI } from "@google/genai";
+import { KHETAI_SYSTEM_INSTRUCTION } from '../src/lib/khetai';
 
 interface Message {
   id: string;
@@ -19,12 +20,22 @@ export const KisanMitraChatbot: React.FC = () => {
     {
        id: 'welcome',
        role: 'model',
-       text: 'Namaste! I am Kisan Mitra, your personal agriculture expert. How can I assist you today?\n\nI can help with:\n- 🌾 **Crop Advice & Pest Control**\n- 🌦️ **Weather & Mandi Prices**\n- 🎓 **Exam Prep (Previous Year Questions)**\n- 🚜 **Equipment Rentals & Marketplace**'
+       text: 'Namaste! I am KhetAI, your personal agriculture expert. How can I assist you today?\n\nI can help with:\n- 🌾 **Crop Advice & Pest Control**\n- 🌦️ **Weather & Mandi Prices**\n- 🎓 **Exam Prep (Previous Year Questions)**\n- 🚜 **Equipment Rentals & Marketplace**'
     }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(true);
+  
+  // Agri Context State
+  const [showConfig, setShowConfig] = useState(false);
+  const [farmProfile, setFarmProfile] = useState({
+    soilType: 'Alluvial',
+    season: 'Kharif',
+    weather: 'Sunny',
+    location: 'Central India'
+  });
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
@@ -106,18 +117,24 @@ export const KisanMitraChatbot: React.FC = () => {
     setIsLoading(true);
 
     try {
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) throw new Error("Gemini API key not configured");
-        const ai = new GoogleGenAI({ apiKey });
-
         let pyqContext = "";
         const lowerMsg = currentInput.toLowerCase();
         if (lowerMsg.includes('pyq') || lowerMsg.includes('previous year') || lowerMsg.includes('exam')) {
            pyqContext = `\n\n- Access to PYQs: ${JSON.stringify(pyqData.slice(0, 20))}... (and more in database)`;
         }
 
-        const SYSTEM_INSTRUCTION = `You are "Kisan Mitra", a highly knowledgeable, practical, and friendly agricultural assistant for the Agrigence platform (agrigence.in).
+        const SYSTEM_INSTRUCTION = `${KHETAI_SYSTEM_INSTRUCTION}
         
+        -----------------------------------
+        🚜 USER FARM PROFILE
+        -----------------------------------
+        - Soil Type: ${farmProfile.soilType}
+        - Current Season: ${farmProfile.season}
+        - Current Weather: ${farmProfile.weather}
+        - Location Context: ${farmProfile.location}
+        
+        IMPORTANT: Always tailor your crop advice, fertilizer recommendations, and irrigation schedules based on this farm profile unless the user specifies otherwise. Speak to the user as if you already know their farm's context.
+
         Your personality: Supportive, respectful, and speaks like a helpful village elder with deep scientific knowledge. 
         
         -----------------------------------
@@ -140,17 +157,17 @@ export const KisanMitraChatbot: React.FC = () => {
         const tempId = Date.now().toString();
         setMessages(prev => [...prev, { id: tempId, role: 'model', text: '' }]);
 
-        const responseStream = await ai.models.generateContentStream({
-            model: 'gemini-3-flash-preview',
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
+        const result = await ai.models.generateContentStream({
+            model: 'gemini-1.5-flash',
             contents: [...historyToSend, { role: 'user', parts: [{ text: currentInput }] }],
             config: {
-                systemInstruction: SYSTEM_INSTRUCTION,
-                temperature: 0.7
+                systemInstruction: SYSTEM_INSTRUCTION
             }
         });
 
         let fullText = '';
-        for await (const chunk of responseStream) {
+        for await (const chunk of result) {
             if (chunk.text) {
                 fullText += chunk.text;
                 setMessages(prev => prev.map(msg => msg.id === tempId ? { ...msg, text: fullText } : msg));
@@ -219,14 +236,21 @@ export const KisanMitraChatbot: React.FC = () => {
             <div className="bg-gradient-to-r from-[#2d5a27] to-emerald-700 p-4 text-white flex items-center justify-between shrink-0">
                <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center p-1 border border-white/30">
-                     <img src="https://api.dicebear.com/7.x/bottts/svg?seed=KisanMitra&backgroundColor=transparent" alt="Bot" className="w-full h-full" />
+                     <img src="https://api.dicebear.com/7.x/bottts/svg?seed=KhetAI&backgroundColor=transparent" alt="Bot" className="w-full h-full" />
                   </div>
                   <div>
-                     <h3 className="font-bold text-lg leading-tight">Kisan Mitra</h3>
+                     <h3 className="font-bold text-lg leading-tight">KhetAI</h3>
                      <p className="text-[10px] text-emerald-200 font-bold uppercase tracking-widest">AI Agriculture Assistant</p>
                   </div>
                </div>
                <div className="flex items-center gap-2">
+                  <button 
+                     onClick={() => setShowConfig(!showConfig)}
+                     className={`p-2 hover:bg-white/20 rounded-full transition-colors ${showConfig ? 'bg-white/30' : ''}`}
+                     title="Farm Profile"
+                  >
+                     <Settings size={18} />
+                  </button>
                   <button 
                      onClick={() => setIsExpanded(!isExpanded)} 
                      className="p-2 hover:bg-white/20 rounded-full transition-colors hidden md:block"
@@ -242,6 +266,92 @@ export const KisanMitraChatbot: React.FC = () => {
                   </button>
                </div>
             </div>
+            
+            {/* Farm Profile Config Overlay */}
+            <AnimatePresence>
+              {showConfig && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-emerald-50 border-b border-emerald-100 overflow-hidden shrink-0"
+                >
+                  <div className="p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-[#2d5a27]">My Farm Profile</h4>
+                      <button onClick={() => setShowConfig(false)} className="text-[#2d5a27] hover:bg-emerald-100 p-1 rounded transition-colors">
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1">
+                          <Shovel size={10} /> Soil Type
+                        </label>
+                        <select 
+                          value={farmProfile.soilType}
+                          onChange={(e) => setFarmProfile({...farmProfile, soilType: e.target.value})}
+                          className="w-full bg-white border border-emerald-200 rounded-lg px-2 py-1.5 text-xs text-stone-700 outline-none focus:border-[#2d5a27] transition-all"
+                        >
+                          <option>Alluvial</option>
+                          <option>Black Soil</option>
+                          <option>Red Soil</option>
+                          <option>Laterite</option>
+                          <option>Arid/Desert</option>
+                          <option>Peaty/Marshy</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1">
+                          <Wind size={10} /> Season
+                        </label>
+                        <select 
+                          value={farmProfile.season}
+                          onChange={(e) => setFarmProfile({...farmProfile, season: e.target.value})}
+                          className="w-full bg-white border border-emerald-200 rounded-lg px-2 py-1.5 text-xs text-stone-700 outline-none focus:border-[#2d5a27] transition-all"
+                        >
+                          <option>Kharif</option>
+                          <option>Rabi</option>
+                          <option>Zaid</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1">
+                          <Thermometer size={10} /> Weather
+                        </label>
+                        <input 
+                          type="text"
+                          value={farmProfile.weather}
+                          onChange={(e) => setFarmProfile({...farmProfile, weather: e.target.value})}
+                          className="w-full bg-white border border-emerald-200 rounded-lg px-2 py-1.5 text-xs text-stone-700 outline-none focus:border-[#2d5a27] transition-all"
+                          placeholder="e.g. Sunny, 32°C"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1">
+                          <MapPin size={10} /> Location
+                        </label>
+                        <input 
+                          type="text"
+                          value={farmProfile.location}
+                          onChange={(e) => setFarmProfile({...farmProfile, location: e.target.value})}
+                          className="w-full bg-white border border-emerald-200 rounded-lg px-2 py-1.5 text-xs text-stone-700 outline-none focus:border-[#2d5a27] transition-all"
+                          placeholder="District, State"
+                        />
+                      </div>
+                    </div>
+                    <div className="pt-2">
+                       <button 
+                        onClick={() => setShowConfig(false)}
+                        className="w-full py-2 bg-[#2d5a27] text-white text-[10px] font-bold uppercase tracking-widest rounded-lg shadow-sm hover:bg-emerald-800 transition-all"
+                       >
+                         Apply Profile Context
+                       </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Messages Area */}
             <div className="flex-1 overflow-y-auto p-4 bg-stone-50/50 space-y-4">
@@ -339,7 +449,7 @@ export const KisanMitraChatbot: React.FC = () => {
                       )}
                    </div>
                    <p className="text-center font-medium text-xs text-stone-400 mt-3">
-                       Kisan Mitra can make mistakes. Please verify important decisions.
+                       KhetAI can make mistakes. Please verify important decisions.
                    </p>
                </div>
             </div>

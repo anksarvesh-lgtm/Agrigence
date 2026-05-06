@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../../lib/db';
 import { Camera, CheckCircle, Clock, Info, ShieldCheck } from 'lucide-react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../../lib/LanguageContext';
 

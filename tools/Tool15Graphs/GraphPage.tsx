@@ -28,7 +28,7 @@ interface DataRow {
   factorB?: string;
 }
 
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import { isPlanExpired } from '../../utils/planAccess';
 

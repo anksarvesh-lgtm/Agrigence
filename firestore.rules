@@ -408,6 +408,17 @@ service cloud.firestore {
       allow update, delete: if isOwner(resource.data.userId) || isAdmin();
     }
 
+    match /soil_reports/{reportId} {
+      // Split read for query compatibility
+      allow get: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isOwner(request.resource.data.userId) && 
+                     hasRequiredFields(['userId', 'timestamp', 'soilData', 'analysis']) && 
+                     request.resource.data.analysis is string;
+      allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
     // --- DEFAULT DENY ---
     match /{document=**} {
       allow read, write: if false;

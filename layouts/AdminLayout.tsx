@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { 
   LayoutDashboard, Users, BookOpen, FileText, ShoppingBag, 
   Settings, LogOut, Menu, X, Image, CreditCard,
@@ -77,7 +77,6 @@ const AdminLayout: React.FC = () => {
       { label: 'Layout', path: '/admin/layout', icon: LayoutIcon },
       { label: 'Popup Manager', path: '/admin/popup', icon: Layers },
       { label: 'SEO Settings', path: '/admin/seo', icon: Globe },
-      { label: 'Ads.txt Manager', path: '/admin/ads-txt', icon: FileText },
       { label: 'Cookie Manager', path: '/admin/cookies', icon: ShieldCheck },
       { label: 'Media Library', path: '/admin/media', icon: Image },
       { label: 'Trash', path: '/admin/trash', icon: Trash2 },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { Calculator, Plus, Minus } from 'lucide-react';
 import { computeANOVA, ANOVAInput, ANOVAOutput } from '../lib/anovaCalculations';
 import { db } from '../src/firebase';

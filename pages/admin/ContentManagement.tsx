@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import { Magazine, Article } from '../../types';
 import { FileText, BookOpen, Plus, X, Upload, Save, FileCheck, Image as ImageIcon, Trash2, Globe, Star, Calendar, Bookmark, File as FileIcon, Loader2, Bold, Italic, Underline, Heading1, Heading2, List, Eye, Edit3, AlertTriangle, ShieldCheck, Activity } from 'lucide-react';

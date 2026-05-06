@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, X, Loader2 } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 
 interface AddDobModalProps {
   onClose: () => void;

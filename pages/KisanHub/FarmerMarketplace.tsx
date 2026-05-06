@@ -4,7 +4,7 @@ import { Store, Tag, Plus, MessageCircle, Trash2, EyeOff, Eye, MapPin } from 'lu
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, updateDoc, deleteDoc, doc, orderBy } from 'firebase/firestore';
 import { db } from '../../src/firebase';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 
 export const FarmerMarketplace: React.FC = () => {
     const navigate = useNavigate();

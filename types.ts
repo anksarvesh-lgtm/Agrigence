@@ -46,6 +46,7 @@ export interface User {
   bio?: string;
   isVerified?: boolean;
   status?: 'ACTIVE' | 'BLOCKED';
+  language?: 'en' | 'hi' | 'mr' | 'gu' | 'te'; // Supported languages
   lastLogin?: string;
   joinedDate?: string;
 }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Database, Clock, ShieldCheck, AlertCircle } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { isPlanExpired } from '../utils/planAccess';
 
 const DataStorageNotice: React.FC = () => {

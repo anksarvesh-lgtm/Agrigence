@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import { getMetaFile, updateMetaStatus, deleteMetaFile, SubmissionMeta } from '../submission-tracking/meta-handler';
 import { Download, Eye, Search, Filter, FileText, Check, X, AlertCircle, Loader2, Save, Trash2, UserPlus, ShieldAlert, Activity, ArrowRight, CornerUpRight, RotateCcw } from 'lucide-react';

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Save, Download, FileText, Activity } from 'lucide-react';
 import { UserFieldData } from '../types';
 import { mockBackend } from '../services/mockBackend';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { canAccessResearch, isPlanExpired } from '../utils/planAccess';
 
 interface DataEntryGridProps {

@@ -3,7 +3,7 @@ import * as XLSX from 'xlsx';
 import { calculateANOVA, AnovaInput, AnovaOutput } from './anova';
 import OutputSheets from './OutputSheets';
 import { mockBackend } from '../../services/mockBackend';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 
 const StudentPortal: React.FC = () => {
   const { user } = useAuth();

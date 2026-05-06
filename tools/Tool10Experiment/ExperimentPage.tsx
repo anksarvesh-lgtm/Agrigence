@@ -1,6 +1,6 @@
 import { isPlanExpired } from '../../utils/planAccess';
 import { mockBackend } from '../../services/mockBackend';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 

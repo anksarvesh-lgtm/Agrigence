@@ -115,6 +115,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
     { id: '5', label: 'Store', path: '/products', isExternal: false, order: 4, isEnabled: true },
     { id: 'sub-nav', label: 'Subscription', path: '/subscription', isExternal: false, order: 4.1, isEnabled: true },
     { id: 'tools-nav', label: 'Tools', path: '/tools', isExternal: false, order: 4.5, isEnabled: true },
+    { id: 'ai-hub-nav', label: 'AI Hub', path: '/ai-hub', isExternal: false, order: 4.6, isEnabled: true },
     { id: '6', label: 'Editorial Board', path: '/editorial-board', isExternal: false, order: 5, isEnabled: true },
     { id: '7', label: 'Author Guidelines', path: '/author-guidelines', isExternal: false, order: 6, isEnabled: true },
     { id: '8', label: 'About', path: '/about-contact', isExternal: false, order: 7, isEnabled: true },
@@ -1670,12 +1671,16 @@ class FirebaseBackendService {
     try {
       if (!visitor.session_id) return;
       
+      const cleanVisitor = Object.fromEntries(
+        Object.entries(visitor).filter(([_, v]) => v !== undefined)
+      );
+      
       const docRef = doc(this.db, 'website_visitors', visitor.session_id);
       const docSnap = await getDoc(docRef);
       
       if (!docSnap.exists()) {
         await setDoc(docRef, {
-          ...visitor,
+          ...cleanVisitor,
           created_at: new Date().toISOString()
         });
       } else {

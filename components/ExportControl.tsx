@@ -1,6 +1,6 @@
 import React from 'react';
 import { Download, Lock, FileText, FileSpreadsheet, File } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { canAccessResearch, isPlanExpired } from '../utils/planAccess';
 
 interface ExportControlProps {

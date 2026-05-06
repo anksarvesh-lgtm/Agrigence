@@ -66,11 +66,6 @@ export const KisanWeather: React.FC = () => {
     const getAIAdvice = async (data: any, cityName: string) => {
         setAnalyzing(true);
         try {
-            const apiKey = process.env.GEMINI_API_KEY;
-            if (!apiKey) throw new Error("Gemini API key not configured");
-
-            const ai = new GoogleGenAI({ apiKey });
-            
             const prompt = `You are a professional agricultural advisor. Based on the following weather data for ${cityName}, provide 4-5 concise, actionable agricultural recommendations and risk alerts for an Indian farmer. 
             Focus on irrigation, pest risk, and harvesting/planting advice.
             
@@ -82,11 +77,12 @@ export const KisanWeather: React.FC = () => {
             
             Format the response as bullet points (use markdown). Keep it practical and specific to Indian conditions.`;
 
+            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
             const result = await ai.models.generateContent({
-                model: 'gemini-3-flash-preview',
-                contents: prompt
+                model: 'gemini-1.5-flash',
+                contents: [{ parts: [{ text: prompt }] }]
             });
-            
+
             if (result.text) {
                 setAiAnalysis(result.text);
             }
@@ -243,7 +239,7 @@ export const KisanWeather: React.FC = () => {
                                     <Zap size={24} className={analyzing ? "animate-pulse" : "fill-white"} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold">Kisan Mitra AI Advisory</h3>
+                                    <h3 className="text-xl font-bold">KhetAI Advisory</h3>
                                     <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em]">Risk Assessment & Crop Guidance</p>
                                 </div>
                             </div>
@@ -254,7 +250,7 @@ export const KisanWeather: React.FC = () => {
                             {analyzing ? (
                                 <div className="flex flex-col items-center justify-center py-12 gap-4">
                                     <Loader2 className="animate-spin text-emerald-600" size={40} />
-                                    <p className="text-stone-500 font-bold uppercase tracking-widest text-xs">Gemini AI is analyzing your local climate...</p>
+                                    <p className="text-stone-500 font-bold uppercase tracking-widest text-xs">AI Hub AI Models are analyzing your local climate...</p>
                                 </div>
                             ) : (
                                 <div className="prose prose-stone max-w-none prose-p:text-stone-600 prose-li:text-stone-600 prose-strong:text-[#2d5a27]">

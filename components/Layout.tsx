@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../App';
+import { Helmet } from 'react-helmet-async';
+import { useAuth } from '../src/authContext';
 import { mockBackend } from '../services/mockBackend';
 import { 
-  Menu, X, Search, User as UserIcon, LogOut, 
+  Menu, X, Search, User as UserIcon, LogOut, Cpu,
   Home, BookOpen, Newspaper, FileText, ShoppingBag, Wrench, BarChart2, Info, Users, Settings, ChevronRight, ArrowLeft
 } from 'lucide-react';
 import Logo from './Logo';
@@ -98,6 +99,75 @@ const AppLayout: React.FC = () => {
   const mouseY = useMotionValue(Infinity);
   const sidebarRef = useRef<HTMLElement>(null);
 
+  // Process navigation items and SEO data in a single memo to ensure initialization order
+  const { filteredMenuItems, pageTitle, canonicalUrl } = React.useMemo(() => {
+    const menuItems = settings?.navigation 
+      ? settings.navigation.filter(item => item.isEnabled).sort((a,b) => a.order - b.order) 
+      : [];
+
+    const defaultItems = [
+      { label: 'Home', path: '/', icon: Home },
+      { label: 'AI Hub', path: '/ai-hub', icon: Cpu },
+      { label: 'Archive', path: '/journals', icon: BookOpen },
+      { label: 'News', path: '/news', icon: Newspaper },
+      { label: 'Blogs', path: '/blogs', icon: FileText },
+      { label: 'Store', path: '/products', icon: ShoppingBag },
+      { label: 'Tools', path: '/tools', icon: Wrench },
+      { label: 'Author Guidelines', path: '/author-guidelines', icon: FileText },
+      { label: 'Editorial Board', path: '/editorial-board', icon: Users },
+      { label: 'About & Contact Us', path: '/about-contact', icon: Info },
+    ];
+
+    const raw = menuItems.length > 0 
+      ? menuItems.map(m => ({...m, icon: defaultItems.find(d => d.path === m.path)?.icon || FileText})) 
+      : defaultItems.map(i => ({ ...i, id: i.path, isExternal: false, order: 0, isEnabled: true }));
+    
+    // Ensure Tools and About & Contact Us are always present
+    const essentialItems = [
+      { label: 'Tools', path: '/tools', icon: Wrench },
+      { label: 'About & Contact Us', path: '/about-contact', icon: Info },
+    ];
+
+    essentialItems.forEach(item => {
+      if (!raw.some(i => i.path === item.path || i.label === item.label)) {
+        raw.push({ ...item, id: item.path, isExternal: false, order: 99, isEnabled: true } as any);
+      }
+    });
+
+    const hasHome = raw.some(i => i.path === '/' || i.label === 'Home');
+    const active = hasHome 
+        ? raw 
+        : [{ label: 'Home', path: '/', id: 'home-auto', isExternal: false, order: -999, isEnabled: true, icon: Home }, ...raw];
+
+    const filtered = active.filter(item => {
+      const label = item.label?.trim().toLowerCase() || '';
+      return !['analytics', 'pipeline builder', 'anova engine'].includes(label);
+    });
+
+    // Sub-function for title mapping
+    const getTitle = (pathname: string) => {
+      const segments = pathname.split('/').filter(Boolean);
+      if (segments.length === 0) return 'Home';
+      
+      const menuItem = filtered.find(i => i.path === pathname);
+      if (menuItem) return menuItem.label;
+
+      if (segments[0] === 'news' && segments[1]) return `News | ${segments[1]}`;
+      if (segments[0] === 'blog' && segments[1]) return `Blog | ${segments[1]}`;
+      if (segments[0] === 'scheme' && segments[1]) return `Scheme | ${segments[1]}`;
+      if (segments[0] === 'mandi-bhav' && segments[1]) return `Mandi Bhav | ${segments[1]}`;
+      if (segments[0] === 'crop' && segments[1]) return `Crop advisory | ${segments[1]}`;
+      
+      return segments.map(s => s.charAt(0).toUpperCase() + s.slice(1).replace(/-/g, ' ')).join(' > ');
+    };
+
+    return {
+      filteredMenuItems: filtered,
+      pageTitle: getTitle(location.pathname),
+      canonicalUrl: `https://www.agrigence.in${location.pathname === '/' ? '' : location.pathname}`
+    };
+  }, [settings?.navigation, location.pathname]);
+
   useEffect(() => {
     // Close sidebar on route change on mobile
     setIsSidebarOpen(false);
@@ -182,6 +252,7 @@ const AppLayout: React.FC = () => {
     const term = e.target.value;
     setSearchTerm(term);
     if (term.length > 2) {
+      const lowerTerm = term.toLowerCase();
       const results = await mockBackend.getArticles(term);
       const allUsers = await mockBackend.getPublicAdmins();
       const adminIds = new Set(allUsers.map(u => u.id));
@@ -189,8 +260,20 @@ const AppLayout: React.FC = () => {
          if (a.status !== 'PUBLISHED' && a.status !== 'APPROVED') return false;
          if (!a.authorId) return true; 
          return adminIds.has(a.authorId);
-      });
-      setSearchResults(publicResults);
+      }).map(a => ({ ...a, resultType: a.type === 'BLOG' ? 'Blog' : 'Article' }));
+
+      let productResults: any[] = [];
+      try {
+        const products = await mockBackend.getProducts();
+        productResults = products.filter(p => 
+          p.name.toLowerCase().includes(lowerTerm) || 
+          p.description.toLowerCase().includes(lowerTerm)
+        ).map(p => ({ ...p, resultType: 'Product' }));
+      } catch (err) {
+        console.error("Error fetching products", err);
+      }
+
+      setSearchResults([...publicResults, ...productResults]);
     } else {
       setSearchResults([]);
     }
@@ -208,49 +291,18 @@ const AppLayout: React.FC = () => {
     }
   };
 
-  const menuItems = settings?.navigation 
-    ? settings.navigation.filter(item => item.isEnabled).sort((a,b) => a.order - b.order) 
-    : [];
-
-  const defaultItems = [
-    { label: 'Home', path: '/', icon: Home },
-    { label: 'Archive', path: '/journals', icon: BookOpen },
-    { label: 'News', path: '/news', icon: Newspaper },
-    { label: 'Blogs', path: '/blogs', icon: FileText },
-    { label: 'Store', path: '/products', icon: ShoppingBag },
-    { label: 'Tools', path: '/tools', icon: Wrench },
-    { label: 'Author Guidelines', path: '/author-guidelines', icon: FileText },
-    { label: 'Editorial Board', path: '/editorial-board', icon: Users },
-    { label: 'About & Contact Us', path: '/about-contact', icon: Info },
-  ];
-
-  const rawMenuItems = menuItems.length > 0 ? menuItems.map(m => ({...m, icon: defaultItems.find(d => d.path === m.path)?.icon || FileText})) : defaultItems.map(i => ({ ...i, id: i.path, isExternal: false, order: 0, isEnabled: true }));
-  
-  // Ensure Tools and About & Contact Us are always present
-  const essentialItems = [
-    { label: 'Tools', path: '/tools', icon: Wrench },
-    { label: 'About & Contact Us', path: '/about-contact', icon: Info },
-  ];
-
-  essentialItems.forEach(item => {
-    if (!rawMenuItems.some(i => i.path === item.path || i.label === item.label)) {
-      rawMenuItems.push({ ...item, id: item.path, isExternal: false, order: 99, isEnabled: true } as any);
-    }
-  });
-
-  const hasHome = rawMenuItems.some(i => i.path === '/' || i.label === 'Home');
-  const activeMenuItems = hasHome 
-      ? rawMenuItems 
-      : [{ label: 'Home', path: '/', id: 'home-auto', isExternal: false, order: -999, isEnabled: true, icon: Home }, ...rawMenuItems];
-
-  // Filter out the specific analytics items if they exist in activeMenuItems
-  const filteredMenuItems = activeMenuItems.filter(item => {
-    const label = item.label?.trim().toLowerCase() || '';
-    return !['analytics', 'pipeline builder', 'anova engine'].includes(label);
-  });
-
   return (
     <div className="flex h-screen w-full overflow-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-sans">
+      <Helmet>
+        <title>{`${pageTitle} | Agrigence`}</title>
+        <meta name="description" content={`Explore ${pageTitle} on Agrigence - The futuristic agricultural intelligence platform.`} />
+        <link rel="canonical" href={canonicalUrl} />
+        
+        {/* Open Graph Tags for sharing */}
+        <meta property="og:title" content={`${pageTitle} | Agrigence`} />
+        <meta property="og:description" content={`Explore ${pageTitle} on Agrigence - The futuristic agricultural intelligence platform.`} />
+        <meta property="og:url" content={canonicalUrl} />
+      </Helmet>
       
       {/* Sidebar (Desktop) & Drawer (Mobile) */}
       <aside className={`fixed inset-y-0 left-0 z-50 glossy border-r border-white/10 transform transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64'} md:relative md:translate-x-0 ${isCollapsed ? 'md:w-20' : 'md:w-64'} flex flex-col shadow-2xl md:shadow-none`}>
@@ -434,7 +486,88 @@ const AppLayout: React.FC = () => {
               </p>
             </div>
           </div>
-          <div className="flex-1 flex justify-end max-w-md relative">
+          
+          <div className="flex-1 max-w-xl mx-4 lg:mx-12 relative hidden md:block">
+            <div className="relative group">
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-agri-primary transition-colors" />
+              <input
+                type="text"
+                placeholder="Search articles, blogs, products..."
+                value={searchTerm}
+                onChange={handleSearch}
+                className="w-full bg-stone-100 dark:bg-stone-900/50 border border-stone-200 dark:border-white/10 rounded-full py-2 pl-9 pr-8 text-sm focus:outline-none focus:border-agri-primary/50 transition-all text-stone-800 dark:text-stone-200"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => { setSearchTerm(''); setSearchResults([]); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-200"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            
+            <AnimatePresence>
+              {searchTerm.length > 2 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute top-[calc(100%+8px)] w-full bg-white dark:bg-stone-950 border border-stone-200 dark:border-white/10 rounded-xl shadow-2xl overflow-hidden z-[100]"
+                >
+                  <div className="max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    {searchResults.length > 0 ? (
+                      <div className="flex flex-col">
+                        {searchResults.map((result, idx) => (
+                           <button 
+                             key={idx} 
+                             onClick={() => { 
+                               setSearchTerm(''); 
+                               setSearchResults([]); 
+                               if (result.resultType === 'Product') {
+                                 navigate(`/products/${result.id}`);
+                               } else if (result.resultType === 'Blog') {
+                                 navigate(`/blog/${result.slug || result.id}`);
+                               } else {
+                                 navigate(`/article/${result.slug || result.id}`);
+                               }
+                             }} 
+                             className="text-left px-4 py-3 border-b border-stone-100 dark:border-white/5 hover:bg-stone-50 dark:hover:bg-stone-900 transition-colors w-full flex items-start gap-3 group"
+                           >
+                              <div className="mt-1 flex-shrink-0">
+                                {result.resultType === 'Product' ? (
+                                    <ShoppingBag size={16} className="text-stone-400 group-hover:text-agri-primary transition-colors" />
+                                ) : result.resultType === 'Blog' ? (
+                                    <FileText size={16} className="text-stone-400 group-hover:text-agri-primary transition-colors" />
+                                ) : (
+                                    <BookOpen size={16} className="text-stone-400 group-hover:text-agri-primary transition-colors" />
+                                )}
+                              </div>
+                              <div className="flex flex-col flex-1 min-w-0">
+                                  <span className="text-sm font-semibold text-stone-800 dark:text-stone-200 truncate group-hover:text-agri-primary transition-colors">{result.name || result.title}</span>
+                                  {result.resultType === 'Product' ? (
+                                     <span className="text-xs text-stone-500 dark:text-stone-400 truncate mt-0.5" dangerouslySetInnerHTML={{ __html: result.description || '' }} />
+                                  ) : (
+                                     <span className="text-xs text-stone-500 dark:text-stone-400 truncate mt-0.5">By {result.authorName}</span>
+                                  )}
+                                  <span className="text-[10px] uppercase font-bold text-agri-primary/80 tracking-wider mt-1.5">{result.resultType}</span>
+                              </div>
+                           </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center">
+                        <Search size={24} className="mx-auto text-stone-300 dark:text-stone-700 mb-2" />
+                        <span className="text-stone-500 text-sm">No results found for "{searchTerm}"</span>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="flex justify-end relative">
             <div className="flex items-center gap-3 bg-stone-950/40 dark:bg-black/40 backdrop-blur-xl px-5 py-2.5 rounded-2xl border-2 border-agri-primary/40 shadow-[0_0_25px_rgba(61,43,31,0.3)] relative overflow-hidden group glossy-card">
               {/* Futuristic Scanline Effect */}
               <div className="absolute inset-0 bg-gradient-to-b from-transparent via-agri-primary/15 to-transparent h-[200%] animate-scanline pointer-events-none" />

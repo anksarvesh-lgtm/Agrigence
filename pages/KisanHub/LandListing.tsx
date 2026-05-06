@@ -4,7 +4,7 @@ import { Map, Droplet, Sun, Wind, ArrowRight, Trash2, EyeOff, Eye, Plus } from '
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../src/firebase';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 
 export const LandListing: React.FC = () => {
     const navigate = useNavigate();

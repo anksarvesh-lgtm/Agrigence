@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { calculateANOVA, AnovaInput, AnovaOutput } from './anova';
 import OutputSheets from './OutputSheets';
 import { mockBackend } from '../../services/mockBackend';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { Download, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface SampleRow {

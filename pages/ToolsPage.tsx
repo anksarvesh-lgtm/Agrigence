@@ -4,7 +4,7 @@ import { Wrench, ChevronLeft, Tractor, Microscope, Sprout, LineChart, Calculator
 import { motion } from 'framer-motion';
 import { TOOL_SECTIONS } from '../config/toolsConfig';
 import ToolSkeleton from '../components/ToolSkeleton';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { canAccessResearch } from '../utils/planAccess';
 import { Link } from 'react-router-dom';
 import OptimizedImage from '../components/OptimizedImage';

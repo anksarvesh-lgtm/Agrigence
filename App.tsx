@@ -11,8 +11,9 @@ import { HelmetProvider } from 'react-helmet-async';
 
 // Layouts and Pages
 import Layout from './components/Layout';
+import { AuthProvider, useAuth, ProtectedRoute, KisanProtectedRoute } from './src/authContext';
 import AdminLayout from './layouts/AdminLayout';
-import { ReviewerLayout } from './components/ReviewerLayout'; // New Layout
+import { ReviewerLayout } from './components/ReviewerLayout'; 
 import PopupAnnouncement from './components/PopupAnnouncement';
 import Preloader from './components/Preloader';
 import GlobalUploadIndicator from './components/GlobalUploadIndicator';
@@ -54,6 +55,7 @@ import MobileAppView from './pages/MobileAppView';
 import MandiCityPage from './pages/MandiCityPage';
 import SchemeDetailPage from './pages/SchemeDetailPage';
 import CropAdvisoryPage from './pages/CropAdvisoryPage';
+import AIHub from './pages/AIHub';
 
 // Lazy loaded tools
 const SeedRatePage = React.lazy(() => import('./tools/Tool01SeedRate/SeedRatePage'));
@@ -101,7 +103,6 @@ import AIContentGenerator from './pages/admin/AIContentGenerator';
 import AdminManager from './extensions/submission-tracking/AdminManager';
 import SubmissionAdminPanel from './extensions/submission-admin/SubmissionAdminPanel';
 import ReviewerDashboard from './pages/ReviewerDashboard'; // New Page
-import AdsTxtManager from './pages/admin/AdsTxtManager';
 import CookieManager from './pages/admin/CookieManager';
 import SchemesManagement from './pages/admin/SchemesManagement';
 import WhapiDashboard from './pages/admin/WhapiDashboard';
@@ -135,137 +136,6 @@ import CropPlanner from './pages/KisanHub/CropPlanner';
 import KisanLogin from './pages/KisanHub/KisanLogin';
 
 import SoilAnalyzer from './pages/KisanHub/SoilAnalyzer';
-
-// Auth Context
-interface AuthContextType {
-  user: User | null;
-  planDetails: SubscriptionPlan | null;
-  login: (u: User) => void;
-  logout: () => void;
-  isLoading: boolean;
-  showDobModal: boolean;
-  setShowDobModal: (show: boolean) => void;
-}
-
-const AuthContext = createContext<AuthContextType>({ user: null, planDetails: null, login: () => {}, logout: () => {}, isLoading: true, showDobModal: false, setShowDobModal: () => {} });
-export const useAuth = () => useContext(AuthContext);
-
-const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [planDetails, setPlanDetails] = useState<SubscriptionPlan | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showDobModal, setShowDobModal] = useState(false);
-
-  useEffect(() => {
-    // Listen for Auth state changes from Firebase
-    let userUnsub: (() => void) | null = null;
-    let cleanupInterval: NodeJS.Timeout | null = null;
-
-    const authUnsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          // 1. Ensure user record exists (Create if first time login)
-          await mockBackend.syncUser(firebaseUser);
-          
-          // 2. Subscribe to the real-time record to get plan updates instantly
-          if (userUnsub) userUnsub(); // cleanup previous if any
-          
-          userUnsub = mockBackend.subscribeToUser(firebaseUser.uid, async (userData) => {
-             if (userData) {
-               setUser(userData);
-               
-               // Fetch plan details
-               if (userData.subscriptionTier) {
-                 const plans = await mockBackend.getPlans();
-                 const plan = plans.find(p => p.name === userData.subscriptionTier);
-                 setPlanDetails(plan || null);
-               } else {
-                 setPlanDetails(null);
-               }
-               
-               // 3. If user is admin, start cleanup tasks
-               if (userData.role === 'SUPER_ADMIN' || userData.role === 'ADMIN') {
-                 if (!cleanupInterval) {
-                   mockBackend.cleanupTemporaryData().catch(() => {}); // Silent fail
-                   cleanupInterval = setInterval(() => {
-                     mockBackend.cleanupTemporaryData().catch(() => {});
-                   }, 30 * 60 * 1000);
-                 }
-               } else if (cleanupInterval) {
-                 clearInterval(cleanupInterval);
-                 cleanupInterval = null;
-               }
-
-               // 4. Check for DOB
-               if (!userData.dob) {
-                 setShowDobModal(true);
-               } else {
-                 setShowDobModal(false);
-               }
-             }
-          });
-
-        } catch (error: any) {
-          console.error("Failed to sync user profile", error instanceof Error ? error.message : String(error));
-          setUser(null);
-        }
-      } else {
-        if (userUnsub) userUnsub();
-        userUnsub = null;
-        if (cleanupInterval) {
-          clearInterval(cleanupInterval);
-          cleanupInterval = null;
-        }
-        setUser(null);
-        setShowDobModal(false);
-      }
-      setIsLoading(false);
-    });
-
-    return () => {
-      authUnsub();
-      if (cleanupInterval) clearInterval(cleanupInterval);
-      if (userUnsub) userUnsub();
-    };
-  }, []);
-
-  const login = (u: User) => {
-    setUser(u);
-  };
-
-  const logout = async () => {
-    await mockBackend.logout();
-    setUser(null);
-    setPlanDetails(null);
-    setShowDobModal(false);
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, planDetails, login, logout, isLoading, showDobModal, setShowDobModal }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({ children, allowedRoles }) => {
-  const { user, isLoading } = useAuth();
-  
-  if (isLoading) return <div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
-  if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
-
-  return <>{children}</>;
-};
-
-const KisanProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoading } = useAuth();
-  const location = useLocation();
-  
-  if (isLoading) return <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center font-serif text-[#92745B]">Validating Farm Credentials...</div>;
-  if (!user) return <Navigate to="/kisan/login" state={{ from: location }} replace />;
-
-  return <>{children}</>;
-};
 
 const App: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -351,6 +221,7 @@ const AppContent: React.FC = () => {
               <Route path="mandi-bhav/:city" element={<MandiCityPage />} />
               <Route path="scheme/:slug" element={<SchemeDetailPage />} />
               <Route path="crop/:slug" element={<CropAdvisoryPage />} />
+              <Route path="ai-hub" element={<AIHub />} />
 
               {/* USER DASHBOARD */}
               <Route path="dashboard" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Dashboard /></ProtectedRoute>} />
@@ -445,7 +316,6 @@ const AppContent: React.FC = () => {
               <Route path="pages" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><StaticPagesEditor /></ProtectedRoute>} />
               <Route path="tracker" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdminManager /></ProtectedRoute>} />
               <Route path="cookies" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><CookieManager /></ProtectedRoute>} />
-              <Route path="ads-txt" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']}><AdsTxtManager /></ProtectedRoute>} />
               <Route path="schemes" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><SchemesManagement /></ProtectedRoute>} />
               <Route path="farmer-connect" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><FarmerConnectManagement /></ProtectedRoute>} />
             </Route>

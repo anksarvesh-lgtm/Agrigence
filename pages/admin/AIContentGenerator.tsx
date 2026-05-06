@@ -15,6 +15,7 @@ import {
 } from '../../src/server/autoContentGenerator';
 import { addDoc } from 'firebase/firestore';
 import { GoogleGenAI } from "@google/genai";
+import { KHETAI_SYSTEM_INSTRUCTION } from '../../src/lib/khetai';
 
 const AIContentGenerator: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -77,25 +78,22 @@ const AIContentGenerator: React.FC = () => {
   const handleGenerateBlog = async () => {
     setIsGenerating(true);
     setStatus('running');
-    setMessage('Connecting to Gemini AI Engine (Frontend)...');
+    setMessage('Connecting to AI Hub AI Models Engine...');
     
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("Gemini API key not configured");
-      const ai = new GoogleGenAI({ apiKey });
-
       const prompt = generateDailyBlogPrompt();
+      
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
       const result = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt
+        model: 'gemini-1.5-flash',
+        contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          systemInstruction: KHETAI_SYSTEM_INSTRUCTION,
+          responseMimeType: 'application/json'
+        }
       });
 
-      if (!result.text) throw new Error("Failed to generate content from AI engine.");
-      
-      let text = result.text;
-      // Strip markdown formatting
-      text = text.replace(/^```json\n/, '').replace(/\n```$/, '').trim();
-      const blogData = JSON.parse(text);
+      const blogData = JSON.parse(result.text || '{}');
 
       if (!blogData || !blogData.slug) {
         throw new Error("Failed to generate valid blog data.");
@@ -142,21 +140,19 @@ const AIContentGenerator: React.FC = () => {
     setMessage('Generating Daily News & Tech Innovations...');
     
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("Gemini API key not configured");
-      const ai = new GoogleGenAI({ apiKey });
-
       const prompt = generateDailyNewsAndInnovationsPrompt();
+      
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
       const result = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt
+        model: 'gemini-1.5-flash',
+        contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          systemInstruction: KHETAI_SYSTEM_INSTRUCTION,
+          responseMimeType: 'application/json'
+        }
       });
 
-      if (!result.text) throw new Error("Failed to generate content from AI engine.");
-
-      let text = result.text;
-      text = text.replace(/^```json\n/, '').replace(/\n```$/, '').trim();
-      const jsonData = JSON.parse(text);
+      const jsonData = JSON.parse(result.text || '{}');
 
       if (!jsonData || !jsonData.news_items) {
         throw new Error("Failed to generate valid news data.");
@@ -189,21 +185,19 @@ const AIContentGenerator: React.FC = () => {
     setMessage('Generating Daily Schemes & Subsidies...');
     
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("Gemini API key not configured");
-      const ai = new GoogleGenAI({ apiKey });
-
       const prompt = generateDailySchemesAndSubsidiesPrompt();
+      
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
       const result = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt
+        model: 'gemini-1.5-flash',
+        contents: [{ parts: [{ text: prompt }] }],
+        config: {
+          systemInstruction: KHETAI_SYSTEM_INSTRUCTION,
+          responseMimeType: 'application/json'
+        }
       });
 
-      if (!result.text) throw new Error("Failed to generate content from AI engine.");
-
-      let text = result.text;
-      text = text.replace(/^```json\n/, '').replace(/\n```$/, '').trim();
-      const data = JSON.parse(text);
+      const data = JSON.parse(result.text || '{}');
 
       if (!data || !data.schemes) {
         throw new Error("Failed to generate valid schemes data.");
@@ -262,7 +256,7 @@ const AIContentGenerator: React.FC = () => {
   const automationStats = [
     { label: 'Cron Status', value: 'Active', icon: RefreshCw, color: 'text-green-600' },
     { label: 'Next Run', value: '07:00 AM (Daily)', icon: Calendar, color: 'text-blue-600' },
-    { label: 'Model', value: 'Gemini Flash', icon: Bot, color: 'text-purple-600' },
+    { label: 'Model', value: 'AI Hub AI Models', icon: Bot, color: 'text-purple-600' },
     { label: 'Target Regions', value: 'UP, Bihar, RJ', icon: Globe, color: 'text-amber-600' },
   ];
 
@@ -485,7 +479,7 @@ const AIContentGenerator: React.FC = () => {
                  <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-white/50 block mb-2">Primary AI Engine</label>
                     <p className="text-sm font-bold flex items-center gap-2">
-                       Gemini 1.5 Flash <span className="px-2 py-0.5 bg-green-500 text-white rounded text-[8px] uppercase tracking-tighter">Connected</span>
+                       AI Hub AI Models <span className="px-2 py-0.5 bg-green-500 text-white rounded text-[8px] uppercase tracking-tighter">Connected</span>
                     </p>
                  </div>
               </div>

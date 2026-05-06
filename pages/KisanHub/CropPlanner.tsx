@@ -23,12 +23,13 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../../src/firebase';
 import { collection, addDoc, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import Markdown from 'react-markdown';
 import { auth } from '../../src/firebase';
 import { GoogleGenAI } from "@google/genai";
 
-// --- Error Handling ---
+// Internal components for clean icons
+const HistoryIcon = ({ size, className }: { size: number, className?: string }) => <Clock size={size} className={className} />;
 enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -191,10 +192,6 @@ const CropPlanner: React.FC = () => {
     setSuggestedCrops(filteredCrops);
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("Gemini API key not configured");
-      const ai = new GoogleGenAI({ apiKey });
-
       const prompt = `
         You are an expert agricultural advisor for Indian farmers. 
         Current Context: Year 2026, Climate-smart focused.
@@ -223,9 +220,10 @@ const CropPlanner: React.FC = () => {
         Use professional, encouraging, and highly technical yet simple language suitable for a modern Indian farmer.
       `;
 
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
       const result = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: prompt
+        model: 'gemini-1.5-flash',
+        contents: [{ parts: [{ text: prompt }] }]
       });
 
       if (!result.text) throw new Error("Failed to generate content from AI.");
@@ -314,7 +312,7 @@ const CropPlanner: React.FC = () => {
             onClick={() => setShowHistory(!showHistory)}
             className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-2xl text-xs font-bold uppercase tracking-widest text-gray-700 shadow-sm hover:border-agri-secondary transition-all"
           >
-            <History size={16} />
+            <HistoryIcon size={16} />
             {showHistory ? 'View Planner' : 'Saved Plans'}
           </button>
         </div>
@@ -363,7 +361,7 @@ const CropPlanner: React.FC = () => {
               </motion.div>
             )) : (
               <div className="text-center py-20 bg-white rounded-[2rem] border border-dashed border-gray-300">
-                <History size={48} className="mx-auto text-gray-300 mb-4" />
+                <HistoryIcon size={48} className="mx-auto text-gray-300 mb-4" />
                 <p className="text-gray-400 font-serif italic">No saved plans yet. Start planning today!</p>
               </div>
             )}

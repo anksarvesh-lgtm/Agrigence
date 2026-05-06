@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { mockBackend } from '../services/mockBackend';
 import { Article, ReviewMessage, Review, Recommendation } from '../types';
 import { FileText, MessageSquare, CheckCircle, Clock, Eye, Send, ArrowLeft, ShieldAlert, Activity, Download, User, PlayCircle, X } from 'lucide-react';

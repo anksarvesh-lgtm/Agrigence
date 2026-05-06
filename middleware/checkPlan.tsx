@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { isPlanExpired, canAccessResearch, canAccessTool } from '../utils/planAccess';
 import UpgradeNotice from '../components/UpgradeNotice';
 

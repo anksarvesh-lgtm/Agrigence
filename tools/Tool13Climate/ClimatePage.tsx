@@ -36,7 +36,7 @@ const DEFAULT_TBASE: Record<string, number> = {
   'Cotton': 12
 };
 
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import { isPlanExpired } from '../../utils/planAccess';
 

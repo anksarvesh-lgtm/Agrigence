@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { safeStringify } from '../lib/safeStringify';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { SubscriptionPlan, SiteSettings, Coupon } from '../types';
 import { 
   Check, Star, ShieldCheck, QrCode, X, 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { FarmerQuestion } from '../../types';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { useConfirm } from '../../components/ContextualConfirm';
 import { Trash2, Search, Mic, MessageCircle, AlertCircle } from 'lucide-react';
 

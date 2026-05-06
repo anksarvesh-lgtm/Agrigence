@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import Logo from './Logo';
 import { 
   LogOut, Menu, X, FileText, MessageSquare, User, PenTool, Home

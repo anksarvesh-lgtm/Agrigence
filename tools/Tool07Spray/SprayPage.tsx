@@ -19,7 +19,7 @@ import { SprayerConfig, ChemicalConfig, FieldConfig, SprayPlan, SafetyCard } fro
 import { calculateSprayVolumePerHa, calculateBackpackSprayVolume, calculateSprayPlan } from './sprayFormulas';
 import { validateDose } from './sprayValidation';
 import { getSafetyCard } from './safetyEngine';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import { isPlanExpired } from '../../utils/planAccess';
 

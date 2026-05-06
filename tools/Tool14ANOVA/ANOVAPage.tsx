@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Observation, AnovaSummary, DesignType } from './anovaTypes';
 import { calculateANOVA } from './anovaCore';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import { isPlanExpired } from '../../utils/planAccess';
 

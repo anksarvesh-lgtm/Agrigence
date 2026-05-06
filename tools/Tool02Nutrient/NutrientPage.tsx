@@ -23,7 +23,7 @@ import { STCR_COEFFICIENTS } from './stcrConstants';
 import * as formulas from './nutrientFormulas';
 import * as engine from './nutrientEngine';
 import { validateNutrients } from './nutrientValidation';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import { isPlanExpired } from '../../utils/planAccess';
 

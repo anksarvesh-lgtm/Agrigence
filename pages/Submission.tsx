@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
 import { UploadCloud, AlertTriangle, Lock, FileText, CheckCircle, PenTool, Type } from 'lucide-react';

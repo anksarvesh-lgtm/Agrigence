@@ -7,15 +7,18 @@ import cron from 'node-cron';
 import { whatsappRouter } from './src/server/whatsapp/api.ts';
 import { mandiPrices, schemes, cropAdvisory } from './src/data/agrigence_engine.ts';
 import { processAndSaveMandiPage, MandiDataInput, processAndSaveDailyBlog } from './src/server/autoContentGenerator.ts';
+import { GoogleGenAI } from "@google/genai";
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
   const projectId = 'gen-lang-client-0276037966';
 
+  const databaseId = 'ai-studio-3e16a161-237b-431f-b594-a3f4635b9cc5';
+
   // Helper to fetch document
   async function getDoc(collection: string, id: string) {
-    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collection}/${id}`);
+    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/${databaseId}/documents/${collection}/${id}`);
     if (!res.ok) return null;
     const data = await res.json();
     const doc: any = {};
@@ -147,15 +150,102 @@ Allow: /crop/
 User-agent: GPTBot
 Allow: /
 
-Sitemap: https://agrigence.in/sitemap.xml`);
+Sitemap: https://www.agrigence.in/sitemap.xml`);
   });
 
   // === WhatsApp Engine API ===
   app.use('/api/whatsapp', whatsappRouter);
 
-  // Note: AI functionalities have been migrated to the frontend to fix API key issues.
+  // === AI API Proxy ===
+  let googleAI: any = null;
+
+  function getAI() {
+    if (googleAI) return googleAI;
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || apiKey === 'undefined' || apiKey === 'null') {
+      throw new Error('GEMINI_API_KEY environment variable is required');
+    }
+    googleAI = new GoogleGenAI({ apiKey });
+    return googleAI;
+  }
+
+  app.post('/api/ai/chat', async (req, res) => {
+    try {
+      const ai = getAI();
+      const { messages, model = 'gemini-1.5-flash' } = req.body;
+      const parsedInstruction = req.body.systemInstruction || (await import('./src/lib/khetai.ts')).KHETAI_SYSTEM_INSTRUCTION;
+      
+      const result = await ai.models.generateContentStream({
+        model,
+        contents: messages,
+        config: {
+          systemInstruction: parsedInstruction 
+        }
+      });
+
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Transfer-Encoding', 'chunked');
+
+      for await (const chunk of result) {
+        if (chunk.text) {
+          res.write(chunk.text);
+        }
+      }
+      res.end();
+    } catch (error: any) {
+      console.error('AI Chat Error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/ai/generate', async (req, res) => {
+    try {
+      const ai = getAI();
+      const { prompt, image, model = 'gemini-1.5-flash', jsonMode = false } = req.body;
+      const parsedInstruction = req.body.systemInstruction || (await import('./src/lib/khetai.ts')).KHETAI_SYSTEM_INSTRUCTION;
+      
+      let contents: any[] = [];
+      if (typeof prompt === 'string') {
+        contents.push({ text: prompt });
+      } else if (Array.isArray(prompt)) {
+        contents = prompt;
+      }
+
+      if (image) {
+        // image is { data: string, mimeType: string }
+        contents.push({
+          inlineData: image
+        });
+      }
+
+      const result = await ai.models.generateContent({
+        model,
+        contents: { parts: contents },
+        config: {
+          systemInstruction: parsedInstruction,
+          responseMimeType: jsonMode ? 'application/json' : undefined
+        }
+      });
+
+      const text = result.text || '';
+      
+      if (jsonMode) {
+         try {
+           res.json(JSON.parse(text));
+         } catch (e) {
+           res.json({ text });
+         }
+      } else {
+        res.json({ text });
+      }
+    } catch (error: any) {
+      console.error('AI Generate Error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.post('/api/chat', (req, res) => {
-    res.status(410).json({ error: 'Endpoint migrated to frontend. Use frontend SDK directly.' });
+    res.status(410).json({ error: 'Endpoint migrated. Use /api/ai/chat instead.' });
   });
 
   app.post('/api/extract-scheme-data', (req, res) => {
@@ -290,15 +380,10 @@ Sitemap: https://agrigence.in/sitemap.xml`);
     res.status(201).json({ id: '1', ...req.body });
   });
 
-  app.get('/ads.txt', (req, res) => {
-    res.header('Content-Type', 'text/plain');
-    res.send('google.com, pub-7206167612469004, DIRECT, f08c47fec0942fa0');
-  });
-
   app.get('/sitemap.xml', async (req, res) => {
     try {
-      const baseUrl = 'https://agrigence.in';
-      const projectId = 'gen-lang-client-0276037966';
+      const baseUrl = 'https://www.agrigence.in';
+      const databaseId = 'ai-studio-3e16a161-237b-431f-b594-a3f4635b9cc5';
       
       const staticRoutes = [
         '',
@@ -316,20 +401,6 @@ Sitemap: https://agrigence.in/sitemap.xml`);
         '/farmer-connect',
         '/govt-schemes',
         '/mobile-app',
-        '/kisan',
-        '/kisan/mandi',
-        '/kisan/ledger',
-        '/kisan/sop',
-        '/kisan/weather',
-        '/kisan/schemes',
-        '/kisan/equipment',
-        '/kisan/marketplace',
-        '/kisan/land',
-        '/kisan/dashboard',
-        '/kisan/post-requirement',
-        '/kisan/my-requirements',
-        '/kisan/my-listings',
-        '/kisan/list-item',
         '/consultation',
         '/tools/seed-rate',
         '/tools/nutrient-req',
@@ -349,18 +420,38 @@ Sitemap: https://agrigence.in/sitemap.xml`);
         '/tools/auto-graph'
       ];
 
+      const kisanRoutes = [
+        '/kisan',
+        '/kisan/login',
+        '/kisan/mandi',
+        '/kisan/ledger',
+        '/kisan/sop',
+        '/kisan/weather',
+        '/kisan/schemes',
+        '/kisan/equipment',
+        '/kisan/marketplace',
+        '/kisan/land',
+        '/kisan/dashboard',
+        '/kisan/post-requirement',
+        '/kisan/my-requirements',
+        '/kisan/my-listings',
+        '/kisan/list-item',
+        '/kisan/crop-planner',
+        '/kisan/soil-analyzer'
+      ];
+
       let dynamicRoutes: string[] = [];
 
       try {
-        // Add Mandi Routes
+        // Add Mandi Routes (Programmatic SEO)
         mandiPrices.forEach(p => dynamicRoutes.push(`/mandi-bhav/${p.city.toLowerCase()}`));
-        // Add Scheme Routes
+        // Add Scheme Routes (Programmatic SEO)
         schemes.forEach(s => dynamicRoutes.push(`/scheme/${s.slug}`));
-        // Add Crop Routes
+        // Add Crop Routes (Programmatic SEO)
         cropAdvisory.forEach(c => dynamicRoutes.push(`/crop/${c.slug}`));
 
         // Fetch Blogs (Now in articles collection)
-        const blogsRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/articles`);
+        const blogsRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/${databaseId}/documents/articles`);
         if (blogsRes.ok) {
           const blogsData = await blogsRes.json();
           if (blogsData.documents) {
@@ -375,7 +466,7 @@ Sitemap: https://agrigence.in/sitemap.xml`);
         }
 
         // Fetch News
-        const newsRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/news`);
+        const newsRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/${databaseId}/documents/news`);
         if (newsRes.ok) {
           const newsData = await newsRes.json();
           if (newsData.documents) {
@@ -389,23 +480,22 @@ Sitemap: https://agrigence.in/sitemap.xml`);
         console.error("Failed to fetch dynamic routes for sitemap", e);
       }
 
-      const allRoutes = [...staticRoutes, ...dynamicRoutes];
+      const allRoutes = [...staticRoutes, ...kisanRoutes, ...dynamicRoutes];
 
       const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${allRoutes.map(route => `
-  <url>
+${allRoutes.map(route => `  <url>
     <loc>${baseUrl}${route}</loc>
-    <changefreq>${staticRoutes.includes(route) ? 'daily' : 'weekly'}</changefreq>
-    <priority>${route === '' ? '1.0' : (staticRoutes.includes(route) ? '0.8' : '0.6')}</priority>
-  </url>`).join('')}
+    <changefreq>${[...staticRoutes, ...kisanRoutes].includes(route) ? 'daily' : 'weekly'}</changefreq>
+    <priority>${route === '' ? '1.0' : ([...staticRoutes, ...kisanRoutes].includes(route) ? '0.8' : '0.6')}</priority>
+  </url>`).join('\n')}
 </urlset>`;
 
       res.header('Content-Type', 'application/xml');
-      res.send(sitemap);
+      res.status(200).send(sitemap);
     } catch (error) {
       console.error('Error generating sitemap:', error);
-      res.status(500).end();
+      res.status(500).header('Content-Type', 'text/plain').send('Error generating sitemap');
     }
   });
 
@@ -423,6 +513,13 @@ Sitemap: https://agrigence.in/sitemap.xml`);
     app.use(express.static(distPath));
     
     app.get('*all', async (req, res) => {
+      // If the request is for a file (has an extension) but reached here, it means it's missing.
+      // We should return a 404 instead of index.html for non-html assets to avoid SEO issues.
+      const parsedPath = path.parse(req.path);
+      if (parsedPath.ext && !['', '.html'].includes(parsedPath.ext)) {
+        return res.status(404).end();
+      }
+
       let html = fs.readFileSync(indexPath, 'utf8');
       
       const blogMatch = req.path.match(/^\/blog\/(.+)$/);

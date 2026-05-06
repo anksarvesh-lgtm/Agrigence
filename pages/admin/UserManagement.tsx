@@ -4,7 +4,7 @@ import { mockBackend } from '../../services/mockBackend';
 import { User, Role, EditorialRole, Tool, SubscriptionPlan } from '../../types';
 import { Search, Edit, Trash2, Shield, Lock, Unlock, UserPlus, X, Globe, Smartphone, BookOpen, Activity, Plus, Minus, FileText, PenTool, Clock, Gift, RefreshCw } from 'lucide-react';
 import { useConfirm } from '../../components/ContextualConfirm';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import axios from 'axios';
 
 const UserManagement: React.FC = () => {

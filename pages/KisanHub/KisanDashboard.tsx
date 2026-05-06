@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { motion } from 'framer-motion';
 import { User, Smartphone, Globe, Mail, ShieldCheck, CheckCircle, AlertTriangle, FileText, MapPin, Store, Tractor, CreditCard, ChevronRight, Settings2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';

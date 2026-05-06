@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState, useRef } from 'react';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { mockBackend } from '../services/mockBackend';
 import { Article, PaymentRecord, ReviewMessage, ReviewStatus, ToolHistory } from '../types';
 import { Link, useNavigate } from 'react-router-dom';

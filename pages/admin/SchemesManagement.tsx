@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { GovtScheme } from '../../types';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { useConfirm } from '../../components/ContextualConfirm';
 import { Plus, Edit, Trash2, Landmark, Save, X, Search, Activity, Sparkles, Upload } from 'lucide-react';
 import * as mammoth from 'mammoth';

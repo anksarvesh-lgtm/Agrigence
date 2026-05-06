@@ -4,7 +4,7 @@ import { evaluateKPIs, overallIndex, KPIInputs, KPIResult } from './KPI_FRAMEWOR
 import { CategorySection } from './KPICategory';
 import { OverallScore } from './KPICard';
 import './KPIStyles.css';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import { isPlanExpired } from '../../utils/planAccess';
 

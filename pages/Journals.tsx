@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../services/mockBackend';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, ArrowRight } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 import PDFAction from '../components/PDFAction';
 import { motion } from 'framer-motion';
 import { Magazine, Article } from '../types';
@@ -143,7 +144,12 @@ const Journals: React.FC = () => {
                    <p className="text-sm text-stone-500 font-medium">By <span className="text-agri-gold">{article.authorName}</span></p>
                  </div>
                  <div className="flex gap-4">
-                   <button className="px-5 py-2.5 rounded-lg border border-stone-200 text-stone-600 font-bold text-sm hover:bg-stone-50 hover:text-[#0F392B] transition-colors">Read Abstract</button>
+                   <Link 
+                     to={`/blog/${article.id}`}
+                     className="px-5 py-2.5 rounded-lg border border-stone-200 text-stone-600 font-bold text-sm hover:bg-stone-50 hover:text-[#0F392B] transition-colors flex items-center gap-2"
+                   >
+                     Read More <ArrowRight size={14} />
+                   </Link>
                    <PDFAction 
                       title={article.title}
                       type={article.type as any || 'ARTICLE'}

@@ -4,7 +4,7 @@ import { mockBackend } from '../../../services/mockBackend';
 import { Tool, ToolCategory } from '../../../types';
 import { ChevronRight, ExternalLink, Microscope } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../../App';
+import { useAuth } from '../../../src/authContext';
 import { canAccessResearch } from '../../../utils/planAccess';
 
 import DataStorageNotice from '../../../components/DataStorageNotice';

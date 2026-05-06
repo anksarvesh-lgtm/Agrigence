@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { mockBackend } from '../services/mockBackend';
 import { CheckCircle2, User, Lock, Mail, Users, LogIn, Globe, Smartphone, Camera, Loader2, Calendar } from 'lucide-react';
 

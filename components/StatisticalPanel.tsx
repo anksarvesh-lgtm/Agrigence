@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Calculator, ChevronRight, Activity, TrendingUp, BarChart2, Download, FileText } from 'lucide-react';
 import { UserFieldData } from '../types';
 import { mockBackend } from '../services/mockBackend';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { calculateBasicStats, calculateCorrelation, calculateRegression, calculateOneWayAnova, StatsResult } from '../utils/statistics';
 import { canAccessResearch } from '../utils/planAccess';
 import ResultViewer from './ResultViewer';

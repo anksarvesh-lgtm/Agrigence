@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { Loader2, AlertCircle, FileText, ArrowLeft, Shield, ShieldAlert, ShieldCheck, AlertTriangle, Activity, Home } from 'lucide-react';
 import { Article } from '../types';
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { mockBackend } from "../services/mockBackend";
 import { safeStringify } from "../lib/safeStringify";
-import { useAuth } from "../App";
+import { useAuth } from "../src/authContext";
 import { SubscriptionPlan } from "../types";
 import { CreditCard } from "lucide-react";
 

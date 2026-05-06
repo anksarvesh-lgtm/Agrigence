@@ -33,7 +33,7 @@ import {
   Smartphone
 } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 
 const HubDashboard: React.FC = () => {
     const { t } = useLanguage();
@@ -162,7 +162,7 @@ const HubDashboard: React.FC = () => {
                                     <Sprout size={32} />
                                 </div>
                                 <h3 className="text-2xl font-black mb-2">AI Crop Planner</h3>
-                                <p className="text-white/70 font-medium mb-8 leading-relaxed">Personalized 210-day crop journey powered by Gemini AI and real-time weather analytics.</p>
+                                <p className="text-white/70 font-medium mb-8 leading-relaxed">Personalized 210-day crop journey powered by AI Hub AI Models and real-time weather analytics.</p>
                                 <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em]">
                                     Start Planning <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
                                 </div>

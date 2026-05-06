@@ -17,7 +17,7 @@ import { SeedRateInput, SeedRateResult } from './seedRateTypes';
 import { CROP_TYPES, AREA_UNITS, AREA_CONVERSION } from './seedRateConstants';
 import * as formulas from './seedRateFormulas';
 import { validateSeed } from './seedRateValidation';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import { isPlanExpired } from '../../utils/planAccess';
 

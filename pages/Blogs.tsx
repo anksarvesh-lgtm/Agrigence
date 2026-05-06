@@ -4,13 +4,12 @@ import { mockBackend } from '../services/mockBackend';
 import { Article } from '../types';
 import { motion } from 'framer-motion';
 import { User, Calendar, ArrowRight, BookOpen } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import OptimizedImage from '../components/OptimizedImage';
 import SEO from '../components/SEO';
 
 const Blogs: React.FC = () => {
   const [blogs, setBlogs] = useState<Article[]>([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const load = async () => {
@@ -74,43 +73,47 @@ const Blogs: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className="glossy glossy-card rounded-[2rem] overflow-hidden hover:shadow-2xl transition-all group flex flex-col h-full cursor-pointer"
-                onClick={() => navigate(`/blog/${blog.id}`)}
+                className="flex"
               >
-                 <div className="h-56 relative overflow-hidden">
-                    <OptimizedImage 
-                      src={blog.featuredImage || `https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=800`} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                      alt={blog.title} 
-                    />
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest text-agri-primary shadow-sm">
-                       {new Date(blog.submissionDate).toLocaleDateString()}
-                    </div>
-                 </div>
-                 
-                 <div className="p-8 flex-1 flex flex-col">
-                    <h3 className="text-2xl font-serif font-bold text-agri-primary mb-3 leading-tight group-hover:text-agri-secondary transition-colors">{blog.title}</h3>
-                    
-                    <div className="flex items-center gap-3 mb-6 border-b border-stone-100 pb-6">
-                       <div className="w-8 h-8 rounded-full bg-agri-secondary/10 flex items-center justify-center text-agri-secondary">
-                          <User size={14} />
-                       </div>
-                       <span className="text-xs font-bold text-stone-500 uppercase tracking-wide">{blog.authorName}</span>
-                    </div>
+                 <Link 
+                   to={`/blog/${blog.id}`}
+                   className="glossy glossy-card rounded-[2rem] overflow-hidden hover:shadow-2xl transition-all group flex flex-col h-full w-full"
+                 >
+                   <div className="h-56 relative overflow-hidden">
+                      <OptimizedImage 
+                        src={blog.featuredImage || `https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&q=80&w=800`} 
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        alt={blog.title} 
+                      />
+                      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest text-agri-primary shadow-sm">
+                         {new Date(blog.submissionDate).toLocaleDateString()}
+                      </div>
+                   </div>
+                   
+                   <div className="p-8 flex-1 flex flex-col">
+                      <h3 className="text-2xl font-serif font-bold text-agri-primary mb-3 leading-tight group-hover:text-agri-secondary transition-colors">{blog.title}</h3>
+                      
+                      <div className="flex items-center gap-3 mb-6 border-b border-stone-100 pb-6">
+                         <div className="w-8 h-8 rounded-full bg-agri-secondary/10 flex items-center justify-center text-agri-secondary">
+                            <User size={14} />
+                         </div>
+                         <span className="text-xs font-bold text-stone-500 uppercase tracking-wide">{blog.authorName}</span>
+                      </div>
 
-                    <p className="text-stone-600 text-sm leading-relaxed mb-8 line-clamp-3 flex-1">
-                       {blog.excerpt || (blog.content ? blog.content.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...' : '')}
-                    </p>
+                      <p className="text-stone-600 text-sm leading-relaxed mb-8 line-clamp-3 flex-1">
+                         {blog.excerpt || (blog.content ? blog.content.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...' : '')}
+                      </p>
 
-                    <div className="flex items-center justify-between">
-                       <span 
-                          className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-agri-primary group-hover:text-agri-secondary transition-colors"
-                       >
-                          READ ARTICLE
-                       </span>
-                       <span className="text-agri-secondary group-hover:translate-x-1 transition-transform"><ArrowRight size={16}/></span>
-                    </div>
-                 </div>
+                      <div className="flex items-center justify-between">
+                         <span 
+                            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-agri-primary group-hover:text-agri-secondary transition-colors"
+                         >
+                            READ ARTICLE
+                         </span>
+                         <span className="text-agri-secondary group-hover:translate-x-1 transition-transform"><ArrowRight size={16}/></span>
+                      </div>
+                   </div>
+                 </Link>
               </motion.div>
             ))}
         </div>

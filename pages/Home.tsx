@@ -5,7 +5,8 @@ import {
   ArrowRight, Calendar, User, 
   ChevronRight, Bookmark, Star, Quote,
   Megaphone, ShoppingBag, BookOpen, FileText, PenTool, ExternalLink, Wrench,
-  Calculator, Droplets, Leaf, Activity, CheckCircle, Shield, Newspaper, Store, Info, MessageSquare, Users, Landmark
+  Calculator, Droplets, Leaf, Activity, CheckCircle, Shield, Newspaper, Store, Info, MessageSquare, Users, Landmark,
+  Brain, Bot, Sparkles, Cpu
 } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
 import { NewsItem, Article, Magazine, Product, Feedback, SiteSettings, HomepageSection } from '../types';
@@ -195,6 +196,9 @@ const Home: React.FC = () => {
                  </span>
                  <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                </Link>
+               <Link to="/ai-hub" className="group px-6 py-3.5 bg-white/10 backdrop-blur-xl border border-white/10 text-white font-bold text-xs tracking-widest rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
+                 <Cpu size={16} /> AI HUB
+               </Link>
                <Link to="/blogs" className="group px-6 py-3.5 bg-white/10 backdrop-blur-xl border border-white/10 text-white font-bold text-xs tracking-widest rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
                  <BookOpen size={16} /> RESEARCH LAB
                </Link>
@@ -286,10 +290,10 @@ const Home: React.FC = () => {
             
             <div className="lg:col-span-8 grid md:grid-cols-2 gap-px bg-white/10 border border-white/10 rounded-3xl overflow-hidden">
               {news.length > 0 ? news.slice(0, 4).map((item, i) => (
-                <div 
+                <Link 
                   key={i}
-                  onClick={() => navigate(`/news/${item.id}`)}
-                  className="p-10 bg-stone-900 hover:bg-stone-800 transition-colors cursor-pointer group relative overflow-hidden"
+                  to={`/news/${item.id}`}
+                  className="p-10 bg-stone-900 hover:bg-stone-800 transition-colors cursor-pointer group relative overflow-hidden block"
                 >
                   <div className="absolute top-0 left-0 w-1 h-0 bg-agri-secondary group-hover:h-full transition-all duration-500"></div>
                   <div className="flex items-center justify-between mb-6">
@@ -299,7 +303,7 @@ const Home: React.FC = () => {
                     <Megaphone size={14} className="text-stone-700 group-hover:text-agri-secondary transition-colors" />
                   </div>
                   <h4 className="text-xl font-bold leading-snug group-hover:text-agri-secondary transition-colors">{item.title}</h4>
-                </div>
+                </Link>
               )) : (
                 <div className="col-span-full text-center py-24 text-stone-500 italic">No active intelligence feeds.</div>
               )}
@@ -391,6 +395,71 @@ const Home: React.FC = () => {
         </div>
       </section>
 
+      {/* NEW AI HUB SECTION */}
+      <section className="py-24 relative overflow-hidden bg-stone-900 border-y border-white/5">
+        <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#C29263_1px,transparent_1px)] [background-size:20px_20px]" />
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-16">
+            <div className="lg:w-1/2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-agri-secondary/20 text-agri-secondary rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 border border-agri-secondary/30">
+                <Brain size={14} /> Intelligence Core
+              </div>
+              <h2 className="text-5xl md:text-7xl font-serif font-black text-white mb-8 tracking-tighter leading-none">
+                Open-Source <br />
+                <span className="text-agri-secondary italic">AI Intelligence Hub</span>
+              </h2>
+              <p className="text-stone-400 text-xl font-light mb-10 leading-relaxed max-w-xl">
+                Explore the curated universe of open-source AI frameworks, models, and tools. Bridging the gap between cutting-edge research and agricultural production.
+              </p>
+              <div className="grid grid-cols-2 gap-4 mb-10">
+                {[
+                  { label: 'Foundation Models', desc: 'Llama 3, Mistral, Gemma' },
+                  { label: 'Agentic AI', desc: 'AutoGPT, CrewAI, AutoGen' },
+                  { label: 'Media Gen', desc: 'OpenVoice, AudioLDM' },
+                  { label: 'Serving', desc: 'vLLM, Ollama, Triton' }
+                ].map((item, i) => (
+                  <div key={i} className="p-4 bg-white/5 border border-white/10 rounded-2xl group hover:bg-white/10 transition-all">
+                    <h4 className="text-white font-bold text-sm mb-1">{item.label}</h4>
+                    <p className="text-[10px] text-stone-500 font-medium uppercase tracking-tight">{item.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <Link to="/ai-hub" className="bg-agri-secondary text-agri-primary px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-white hover:text-agri-primary transition-all shadow-xl shadow-agri-secondary/20 inline-flex items-center gap-3">
+                 Access AI Hub <ArrowRight size={18} />
+              </Link>
+            </div>
+            
+            <div className="lg:w-1/2 relative">
+              <div className="relative z-10 bg-gradient-to-br from-stone-800 to-black p-8 rounded-[3rem] border border-white/10 shadow-2xl">
+                 <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 rounded-2xl bg-agri-primary/20 border border-agri-primary/30 flex items-center justify-center p-2">
+                       <Bot className="w-full h-full text-agri-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold uppercase tracking-widest text-lg">AI Orchestrator</h3>
+                      <p className="text-stone-500 text-[10px] font-bold uppercase tracking-widest">Guided Intelligence Active</p>
+                    </div>
+                 </div>
+                 <div className="space-y-4 mb-8">
+                    <div className="p-4 bg-white/5 rounded-2xl rounded-tl-none border border-white/5">
+                       <p className="text-stone-400 text-xs italic leading-relaxed">"How can I help you explore the world of open-source AI today? I can explain frameworks like LangChain or models like Llama 3."</p>
+                    </div>
+                    <div className="p-4 bg-agri-primary/10 rounded-2xl rounded-tr-none border border-agri-primary/20 self-end ml-12">
+                       <p className="text-white text-xs font-medium">"Tell me about RAG applications in agriculture."</p>
+                    </div>
+                 </div>
+                 <div className="flex items-center gap-2 text-agri-secondary text-[10px] font-black uppercase tracking-[0.3em] bg-white/5 py-2 px-4 rounded-xl w-fit">
+                    <Sparkles size={12} className="animate-pulse" /> Kawaii Mode Integrated
+                 </div>
+              </div>
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-agri-secondary/20 blur-[80px] rounded-full" />
+              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-500/10 blur-[80px] rounded-full" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+
 
       {/* 3.1 GOVERNMENT SCHEMES ROW */}
       <section className="py-24 relative z-10 bg-white">
@@ -434,33 +503,34 @@ const Home: React.FC = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                onClick={() => navigate(`/blog/${blog.id}`)}
-                className="group cursor-pointer"
+                className="flex"
               >
-                <div className="aspect-[16/9] relative overflow-hidden rounded-[2rem] mb-8 glossy-card">
-                  <OptimizedImage 
-                    src={blog.featuredImage || blog.fileUrl || `https://images.unsplash.com/photo-1586771107445-d3af22d1031c?q=80&w=800&auto=format&fit=crop&sig=${i}`} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
-                    alt={blog.title} 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-agri-primary/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
-                  <div className="absolute bottom-8 left-8 right-8">
-                    <div className="inline-block px-4 py-1 bg-agri-secondary text-agri-primary text-[10px] font-bold uppercase tracking-widest rounded-full mb-4">
-                      {blog.categoryId || 'Agriculture'}
+                <Link to={`/blog/${blog.id}`} className="group cursor-pointer block w-full">
+                  <div className="aspect-[16/9] relative overflow-hidden rounded-[2rem] mb-8 glossy-card">
+                    <OptimizedImage 
+                      src={blog.featuredImage || blog.fileUrl || `https://images.unsplash.com/photo-1586771107445-d3af22d1031c?q=80&w=800&auto=format&fit=crop&sig=${i}`} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
+                      alt={blog.title} 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-agri-primary/80 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity"></div>
+                    <div className="absolute bottom-8 left-8 right-8">
+                      <div className="inline-block px-4 py-1 bg-agri-secondary text-agri-primary text-[10px] font-bold uppercase tracking-widest rounded-full mb-4">
+                        {blog.categoryId || 'Agriculture'}
+                      </div>
+                      <h4 className="text-2xl font-serif font-bold text-white leading-tight line-clamp-2">{blog.title}</h4>
                     </div>
-                    <h4 className="text-2xl font-serif font-bold text-white leading-tight line-clamp-2">{blog.title}</h4>
                   </div>
-                </div>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-agri-primary font-bold text-[10px]">
-                    {blog.authorName[0]}
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-agri-primary font-bold text-[10px]">
+                      {blog.authorName[0]}
+                    </div>
+                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{blog.authorName} • {new Date(blog.submissionDate).toLocaleDateString()}</span>
                   </div>
-                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{blog.authorName} • {new Date(blog.submissionDate).toLocaleDateString()}</span>
-                </div>
-                <p className="text-stone-600 text-sm leading-relaxed line-clamp-3 mb-6">
-                  {blog.excerpt || (blog.content ? blog.content.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...' : '')}
-                </p>
-                <div className="w-full h-px bg-stone-100 group-hover:bg-agri-secondary transition-colors"></div>
+                  <p className="text-stone-600 text-sm leading-relaxed line-clamp-3 mb-6">
+                    {blog.excerpt || (blog.content ? blog.content.replace(/<[^>]*>?/gm, '').substring(0, 150) + '...' : '')}
+                  </p>
+                  <div className="w-full h-px bg-stone-100 group-hover:bg-agri-secondary transition-colors"></div>
+                </Link>
               </motion.div>
             )) : (
               <div className="col-span-full text-center py-24 text-stone-400 italic">No research papers found.</div>

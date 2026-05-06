@@ -65,10 +65,10 @@ const Sitemap: React.FC = () => {
           <div>
             <h2 className="text-xl font-bold text-agri-primary mb-4 border-b border-stone-200 pb-2">Dynamic Content</h2>
             <ul className="space-y-3">
-              {articles.map(a => <li key={a.id}><Link to={`/article/${a.slug}`} className="text-stone-600 hover:text-agri-secondary">{a.title}</Link></li>)}
+              {articles.map(a => <li key={a.id}><Link to={`/blog/${a.id}`} className="text-stone-600 hover:text-agri-secondary">{a.title}</Link></li>)}
               {news.map(n => <li key={n.id}><Link to={`/news/${n.id}`} className="text-stone-600 hover:text-agri-secondary">{n.title}</Link></li>)}
-              {magazines.map(m => <li key={m.id}><Link to={`/journals/${m.id}`} className="text-stone-600 hover:text-agri-secondary">{m.title}</Link></li>)}
-              {products.map(p => <li key={p.id}><Link to={`/products/${p.id}`} className="text-stone-600 hover:text-agri-secondary">{p.name}</Link></li>)}
+              {magazines.map(m => <li key={m.id}><Link to="/journals" className="text-stone-600 hover:text-agri-secondary">{m.title}</Link></li>)}
+              {products.map(p => <li key={p.id}><Link to="/products" className="text-stone-600 hover:text-agri-secondary">{p.name}</Link></li>)}
             </ul>
           </div>
 

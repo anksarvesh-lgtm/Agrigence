@@ -4,7 +4,7 @@ import { db } from '../../lib/db';
 import { jsPDF } from 'jspdf';
 import { formatCurrency } from '../../lib/kisanUtils';
 import { Plus, Download, FileText, IndianRupee, TrendingUp, Info, HelpCircle } from 'lucide-react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { useLanguage } from '../../lib/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 

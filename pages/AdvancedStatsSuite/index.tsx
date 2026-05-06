@@ -4,7 +4,7 @@ import {
   Database, Plus, FileSpreadsheet, BarChart2, Save, Download, 
   Settings, Trash2, Edit2, Play, ChevronRight, FileText, Activity
 } from 'lucide-react';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { mockBackend } from '../../services/mockBackend';
 import DatasetList from './DatasetList';
 import DatasetEditor from './DatasetEditor';

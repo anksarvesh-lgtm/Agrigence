@@ -13,14 +13,64 @@ import {
   ChevronDown,
   Loader2,
   Camera,
-  Layers
+  Layers,
+  Mic
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../../App';
+import { useAuth } from '../../src/authContext';
 import { db } from '../../src/firebase';
 import { collection, addDoc, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import ReactMarkdown from 'react-markdown';
+import { auth } from '../../src/firebase';
 import { GoogleGenAI } from "@google/genai";
+
+// --- Error Handling ---
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
 
 interface SoilData {
   ph: string;
@@ -66,36 +116,86 @@ const SoilAnalyzer: React.FC = () => {
     setSoilData({ ...soilData, [e.target.name]: e.target.value });
   };
 
+  const loadSampleData = () => {
+    setSoilData({
+      ph: '6.5',
+      nitrogen: '45',
+      phosphorus: '22',
+      potassium: '150',
+      organicMatter: '1.2',
+      ec: '0.8'
+    });
+  };
+
+  const [isListening, setIsListening] = useState<string | null>(null);
+
+  const startVoiceInput = (fieldName: keyof SoilData) => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice recognition is not supported in this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = user?.language === 'hi' ? 'hi-IN' : 'en-IN';
+    recognition.interimResults = false;
+
+    recognition.onstart = () => setIsListening(fieldName);
+    recognition.onend = () => setIsListening(null);
+    recognition.onerror = () => setIsListening(null);
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      const cleanValue = transcript.replace(/[^0-9.]/g, '');
+      if (cleanValue) {
+        setSoilData(prev => ({ ...prev, [fieldName]: cleanValue }));
+      }
+    };
+
+    recognition.start();
+  };
+
   const analyzeSoil = async () => {
     if (!user) return;
     setLoading(true);
     setAnalysis(null);
 
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) throw new Error("Gemini API key not configured");
-      const ai = new GoogleGenAI({ apiKey });
+      const prompt = `You are a professional agricultural scientist. Analyze the soil data provided below for an Indian farm. 
+      Provide a highly detailed report including:
+      1. STATUS: Assessment of each nutrient level (Low/Optimal/High).
+      2. FERTILIZATION PLAN: Specific dosage (e.g. quantity per acre) of Urea, DAP, MOP, or organic alternatives based on the levels.
+      3. INPUT RECOMMENDATIONS: Precise commercial product categories (e.g. Zinc Sulphate, Boron) if deficient.
+      4. APPLICATION TIMING: When to apply (basal dose vs top dressing).
+      5. CROPS: 3 most suitable crops for this soil.
+      
+      Manual Data: ${JSON.stringify(soilData)}
+      
+      Respond in clear Markdown with bullet points and bold headings. Language: ${user?.language === 'hi' ? 'Hindi' : 'English (with common Indian farming terms like ' + String.fromCharCode(39) + 'Bhur-bhuri' + String.fromCharCode(39) + ' or ' + String.fromCharCode(39) + 'Desi Khaad' + String.fromCharCode(39) + ')'}.`;
 
-      let prompt = `Analyze this soil report and data. Provide fertilization recommendations, irrigation advice, and suitable crops. 
-      Respond in Markdown. Focus on Indian farming context.
-      Manual Data: ${JSON.stringify(soilData)}`;
-
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY as string });
+      
       let result;
       if (preview) {
-        const base64Image = preview.split(',')[1];
         result = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: {
+          model: 'gemini-1.5-flash',
+          contents: [{ 
+            role: 'user', 
             parts: [
               { text: prompt },
-              { inlineData: { data: base64Image, mimeType: 'image/jpeg' } }
-            ]
-          }
+              { 
+                inlineData: { 
+                    data: preview.split(',')[1], 
+                    mimeType: 'image/jpeg' 
+                } 
+              }
+            ] 
+          }]
         });
       } else {
         result = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: prompt
+          model: 'gemini-1.5-flash',
+          contents: [{ parts: [{ text: prompt }] }]
         });
       }
 
@@ -103,13 +203,17 @@ const SoilAnalyzer: React.FC = () => {
       setAnalysis(analysisText);
 
       // Save to Firestore
-      await addDoc(collection(db, 'soil_reports'), {
-        userId: user.id,
-        timestamp: new Date().toISOString(),
-        soilData,
-        analysis: analysisText,
-        status: 'COMPLETED'
-      });
+      try {
+        await addDoc(collection(db, 'soil_reports'), {
+          userId: user.id,
+          timestamp: new Date().toISOString(),
+          soilData,
+          analysis: analysisText,
+          status: 'COMPLETED'
+        });
+      } catch (error) {
+        handleFirestoreError(error, OperationType.CREATE, 'soil_reports');
+      }
 
       fetchHistory();
     } catch (err: any) {
@@ -131,7 +235,7 @@ const SoilAnalyzer: React.FC = () => {
       const snap = await getDocs(q);
       setHistory(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     } catch (err) {
-      console.error("Error fetching history:", err);
+      handleFirestoreError(err, OperationType.GET, 'soil_reports');
     }
   };
 
@@ -149,7 +253,7 @@ const SoilAnalyzer: React.FC = () => {
             Soil Health <span className="text-emerald-600">A.I. Analyzer</span>
           </h1>
           <p className="text-stone-500 font-medium max-w-2xl leading-relaxed">
-            Upload your soil test report or enter values manually. Our Gemini AI will analyze your soil health and provide precise fertilization, irrigation, and crop suitability recommendations.
+            Upload your soil test report or enter values manually. Our AI Hub AI Models will analyze your soil health and provide precise fertilization, irrigation, and crop suitability recommendations.
           </p>
         </header>
 
@@ -201,11 +305,19 @@ const SoilAnalyzer: React.FC = () => {
               </div>
 
               <div className="mt-10 pt-10 border-t border-stone-100">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600">
-                    <FileText size={16} />
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600">
+                      <FileText size={16} />
+                    </div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-stone-900">Manual Input (Optional)</h3>
                   </div>
-                  <h3 className="text-sm font-black uppercase tracking-widest text-stone-900">Manual Input (Optional)</h3>
+                  <button 
+                    onClick={loadSampleData}
+                    className="text-[10px] font-black uppercase tracking-widest text-emerald-600 hover:bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 transition-all"
+                  >
+                    Load Sample Data
+                  </button>
                 </div>
                 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -217,15 +329,23 @@ const SoilAnalyzer: React.FC = () => {
                     { name: 'organicMatter', label: 'Organic Matter', placeholder: '%' },
                     { name: 'ec', label: 'Elec. Cond. (EC)', placeholder: 'dS/m' }
                   ].map((field) => (
-                    <div key={field.name} className="space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 pl-1">{field.label}</label>
+                    <div key={field.name} className="space-y-1 relative group/field">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-stone-400 pl-1 flex items-center justify-between">
+                        {field.label}
+                        <button 
+                          onClick={() => startVoiceInput(field.name as keyof SoilData)}
+                          className={`hover:text-[#92745B] transition-colors ${isListening === field.name ? 'text-red-500 animate-pulse' : ''}`}
+                        >
+                          <Mic size={10} />
+                        </button>
+                      </label>
                       <input 
                         type="number"
                         name={field.name}
                         value={(soilData as any)[field.name]}
                         onChange={handleInputChange}
                         placeholder={field.placeholder}
-                        className="w-full bg-stone-50 border border-stone-100 rounded-xl py-3 px-4 text-xs font-bold focus:border-[#92745B] outline-none transition-all"
+                        className="w-full bg-stone-50 border border-stone-100 rounded-xl py-3 px-4 text-xs font-bold focus:border-[#92745B] outline-none transition-all pr-8"
                       />
                     </div>
                   ))}
@@ -293,7 +413,7 @@ const SoilAnalyzer: React.FC = () => {
               <div className="space-y-8">
                 {[
                   { step: '01', title: 'Submit Data', desc: 'Securely upload your soil test certificate or data.' },
-                  { step: '02', title: 'AI Processing', desc: 'Gemini AI scans values for N, P, K, pH and organic carbon.' },
+                  { step: '02', title: 'AI Processing', desc: 'AI Hub AI Models scan values for N, P, K, pH and organic carbon.' },
                   { step: '03', title: 'Insights', desc: 'Get tailored fertilization & crop suitability data.' }
                 ].map((item) => (
                   <div key={item.step} className="flex gap-4">

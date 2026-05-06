@@ -25,7 +25,7 @@ import {
   FlaskConical
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../App';
+import { useAuth } from '../src/authContext';
 import { mockBackend } from '../services/mockBackend';
 import { Tool, UserFieldData } from '../types';
 import { hasActivePlan, isPlanExpired, canAccessTool } from '../utils/planAccess';
