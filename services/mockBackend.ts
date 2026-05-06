@@ -1257,6 +1257,29 @@ class FirebaseBackendService {
       }
   }
 
+  async uploadToBlob(file: File, path: string): Promise<string> {
+      this.notifyUpload(0, 'UPLOADING', file.name);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('path', path);
+
+      const response = await fetch('/api/admin/blob/upload', {
+          method: 'POST',
+          body: formData
+      });
+
+      if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          this.notifyUpload(0, 'ERROR', file.name);
+          throw new Error(err.error || 'Failed to upload to Vercel Blob');
+      }
+
+      const data = await response.json();
+      this.notifyUpload(100, 'SUCCESS', file.name);
+      return data.url;
+  }
+
   async uploadFile(file: File, path: string, customName?: string): Promise<string> {
       this.notifyUpload(0, 'UPLOADING', file.name);
 

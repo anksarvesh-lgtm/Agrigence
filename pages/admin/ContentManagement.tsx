@@ -520,7 +520,7 @@ const MagazineManager = () => {
       if (file) {
         setUploadingField(field);
         try {
-            const url = await mockBackend.uploadFile(file, 'magazines');
+            const url = await mockBackend.uploadToBlob(file, 'magazines');
             setEditingMag(prev => ({ ...prev, [field]: url }));
         } finally {
             setUploadingField(null);

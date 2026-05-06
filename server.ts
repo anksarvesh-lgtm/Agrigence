@@ -8,10 +8,18 @@ import { whatsappRouter } from './src/server/whatsapp/api.ts';
 import { mandiPrices, schemes, cropAdvisory } from './src/data/agrigence_engine.ts';
 import { processAndSaveMandiPage, MandiDataInput, processAndSaveDailyBlog } from './src/server/autoContentGenerator.ts';
 import { GoogleGenAI } from "@google/genai";
+import { put } from '@vercel/blob';
+import multer from 'multer';
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
+  
+  // Multer setup for memory storage
+  const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  });
   const projectId = 'gen-lang-client-0276037966';
 
   const databaseId = 'ai-studio-3e16a161-237b-431f-b594-a3f4635b9cc5';
@@ -102,6 +110,34 @@ async function startServer() {
       await processAndSaveDailyBlog();
     } catch (err) {
       console.error('Blog cron job failed:', err);
+    }
+  });
+
+  // === Vercel Blob Upload Proxy ===
+  app.post('/api/admin/blob/upload', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const token = process.env.BLOB_READ_WRITE_TOKEN;
+      if (!token) {
+        throw new Error('BLOB_READ_WRITE_TOKEN is not configured');
+      }
+
+      const { path = 'general' } = req.body;
+      const fileName = `${path}/${Date.now()}-${req.file.originalname}`;
+
+      const blob = await put(fileName, req.file.buffer, {
+        access: 'public',
+        token: token,
+        contentType: req.file.mimetype
+      });
+
+      res.json({ url: blob.url });
+    } catch (error: any) {
+      console.error('Blob Upload Error:', error);
+      res.status(500).json({ error: error.message });
     }
   });
 

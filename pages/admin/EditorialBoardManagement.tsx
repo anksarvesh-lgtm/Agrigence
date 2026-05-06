@@ -59,7 +59,7 @@ const EditorialBoardManagement: React.FC = () => {
     if (file) {
       setIsUploading(true);
       try {
-        const url = await mockBackend.uploadFile(file, 'editorial');
+        const url = await mockBackend.uploadToBlob(file, 'editorial');
         setEditingMember({...editingMember, imageUrl: url});
       } finally {
         setIsUploading(false);
