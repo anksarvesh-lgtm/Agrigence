@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { EditorialMember } from '../../types';
-import { Plus, Trash2, Edit, Save, X, Award, MapPin, Mail, ImageIcon, Globe, Linkedin, BookOpen, User, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, Award, MapPin, Mail, ImageIcon, Globe, Linkedin, BookOpen, User, Loader2, Upload } from 'lucide-react';
 import { useConfirm } from '../../components/ContextualConfirm';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const EditorialBoardManagement: React.FC = () => {
   const [members, setMembers] = useState<EditorialMember[]>([]);
@@ -65,6 +67,14 @@ const EditorialBoardManagement: React.FC = () => {
         setIsUploading(false);
       }
     }
+  };
+
+  const quillModules = {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      ['link', 'clean']
+    ],
   };
 
   return (
@@ -226,8 +236,15 @@ const EditorialBoardManagement: React.FC = () => {
                        </div>
 
                        <div>
-                          <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Biography</label>
-                          <textarea className="w-full bg-white border border-gray-300 rounded-3xl p-6 text-gray-900 text-sm outline-none focus:border-agri-secondary h-40 leading-relaxed resize-none font-serif" placeholder="Provide a professional summary..." value={editingMember.bio || ''} onChange={e => setEditingMember({...editingMember, bio: e.target.value})}></textarea>
+                          <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Biography (HTML Support)</label>
+                          <ReactQuill 
+                            theme="snow"
+                            value={editingMember.bio || ''}
+                            onChange={(val) => setEditingMember({...editingMember, bio: val})}
+                            modules={quillModules}
+                            className="bg-white border-gray-300 rounded-[2rem] overflow-hidden"
+                            placeholder="Provide a professional summary..."
+                          />
                        </div>
                     </div>
                  </div>

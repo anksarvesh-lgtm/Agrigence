@@ -44,7 +44,7 @@ const Settings: React.FC = () => {
     if (file && settings) {
       setUploadingField(field);
       try {
-        const url = await mockBackend.uploadFile(file, 'settings');
+        const url = await mockBackend.uploadToBlob(file, 'settings');
         setSettings({ ...settings, [field]: url });
       } finally {
         setUploadingField(null);

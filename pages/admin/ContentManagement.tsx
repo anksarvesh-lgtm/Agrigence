@@ -91,7 +91,7 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
                         const ext = mime.split('/')[1] || 'png';
                         const file = new File([u8arr], `inline-${Date.now()}-${i}.${ext}`, { type: mime });
                         
-                        const url = await mockBackend.uploadFile(file, 'articles');
+                        const url = await mockBackend.uploadToBlob(file, 'articles');
                         img.setAttribute('src', url);
                     } catch (e) {
                         console.error('Failed to upload inline image:', e);
@@ -153,7 +153,7 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
       if (file) {
         setIsUploading(true);
         try {
-            const url = await mockBackend.uploadFile(file, 'articles');
+            const url = await mockBackend.uploadToBlob(file, 'articles');
             setEditingArticle({ ...editingArticle, featuredImage: url });
         } finally {
             setIsUploading(false);
@@ -169,7 +169,7 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
         }
         setIsUploading(true);
         try {
-            const url = await mockBackend.uploadFile(file, 'articles/docs');
+            const url = await mockBackend.uploadToBlob(file, 'articles/docs');
             
             // Extract text from the docx file
             const arrayBuffer = await file.arrayBuffer();

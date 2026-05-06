@@ -4,6 +4,8 @@ import { mockBackend } from '../../services/mockBackend';
 import { Product } from '../../types';
 import { Search, Plus, Image as ImageIcon, Trash2, Edit, ExternalLink, Link as LinkIcon, Save, X, Upload, Loader2 } from 'lucide-react';
 import { useConfirm } from '../../components/ContextualConfirm';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const ProductManagement: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -57,7 +59,7 @@ const ProductManagement: React.FC = () => {
     if (file) {
       setIsUploading(true);
       try {
-        const url = await mockBackend.uploadFile(file, 'products');
+        const url = await mockBackend.uploadToBlob(file, 'products');
         setEditingProduct({ ...editingProduct, imageUrl: url });
       } catch (error) {
         console.error("Upload failed", error);
@@ -66,6 +68,14 @@ const ProductManagement: React.FC = () => {
         setIsUploading(false);
       }
     }
+  };
+
+  const quillModules = {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      ['link', 'clean']
+    ],
   };
 
   return (
@@ -100,7 +110,7 @@ const ProductManagement: React.FC = () => {
                         <h3 className="text-admin-text font-bold truncate pr-2 text-lg">{product.name}</h3>
                         <span className="text-agri-secondary font-black">₹{product.price}</span>
                     </div>
-                    <p className="text-admin-secondary text-xs mb-6 line-clamp-2 h-8 leading-relaxed">{product.description}</p>
+                    <div className="text-admin-secondary text-xs mb-6 line-clamp-2 h-8 leading-relaxed overflow-hidden" dangerouslySetInnerHTML={{ __html: product.description }} />
                     <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest">
                         <span className="text-agri-secondary bg-agri-secondary/10 px-3 py-1 rounded-full border border-agri-secondary/10">{product.category}</span>
                         {product.buyLink !== '#' && (
@@ -173,8 +183,14 @@ const ProductManagement: React.FC = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="text-[10px] uppercase font-bold text-admin-secondary mb-2 block tracking-widest">Description</label>
-                        <textarea className="w-full bg-white border border-admin-inputBorder rounded-xl p-4 text-admin-text outline-none focus:border-admin-inputFocus focus:ring-1 focus:ring-admin-inputFocus h-24" placeholder="Brief product overview..." value={editingProduct.description || ''} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})}></textarea>
+                        <label className="text-[10px] uppercase font-bold text-admin-secondary mb-2 block tracking-widest">Description (HTML Support)</label>
+                        <ReactQuill 
+                            theme="snow"
+                            value={editingProduct.description || ''}
+                            onChange={(val) => setEditingProduct({...editingProduct, description: val})}
+                            modules={quillModules}
+                            className="bg-white rounded-xl overflow-hidden border border-admin-inputBorder"
+                        />
                     </div>
                 </div>
                 <div className="p-8 border-t border-admin-border flex justify-end gap-4 bg-admin-header">
@@ -189,5 +205,6 @@ const ProductManagement: React.FC = () => {
     </div>
   );
 };
+
 
 export default ProductManagement;

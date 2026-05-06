@@ -2,12 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
 import { NewsItem } from '../../types';
-import { Plus, Trash2, Edit, Save, X, Newspaper, Calendar, Megaphone, Image as ImageIcon, Link as LinkIcon, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, Edit, Save, X, Newspaper, Calendar, Megaphone, Image as ImageIcon, Link as LinkIcon, ExternalLink, Loader2, Upload } from 'lucide-react';
 import { useConfirm } from '../../components/ContextualConfirm';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const AdminNewsManagement: React.FC = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [editingNews, setEditingNews] = useState<Partial<NewsItem>>({
     isBreaking: false,
     relevantLink: ''
@@ -45,6 +48,39 @@ const AdminNewsManagement: React.FC = () => {
       loadNews();
     }
   };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setIsUploading(true);
+      try {
+        const url = await mockBackend.uploadToBlob(file, 'news');
+        setEditingNews({ ...editingNews, thumbnail: url });
+      } catch (error) {
+        console.error("Upload failed", error);
+        alert("Image upload failed");
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const quillModules = {
+    toolbar: [
+      [{ 'header': [1, 2, 3, false] }],
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      ['link', 'image', 'code-block'],
+      ['clean']
+    ],
+  };
+
+  const quillFormats = [
+    'header',
+    'bold', 'italic', 'underline', 'strike',
+    'list', 'bullet',
+    'link', 'image', 'code-block'
+  ];
 
   return (
     <div className="space-y-6">
@@ -103,7 +139,7 @@ const AdminNewsManagement: React.FC = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
-           <div className="bg-white w-full max-w-xl rounded-3xl border border-stone-200 shadow-2xl overflow-hidden">
+           <div className="bg-white w-full max-w-3xl rounded-3xl border border-stone-200 shadow-2xl overflow-hidden">
               <div className="p-8 border-b border-stone-200 flex justify-between items-center bg-stone-50">
                  <h3 className="text-2xl font-serif font-bold text-black">{editingNews.id ? 'Edit News Update' : 'Post News Update'}</h3>
                  <button onClick={() => setIsModalOpen(false)}><X className="text-stone-400 hover:text-black" /></button>
@@ -129,12 +165,25 @@ const AdminNewsManagement: React.FC = () => {
 
                  <div className="grid grid-cols-2 gap-6">
                     <div>
-                       <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Featured Photo URL</label>
-                       <div className="flex gap-2">
-                          <div className="w-12 h-12 bg-stone-100 rounded-xl border border-stone-200 shrink-0 flex items-center justify-center text-stone-400 overflow-hidden">
-                             {editingNews.thumbnail ? <img src={editingNews.thumbnail} className="w-full h-full object-cover" /> : <ImageIcon size={20} />}
+                       <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">News Image</label>
+                       <div className="flex gap-4 items-center">
+                          <div className="w-16 h-16 bg-stone-100 rounded-xl border border-stone-200 shrink-0 flex items-center justify-center text-stone-400 overflow-hidden relative">
+                             {isUploading ? (
+                                <Loader2 className="animate-spin text-agri-secondary" size={24} />
+                             ) : editingNews.thumbnail ? (
+                                <img src={editingNews.thumbnail} className="w-full h-full object-cover" />
+                             ) : (
+                                <ImageIcon size={24} />
+                             )}
                           </div>
-                          <input className="flex-1 bg-white border border-stone-300 rounded-xl p-4 text-black outline-none focus:border-agri-secondary text-xs" placeholder="https://images.unsplash.com/..." value={editingNews.thumbnail || ''} onChange={e => setEditingNews({...editingNews, thumbnail: e.target.value})} />
+                          <div className="flex-1 space-y-2">
+                             <label className={`flex items-center justify-center gap-2 cursor-pointer bg-white hover:bg-stone-50 px-4 py-3 rounded-xl border border-stone-200 text-[10px] font-black uppercase tracking-widest text-stone-800 transition-all ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                                {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} 
+                                {isUploading ? 'Uploading...' : 'Upload Image'}
+                                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
+                             </label>
+                             <input className="w-full bg-white border border-stone-300 rounded-xl p-3 text-stone-500 outline-none focus:border-agri-secondary text-[9px] font-mono" placeholder="Or enter image URL..." value={editingNews.thumbnail || ''} onChange={e => setEditingNews({...editingNews, thumbnail: e.target.value})} disabled={isUploading} />
+                          </div>
                        </div>
                     </div>
                     <div>
@@ -148,9 +197,16 @@ const AdminNewsManagement: React.FC = () => {
                     </div>
                  </div>
 
-                 <div>
-                    <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Full Detailed Content</label>
-                    <textarea className="w-full bg-white border border-stone-300 rounded-xl p-4 text-black outline-none focus:border-agri-secondary h-40 text-xs" placeholder="Full details of the announcement..." value={editingNews.content || ''} onChange={e => setEditingNews({...editingNews, content: e.target.value})}></textarea>
+                 <div className="quill-container">
+                    <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Full Detailed Content (HTML Support)</label>
+                    <ReactQuill 
+                      theme="snow"
+                      value={editingNews.content || ''}
+                      onChange={(val) => setEditingNews({...editingNews, content: val})}
+                      modules={quillModules}
+                      formats={quillFormats}
+                      className="bg-white rounded-xl overflow-hidden border border-stone-300"
+                    />
                  </div>
               </div>
               <div className="p-8 border-t border-stone-200 flex justify-end gap-4 bg-stone-50">

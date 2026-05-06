@@ -4,6 +4,8 @@ import { mockBackend } from '../../services/mockBackend';
 import { LeadershipMember } from '../../types';
 import { Save, UserCircle, Camera, Trash2, Eye, EyeOff, ChevronUp, ChevronDown, Loader2, Plus } from 'lucide-react';
 import { useConfirm } from '../../components/ContextualConfirm';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const LeadershipManagement: React.FC = () => {
   const [leaders, setLeaders] = useState<LeadershipMember[]>([]);
@@ -57,12 +59,20 @@ const LeadershipManagement: React.FC = () => {
     setLeaders(prev => prev.map(l => l.id === id ? { ...l, [field]: value } : l));
   };
 
+  const quillModules = {
+    toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+      ['link', 'clean']
+    ],
+  };
+
   const handleImageUpload = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setUploadingId(id);
       try {
-        const url = await mockBackend.uploadFile(file, 'leadership');
+        const url = await mockBackend.uploadToBlob(file, 'leadership');
         updateLeader(id, 'imageUrl', url);
       } finally {
         setUploadingId(null);
@@ -176,11 +186,13 @@ const LeadershipManagement: React.FC = () => {
                     </div>
 
                     <div>
-                       <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Public Biography</label>
-                       <textarea 
-                        className="w-full bg-stone-50 border border-stone-200 rounded-2xl p-5 text-black text-sm outline-none focus:border-agri-secondary focus:ring-1 focus:ring-agri-secondary h-32 leading-relaxed resize-none" 
-                        value={lead.bio} 
-                        onChange={e => updateLeader(lead.id, 'bio', e.target.value)}
+                       <label className="text-[10px] uppercase font-bold text-stone-500 mb-2 block tracking-widest">Public Biography (HTML Support)</label>
+                       <ReactQuill 
+                        theme="snow"
+                        value={lead.bio || ''}
+                        onChange={(val) => updateLeader(lead.id, 'bio', val)}
+                        modules={quillModules}
+                        className="bg-white border-stone-200 rounded-2xl overflow-hidden"
                        />
                     </div>
 

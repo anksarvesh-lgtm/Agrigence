@@ -5,6 +5,8 @@ import { useAuth } from '../../src/authContext';
 import { useConfirm } from '../../components/ContextualConfirm';
 import { Plus, Edit, Trash2, Landmark, Save, X, Search, Activity, Sparkles, Upload } from 'lucide-react';
 import * as mammoth from 'mammoth';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const SchemesManagement: React.FC = () => {
     const { user } = useAuth();
@@ -30,6 +32,14 @@ const SchemesManagement: React.FC = () => {
         const data = await mockBackend.getGovtSchemes();
         setSchemes(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
         setLoading(false);
+    };
+
+    const quillModules = {
+        toolbar: [
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+            ['link', 'clean']
+        ],
     };
 
     const handleSave = async () => {
@@ -196,7 +206,7 @@ const SchemesManagement: React.FC = () => {
                                     <tr key={scheme.id} className="border-b border-admin-border hover:bg-admin-bg/30 transition-colors">
                                         <td className="p-4">
                                             <p className="font-bold text-admin-text text-sm mb-1">{scheme.title}</p>
-                                            <p className="text-xs text-admin-muted line-clamp-1">{scheme.description}</p>
+                                            <div className="text-xs text-admin-muted line-clamp-1 overflow-hidden" dangerouslySetInnerHTML={{ __html: scheme.description }} />
                                         </td>
                                         <td className="p-4">
                                             <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-md text-[10px] font-bold uppercase tracking-widest">
@@ -250,9 +260,14 @@ const SchemesManagement: React.FC = () => {
                            </div>
                            
                            <div>
-                               <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 block">Description</label>
-                               <textarea className="w-full bg-white border border-gray-200 rounded-xl p-4 text-sm focus:border-yellow-500 outline-none h-32 resize-none" 
-                                         value={editingScheme.description || ''} onChange={e => setEditingScheme({...editingScheme, description: e.target.value})} placeholder="Explain the benefits or requirements briefly..."/>
+                               <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 block">Description (HTML Support) </label>
+                               <ReactQuill 
+                                   theme="snow"
+                                   value={editingScheme.description || ''}
+                                   onChange={(val) => setEditingScheme({...editingScheme, description: val})}
+                                   modules={quillModules}
+                                   className="bg-white rounded-xl overflow-hidden border border-gray-200"
+                               />
                            </div>
 
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -274,9 +289,14 @@ const SchemesManagement: React.FC = () => {
                            </div>
 
                            <div>
-                               <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 block">Detailed Description</label>
-                               <textarea className="w-full bg-white border border-gray-200 rounded-xl p-4 text-sm focus:border-yellow-500 outline-none h-32 resize-none" 
-                                         value={editingScheme.detailedDesc || ''} onChange={e => setEditingScheme({...editingScheme, detailedDesc: e.target.value})} placeholder="Full details of the scheme..."/>
+                               <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-2 block">Detailed Description (HTML Support)</label>
+                               <ReactQuill 
+                                   theme="snow"
+                                   value={editingScheme.detailedDesc || ''}
+                                   onChange={(val) => setEditingScheme({...editingScheme, detailedDesc: val})}
+                                   modules={quillModules}
+                                   className="bg-white rounded-xl overflow-hidden border border-gray-200"
+                               />
                            </div>
 
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
