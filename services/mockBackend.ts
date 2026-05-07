@@ -83,7 +83,7 @@ export const onAuthStateChanged = (authObj: any, cb: (user: FirebaseUser | null)
 
 // Default settings fallback
 const DEFAULT_SETTINGS: SiteSettings = {
-  logoUrl: 'https://www.agrigence.in/logo.png', 
+  logoUrl: 'https://kpnttmkkjq9kpa0f.public.blob.vercel-storage.com/settings/1778090902639-WhatsApp_Image_2026-04-05_at_21.20.18-removebg-preview.png', 
   issn: '2345-6789',
   footerSocials: {
     twitter: 'https://x.com/agrigence',
@@ -267,6 +267,9 @@ class FirebaseBackendService {
                     data.navigation.push({ id: 'guidelines-fallback', label: 'Author Guidelines', path: '/author-guidelines', isExternal: false, order: 6, isEnabled: true });
                 }
             }
+            if (data.logoUrl === 'https://www.agrigence.in/logo.png' || data.logoUrl === '/logo.png' || !data.logoUrl) {
+                data.logoUrl = DEFAULT_SETTINGS.logoUrl;
+            }
             this.localSettings = data;
         } else {
             this.localSettings = DEFAULT_SETTINGS;
@@ -402,9 +405,13 @@ class FirebaseBackendService {
   }
   
   subscribeToSettings(cb: (s: SiteSettings) => void) {
-    return onSnapshot(doc(this.db, 'site_identity', 'global'), (doc) => {
-        if (doc.exists()) {
-            cb(doc.data() as SiteSettings);
+    return onSnapshot(doc(this.db, 'site_identity', 'global'), (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data() as SiteSettings;
+            if (data.logoUrl === 'https://www.agrigence.in/logo.png' || data.logoUrl === '/logo.png' || !data.logoUrl) {
+                data.logoUrl = DEFAULT_SETTINGS.logoUrl;
+            }
+            cb(data);
         } else {
             cb(DEFAULT_SETTINGS);
         }
@@ -1258,26 +1265,7 @@ class FirebaseBackendService {
   }
 
   async uploadToBlob(file: File, path: string): Promise<string> {
-      this.notifyUpload(0, 'UPLOADING', file.name);
-      
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('path', path);
-
-      const response = await fetch('/api/admin/blob/upload', {
-          method: 'POST',
-          body: formData
-      });
-
-      if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          this.notifyUpload(0, 'ERROR', file.name);
-          throw new Error(err.error || 'Failed to upload to Vercel Blob');
-      }
-
-      const data = await response.json();
-      this.notifyUpload(100, 'SUCCESS', file.name);
-      return data.url;
+      return this.uploadFile(file, path);
   }
 
   async uploadFile(file: File, path: string, customName?: string): Promise<string> {

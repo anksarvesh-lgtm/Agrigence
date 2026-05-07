@@ -156,10 +156,52 @@ const App: React.FC = () => {
   );
 };
 
+const FaviconUpdater: React.FC = () => {
+  useEffect(() => {
+    return mockBackend.subscribeToSettings((data) => {
+        if (data && data.logoUrl) {
+            const updateFavicon = (url: string) => {
+                const linkId = 'dynamic-favicon';
+                const oldLink = document.getElementById(linkId);
+                const newLink = document.createElement('link');
+                newLink.id = linkId;
+                newLink.rel = 'shortcut icon';
+                newLink.type = 'image/png';
+                newLink.href = url;
+                if (oldLink) document.head.removeChild(oldLink);
+                else document.querySelectorAll("link[rel*='icon']").forEach(el => el.remove());
+                document.head.appendChild(newLink);
+            };
+            const canvas = document.createElement('canvas');
+            canvas.width = 64; canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; 
+                img.onload = () => {
+                    try {
+                        ctx.clearRect(0, 0, 64, 64);
+                        const scale = Math.min(64 / img.width, 64 / img.height);
+                        const w = img.width * scale; const h = img.height * scale;
+                        const x = (64 - w) / 2; const y = (64 - h) / 2;
+                        ctx.drawImage(img, x, y, w, h);
+                        updateFavicon(canvas.toDataURL('image/png'));
+                    } catch (e) { updateFavicon(data.logoUrl); }
+                };
+                img.onerror = () => updateFavicon(data.logoUrl);
+                img.src = data.logoUrl;
+            }
+        }
+    });
+  }, []);
+  return null;
+};
+
 const AppContent: React.FC = () => {
   const { showDobModal, setShowDobModal } = useAuth();
   return (
     <>
+      <FaviconUpdater />
       <GlobalUploadIndicator />
       <CookieConsentManager />
       <KisanMitraChatbot />

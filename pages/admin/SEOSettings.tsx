@@ -40,7 +40,7 @@ const SEOSettings: React.FC = () => {
     if (file && seo) {
       setIsUploading(true);
       try {
-        const url = await mockBackend.uploadFile(file, 'seo');
+        const url = await mockBackend.uploadToBlob(file, 'seo');
         setSeo({ ...seo, [field]: url });
       } catch (error) {
         console.error("Upload failed", error);

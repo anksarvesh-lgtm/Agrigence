@@ -176,40 +176,6 @@ const AppLayout: React.FC = () => {
   useEffect(() => {
     const unsubSettings = mockBackend.subscribeToSettings((data) => {
         setSettings(data);
-        // Favicon logic
-        if (data.logoUrl) {
-            const updateFavicon = (url: string) => {
-                const linkId = 'dynamic-favicon';
-                const oldLink = document.getElementById(linkId);
-                const newLink = document.createElement('link');
-                newLink.id = linkId;
-                newLink.rel = 'shortcut icon';
-                newLink.type = 'image/png';
-                newLink.href = url;
-                if (oldLink) document.head.removeChild(oldLink);
-                else document.querySelectorAll("link[rel*='icon']").forEach(el => el.remove());
-                document.head.appendChild(newLink);
-            };
-            const canvas = document.createElement('canvas');
-            canvas.width = 64; canvas.height = 64;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                const img = new Image();
-                img.crossOrigin = "Anonymous"; 
-                img.onload = () => {
-                    try {
-                        ctx.clearRect(0, 0, 64, 64);
-                        const scale = Math.min(64 / img.width, 64 / img.height);
-                        const w = img.width * scale; const h = img.height * scale;
-                        const x = (64 - w) / 2; const y = (64 - h) / 2;
-                        ctx.drawImage(img, x, y, w, h);
-                        updateFavicon(canvas.toDataURL('image/png'));
-                    } catch (e) { updateFavicon(data.logoUrl); }
-                };
-                img.onerror = () => updateFavicon(data.logoUrl);
-                img.src = data.logoUrl;
-            }
-        }
     });
     return () => unsubSettings();
   }, []);
@@ -308,14 +274,10 @@ const AppLayout: React.FC = () => {
       <aside className={`fixed inset-y-0 left-0 z-50 glossy border-r border-white/10 transform transition-all duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0 w-64' : '-translate-x-full w-64'} md:relative md:translate-x-0 ${isCollapsed ? 'md:w-20' : 'md:w-64'} flex flex-col shadow-2xl md:shadow-none`}>
         
         {/* Logo Area */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-white/10 shrink-0 glossy">
+        <div className="h-20 flex items-center justify-between px-4 border-b border-white/10 shrink-0 glossy">
           <Link to="/" className={`flex items-center gap-3 ${isCollapsed ? 'md:justify-center md:w-full' : ''}`}>
-            {settings?.logoUrl ? (
-                <OptimizedImage src={settings.logoUrl} className="h-8 w-auto object-contain shrink-0" alt="Agrigence" priority={true} />
-            ) : (
-                <Logo className="h-8 shrink-0" variant="dark" showText={false} />
-            )}
-            <span className={`font-serif font-bold text-agri-primary dark:text-stone-100 text-lg tracking-tight truncate ${isCollapsed ? 'md:hidden' : ''}`}>Agrigence</span>
+            <Logo className="h-12 shrink-0" variant="dark" showText={false} />
+            <span className={`font-serif font-bold text-agri-primary dark:text-stone-100 text-xl tracking-tight truncate ${isCollapsed ? 'md:hidden' : ''}`}>Agrigence</span>
           </Link>
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg">
             <X size={20} />

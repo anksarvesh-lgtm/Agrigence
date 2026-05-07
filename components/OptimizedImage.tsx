@@ -78,7 +78,6 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 
   const styles: React.CSSProperties = {
     aspectRatio: aspectRatio,
-    objectFit: 'cover',
     ...props.style,
   };
 
@@ -91,7 +90,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"
         {...({ fetchpriority: priority ? 'high' : 'auto' } as any)}
-        srcSet={srcSet}
+        srcSet={srcSet || undefined}
         sizes={srcSet ? props.sizes || '(max-width: 768px) 100vw, 50vw' : undefined}
         width={width}
         height={height}

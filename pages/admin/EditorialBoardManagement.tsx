@@ -62,7 +62,9 @@ const EditorialBoardManagement: React.FC = () => {
       setIsUploading(true);
       try {
         const url = await mockBackend.uploadToBlob(file, 'editorial');
-        setEditingMember({...editingMember, imageUrl: url});
+        setEditingMember((prev) => prev ? {...prev, imageUrl: url} : prev);
+      } catch (err) {
+        console.error("Upload failed", err);
       } finally {
         setIsUploading(false);
       }
@@ -158,10 +160,10 @@ const EditorialBoardManagement: React.FC = () => {
                                 </div>
                              )}
                              {editingMember.imageUrl ? <img src={editingMember.imageUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex flex-col items-center justify-center text-gray-300"><ImageIcon size={48} /><span className="text-[8px] mt-2">MISSING_ASSET</span></div>}
-                             <label className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer">
+                             <label htmlFor="editorial-image-upload" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer">
                                 <span className="text-[10px] font-black text-white uppercase tracking-widest">Replace Photo</span>
-                                <input type="file" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
                              </label>
+                             <input type="file" id="editorial-image-upload" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading} />
                           </div>
                        </div>
 
