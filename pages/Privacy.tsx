@@ -91,7 +91,7 @@ const Privacy: React.FC = () => {
           <section>
             <h2 className="text-xl font-bold text-stone-800 mb-3">9. Contact Us</h2>
             <p>
-              If you have any questions about this Privacy Policy or our data practices, please contact us at: <a href="mailto:info@agrigence.in" className="text-agri-green hover:underline">info@agrigence.in</a>.
+              If you have any questions about this Privacy Policy or our data practices, please contact us at: <a href="mailto:agrigence@gmail.com" className="text-agri-green hover:underline">agrigence@gmail.com</a>.
             </p>
           </section>
         </div>

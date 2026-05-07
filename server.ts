@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import * as path from 'path';
 import * as fs from 'fs';
 import { createRequire } from 'module';
@@ -14,6 +15,8 @@ import multer from 'multer';
 async function startServer() {
   const app = express();
   const PORT = 3000;
+  
+  app.use(cors());
   
   // Multer setup for memory storage
   const upload = multer({ 
@@ -39,13 +42,17 @@ async function startServer() {
   }
 
   // Helper to inject meta tags and Schema
-  function injectMeta(htmlContent: string, { title, description, image, url, schema, keywords }: { title: string, description: string, image: string, url: string, schema?: any, keywords?: string }) {
+  function injectMeta(htmlContent: string, { title, description, image, url, schema, keywords, host }: { title: string, description: string, image: string, url: string, schema?: any, keywords?: string, host?: string }) {
+    const baseUrl = host ? `https://${host}` : 'https://www.agrigence.in';
+    const fallbackImage = "https://kpnttmkkjq9kpa0f.public.blob.vercel-storage.com/settings/1778090902639-WhatsApp_Image_2026-04-05_at_21.20.18-removebg-preview.png";
+    const ogImage = image && !image.includes('null') && !image.includes('undefined') ? image : fallbackImage;
+
     const orgSchema = {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Agrigence",
-      "url": "https://agrigence.in",
-      "logo": "https://agrigence.in/logo.png"
+      "url": baseUrl,
+      "logo": fallbackImage
     };
 
     const combinedSchemas = schema 
@@ -59,13 +66,13 @@ async function startServer() {
     <meta data-rh="true" name="keywords" content="${keywords || 'agriculture, farming, agritech, india, mandi bhav, gov schemes'}"/>
     <meta data-rh="true" property="og:title" content="${title} | Agrigence"/>
     <meta data-rh="true" property="og:description" content="${description}"/>
-    <meta data-rh="true" property="og:image" content="${image}"/>
+    <meta data-rh="true" property="og:image" content="${ogImage}"/>
     <meta data-rh="true" property="og:url" content="${url}"/>
     <meta data-rh="true" property="og:type" content="website"/>
     <meta data-rh="true" name="twitter:card" content="summary_large_image"/>
     <meta data-rh="true" name="twitter:title" content="${title} | Agrigence"/>
     <meta data-rh="true" name="twitter:description" content="${description}"/>
-    <meta data-rh="true" name="twitter:image" content="${image}"/>
+    <meta data-rh="true" name="twitter:image" content="${ogImage}"/>
     <link data-rh="true" rel="canonical" href="${url}" />
     ${combinedSchemas.map(s => `<script data-rh="true" type="application/ld+json">${JSON.stringify(s)}</script>`).join('\n')}
     `;
@@ -116,17 +123,21 @@ async function startServer() {
   // === Vercel Blob Upload Proxy ===
   app.post('/api/admin/blob/upload', upload.single('file'), async (req, res) => {
     try {
+      console.log('Blob upload request received');
       if (!req.file) {
+        console.error('Upload failed: No file in request');
         return res.status(400).json({ error: 'No file uploaded' });
       }
 
       const token = process.env.BLOB_READ_WRITE_TOKEN;
       if (!token) {
-        throw new Error('BLOB_READ_WRITE_TOKEN is not configured');
+        console.error('Upload failed: BLOB_READ_WRITE_TOKEN is missing');
+        throw new Error('BLOB_READ_WRITE_TOKEN is not configured on server');
       }
 
       const { path = 'general' } = req.body;
       const fileName = `${path}/${Date.now()}-${req.file.originalname}`;
+      console.log(`Uploading to Vercel Blob: ${fileName}`);
 
       const blob = await put(fileName, req.file.buffer, {
         access: 'public',
@@ -134,10 +145,11 @@ async function startServer() {
         contentType: req.file.mimetype
       });
 
+      console.log('Upload successful:', blob.url);
       res.json({ url: blob.url });
     } catch (error: any) {
-      console.error('Blob Upload Error:', error);
-      res.status(500).json({ error: error.message });
+      console.error('Blob Upload Error Details:', error);
+      res.status(500).json({ error: error.message || 'Server failed to process upload' });
     }
   });
 
@@ -607,6 +619,10 @@ ${allRoutes.map(route => `  <url>
     app.use(express.static(distPath));
     
     app.get('*all', async (req, res) => {
+      const fallbackImage = "https://kpnttmkkjq9kpa0f.public.blob.vercel-storage.com/settings/1778090902639-WhatsApp_Image_2026-04-05_at_21.20.18-removebg-preview.png";
+      const host = req.get('host') || 'www.agrigence.in';
+      const baseUrl = `https://${host}`;
+
       // If the request is for a file (has an extension) but reached here, it means it's missing.
       // We should return a 404 instead of index.html for non-html assets to avoid SEO issues.
       const parsedPath = path.parse(req.path);
@@ -629,8 +645,8 @@ ${allRoutes.map(route => `  <url>
         if (doc) {
           const title = doc.title || 'Agrigence';
           const description = (doc.content || doc.description || '').substring(0, 150);
-          const image = doc.featuredImage || doc.thumbnail || 'https://www.agrigence.in/logo.png';
-          html = injectMeta(html, { title, description, image, url: `https://agrigence.in${req.path}` });
+          const image = doc.featuredImage || doc.thumbnail || fallbackImage;
+          html = injectMeta(html, { title, description, image, url: `${baseUrl}${req.path}`, host });
         }
       } else if (mandiMatch) {
         const city = mandiMatch[1];
@@ -644,10 +660,10 @@ ${allRoutes.map(route => `  <url>
             "@type": "Dataset",
             "name": `${price.city} ${price.crop} Market Prices`,
             "description": description,
-            "url": `https://agrigence.in${req.path}`,
+            "url": `${baseUrl}${req.path}`,
             "publisher": { "@type": "Organization", "name": "Agrigence" }
           };
-          html = injectMeta(html, { title, description, image: 'https://agrigence.in/mandi-meta.jpg', url: `https://agrigence.in${req.path}`, schema });
+          html = injectMeta(html, { title, description, image: fallbackImage, url: `${baseUrl}${req.path}`, schema, host });
         }
       } else if (schemeMatch) {
         const slug = schemeMatch[1];
@@ -662,7 +678,7 @@ ${allRoutes.map(route => `  <url>
             "description": description,
             "publisher": { "@type": "Organization", "name": "Agrigence" }
           };
-          html = injectMeta(html, { title, description, image: 'https://agrigence.in/scheme-meta.jpg', url: `https://agrigence.in${req.path}`, schema });
+          html = injectMeta(html, { title, description, image: fallbackImage, url: `${baseUrl}${req.path}`, schema, host });
         }
       } else if (cropMatch) {
         const slug = cropMatch[1];
@@ -670,21 +686,23 @@ ${allRoutes.map(route => `  <url>
         if (crop) {
           const title = `${crop.name} Cultivation Guide & Advisory`;
           const description = `Learn how to grow ${crop.name} with Agrigence. Best soil: ${crop.soil_type}, Season: ${crop.season}. Direct answer to yield optimization.`;
-          html = injectMeta(html, { title, description, image: 'https://agrigence.in/crop-meta.jpg', url: `https://agrigence.in${req.path}` });
+          html = injectMeta(html, { title, description, image: fallbackImage, url: `${baseUrl}${req.path}`, host });
         }
       } else if (req.path === '/' || req.path === '') {
         html = injectMeta(html, { 
           title: 'Agricultural Intelligence & Education Platform', 
           description: 'Smart agricultural tools, academic resources, and research insights for farmers and students. Optimize your farming and studies with data-driven decisions.', 
-          image: 'https://agrigence.in/logo.png', 
-          url: 'https://agrigence.in' 
+          image: fallbackImage, 
+          url: baseUrl,
+          host
         });
       } else if (req.path === '/about-contact') {
         html = injectMeta(html, { 
           title: 'About Us & Contact', 
           description: 'Learn about Agrigence, our mission, leadership, and how to get in touch with our team.', 
-          image: 'https://agrigence.in/logo.png', 
-          url: 'https://agrigence.in/about-contact' 
+          image: fallbackImage, 
+          url: `${baseUrl}/about-contact`,
+          host
         });
       }
       

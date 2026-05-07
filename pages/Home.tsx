@@ -5,7 +5,7 @@ import {
   ArrowRight, Calendar, User, 
   ChevronRight, Bookmark, Star, Quote,
   Megaphone, ShoppingBag, BookOpen, FileText, PenTool, ExternalLink, Wrench,
-  Calculator, Droplets, Leaf, Activity, CheckCircle, Shield, Newspaper, Store, Info, MessageSquare, Users, Landmark,
+  Calculator, Droplets, Leaf, Activity, CheckCircle, Shield, Newspaper, Store, Info, MessageSquare, Users, Landmark, TrendingUp,
   Brain, Bot, Sparkles, Cpu
 } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
@@ -24,6 +24,7 @@ const Home: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [visitorCount, setVisitorCount] = useState<number>(0);
+  const [mandiBhav, setMandiBhav] = useState<any[]>([]);
 
   useEffect(() => {
     const unsubSettings = mockBackend.subscribeToSettings(setSettings);
@@ -46,6 +47,12 @@ const Home: React.FC = () => {
     const unsubProducts = mockBackend.subscribeToProducts(data => setProducts(data.slice(0, 4)));
     const unsubFeedback = mockBackend.subscribeToFeedback(data => setFeedbacks(data.filter(f => f.status === 'APPROVED').slice(0, 3)));
     const unsubVisitors = mockBackend.subscribeToVisitors(data => setVisitorCount(data.length));
+    
+    const loadMandi = async () => {
+      const data = await mockBackend.getMandiBhav('Delhi'); // Default to Delhi for home
+      setMandiBhav(data.slice(0, 4));
+    };
+    loadMandi();
 
     return () => {
         unsubSettings();
@@ -268,6 +275,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* 2. NEWS & UPDATES (Technical Grid Style) - MOVED HERE */}
+      {settings?.featureVisibility?.news !== false && (
       <section className="py-32 relative z-10 bg-stone-900 text-white overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
         <div className="container mx-auto px-6">
@@ -308,6 +316,47 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+      )}
+
+      {/* 2.5 MANDI BHAV (Market Intelligence) - ADDED HERE */}
+      {settings?.featureVisibility?.mandi !== false && (
+      <section className="py-32 relative z-10 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div className="max-w-2xl">
+              <h2 className="text-5xl md:text-7xl font-serif font-bold text-agri-primary mb-6 tracking-tighter leading-none">
+                Market <br />
+                <span className="text-agri-secondary">Intelligence</span>
+              </h2>
+              <p className="text-stone-500 text-lg font-medium">Real-time Mandi rates and price trends across major urban centers.</p>
+            </div>
+            <Link to="/kisan" className="group flex items-center gap-4 px-8 py-4 bg-agri-primary text-white rounded-full text-xs font-bold uppercase tracking-widest hover:bg-stone-900 transition-all">
+              KISAN DASHBOARD <Store size={16} className="group-hover:scale-110 transition-transform" />
+            </Link>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-6">
+            {mandiBhav.length > 0 ? mandiBhav.map((item, i) => (
+              <GlassCard key={i} className="bg-stone-50/50 border-stone-200">
+                <div className="flex items-center justify-between mb-6">
+                  <div className={`p-3 rounded-xl ${i % 2 === 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                    <TrendingUp size={20} />
+                  </div>
+                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">{item.commodity}</span>
+                </div>
+                <h3 className="text-2xl font-bold text-agri-primary mb-1">₹{item.price}</h3>
+                <p className="text-stone-500 text-xs mb-4">per {item.unit || 'Quintal'}</p>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-600">
+                  <Activity size={12} /> Live Updates
+                </div>
+              </GlassCard>
+            )) : (
+              <div className="col-span-full text-center py-12 text-stone-400 italic">Market data is refreshing...</div>
+            )}
+          </div>
+        </div>
+      </section>
+      )}
 
       {/* 3. QUICK TOOLS SECTION (Bento Grid Style) */}
       <section className="py-32 relative z-10">
@@ -397,6 +446,7 @@ const Home: React.FC = () => {
 
 
       {/* 3.1 GOVERNMENT SCHEMES ROW */}
+      {settings?.featureVisibility?.schemes !== false && (
       <section className="py-24 relative z-10 bg-white">
         <div className="container mx-auto px-6">
           <div onClick={() => navigate('/govt-schemes')} className="cursor-pointer relative overflow-hidden bg-gradient-to-br from-agri-primary to-emerald-900 rounded-[3rem] p-12 md:p-16 lg:p-20 shadow-2xl group w-full">
@@ -421,8 +471,10 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+      )}
 
       {/* 4. BLOGS & EXPERT INSIGHTS (Editorial Style) */}
+      {settings?.featureVisibility?.blogs !== false && (
       <section className="py-32 relative z-10 bg-white">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-20">
@@ -473,8 +525,10 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+      )}
 
       {/* 5. MAGAZINE SECTION (Immersive Style) */}
+      {settings?.featureVisibility?.journals !== false && (
       <section className="py-32 relative overflow-hidden z-10">
         <div className="absolute inset-0 bg-stone-50"></div>
         <div className="absolute top-0 left-0 w-full h-full opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')]"></div>
@@ -524,8 +578,10 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+      )}
 
       {/* 7. STORE SECTION (Minimal Grid Style) */}
+      {settings?.featureVisibility?.store !== false && (
       <section className="py-32 relative z-10 bg-white">
         <div className="container mx-auto px-6">
           <div className="flex justify-between items-end mb-20">
@@ -567,6 +623,7 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+      )}
 
       {/* 8. REVIEWS & TESTIMONIALS */}
       <section className="py-32 relative overflow-hidden z-10 bg-stone-50">
@@ -740,7 +797,7 @@ const Home: React.FC = () => {
             <span>Visit Website</span>
             <ArrowRight size={18} />
           </a>
-          <a href="mailto:info@agrigence.in" className="flex items-center justify-center gap-2 px-8 py-4 bg-white text-agri-primary border border-agri-primary rounded-xl hover:bg-stone-50 transition-colors font-medium shadow-sm w-full sm:w-auto">
+          <a href="mailto:agrigence@gmail.com" className="flex items-center justify-center gap-2 px-8 py-4 bg-white text-agri-primary border border-agri-primary rounded-xl hover:bg-stone-50 transition-colors font-medium shadow-sm w-full sm:w-auto">
             <span>Contact Us</span>
             <ArrowRight size={18} />
           </a>

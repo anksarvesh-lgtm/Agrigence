@@ -1,19 +1,35 @@
 
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../../services/mockBackend';
-import { HomepageSection } from '../../types';
-import { Save, ChevronUp, ChevronDown } from 'lucide-react';
+import { HomepageSection, SiteSettings } from '../../types';
+import { Save, ChevronUp, ChevronDown, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../../src/authContext';
 
 const LayoutManager: React.FC = () => {
+  const { user } = useAuth();
   const [sections, setSections] = useState<HomepageSection[]>([]);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    setSections([...mockBackend.getSettings().homepageLayout].sort((a,b) => a.order - b.order));
+    const s = mockBackend.getSettings();
+    setSettings(s);
+    setSections([...s.homepageLayout].sort((a,b) => a.order - b.order));
   }, []);
 
   const handleToggle = (id: string) => {
     setSections(prev => prev.map(s => s.id === id ? { ...s, isEnabled: !s.isEnabled } : s));
+  };
+
+  const handleFeatureToggle = (feature: keyof SiteSettings['featureVisibility']) => {
+    if (!settings || !settings.featureVisibility) return;
+    setSettings({
+      ...settings,
+      featureVisibility: {
+        ...settings.featureVisibility,
+        [feature]: !settings.featureVisibility[feature]
+      }
+    });
   };
 
   const updateCount = (id: string, count: number) => {
@@ -34,11 +50,11 @@ const LayoutManager: React.FC = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
-    const settings = mockBackend.getSettings();
-    await mockBackend.updateSettings({ ...settings, homepageLayout: sections });
+    const currentSettings = mockBackend.getSettings();
+    await mockBackend.updateSettings({ ...currentSettings, homepageLayout: sections, featureVisibility: settings?.featureVisibility || currentSettings.featureVisibility });
     setTimeout(() => {
       setIsSaving(false);
-      alert('Homepage layout synced!');
+      alert('Layout and visibility settings synced!');
     }, 800);
   };
 
@@ -57,6 +73,49 @@ const LayoutManager: React.FC = () => {
            <Save size={18} /> {isSaving ? 'SYNCING...' : 'SAVE LAYOUT'}
         </button>
       </div>
+      
+      {/* Super Admin Section Controls */}
+      {user?.role === 'SUPER_ADMIN' && settings && (
+        <div className="bg-stone-900 text-white p-8 rounded-[2rem] border border-stone-800 shadow-xl overflow-hidden relative group">
+          <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
+            <ShieldCheck size={120} />
+          </div>
+          
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-10 h-10 rounded-xl bg-agri-secondary/20 flex items-center justify-center border border-agri-secondary/30">
+              <ShieldCheck className="text-agri-secondary" size={24} />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Terminal Controls (Super Admin Only)</h2>
+              <p className="text-stone-400 text-xs">Global feature visibility and system-level overrides</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {settings.featureVisibility && Object.entries(settings.featureVisibility).map(([key, isVisible]) => (
+              <button
+                key={key}
+                onClick={() => handleFeatureToggle(key as any)}
+                className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                  isVisible 
+                    ? 'bg-stone-800/50 border-emerald-500/30 text-emerald-400' 
+                    : 'bg-stone-900 border-red-500/30 text-red-400 opacity-60'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {isVisible ? <Eye size={16} /> : <EyeOff size={16} />}
+                  <span className="font-bold uppercase tracking-widest text-[10px]">
+                    {key} Protocol
+                  </span>
+                </div>
+                <div className={`w-8 h-4 rounded-full relative transition-colors ${isVisible ? 'bg-emerald-500' : 'bg-red-500'}`}>
+                  <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${isVisible ? 'right-0.5' : 'left-0.5'}`} />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-4">
         {sections.map((section, idx) => (

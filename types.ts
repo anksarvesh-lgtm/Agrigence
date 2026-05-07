@@ -326,6 +326,15 @@ export interface SiteSettings {
   popup: PopupSettings;
   navigation: NavigationItem[];
   homepageLayout: HomepageSection[];
+  featureVisibility: {
+    mandi: boolean;
+    schemes: boolean;
+    crops: boolean;
+    journals: boolean;
+    blogs: boolean;
+    news: boolean;
+    store: boolean;
+  };
   seo: SEOSettings;
   paymentGateway?: any;
 }

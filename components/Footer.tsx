@@ -46,9 +46,15 @@ const Footer: React.FC = () => {
             <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Quick Links</h3>
             <ul className="space-y-2 text-sm">
               <li><Link to="/about-contact" className="hover:text-agri-secondary transition-colors">About Us</Link></li>
-              <li><Link to="/journals" className="hover:text-agri-secondary transition-colors">Journals</Link></li>
-              <li><Link to="/news" className="hover:text-agri-secondary transition-colors">News</Link></li>
-              <li><Link to="/products" className="hover:text-agri-secondary transition-colors">Store</Link></li>
+              {settings?.featureVisibility?.journals !== false && (
+                <li><Link to="/journals" className="hover:text-agri-secondary transition-colors">Journals</Link></li>
+              )}
+              {settings?.featureVisibility?.news !== false && (
+                <li><Link to="/news" className="hover:text-agri-secondary transition-colors">News</Link></li>
+              )}
+              {settings?.featureVisibility?.store !== false && (
+                <li><Link to="/products" className="hover:text-agri-secondary transition-colors">Store</Link></li>
+              )}
             </ul>
           </div>
 
@@ -97,7 +103,7 @@ const Footer: React.FC = () => {
               </li>
               <li className="flex items-center gap-3">
                 <Mail size={16} className="text-agri-secondary shrink-0" />
-                <a href="mailto:info@agrigence.in" className="hover:text-agri-secondary transition-colors">info@agrigence.in</a>
+                <a href="mailto:agrigence@gmail.com" className="hover:text-agri-secondary transition-colors">agrigence@gmail.com</a>
               </li>
             </ul>
           </div>

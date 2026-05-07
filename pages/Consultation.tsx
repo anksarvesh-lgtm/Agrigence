@@ -22,7 +22,7 @@ const Consultation: React.FC = () => {
   const getMailLink = () => {
     const subject = `Consultation Request: ${formData.type}`;
     const body = `Name: ${formData.name}\nEmail: ${formData.email}\nType: ${formData.type}\n\nMessage:\n${formData.message}`;
-    return `mailto:info@agrigence.in?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    return `mailto:agrigence@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   return (

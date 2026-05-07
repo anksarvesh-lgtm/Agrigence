@@ -95,7 +95,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   upiId: 'agrigence@upi',
   upiQrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=agrigence@upi&pn=Agrigence',
   whatsappNumber: '+919452571317',
-  contactEmail: 'info@agrigence.in',
+  contactEmail: 'agrigence@gmail.com',
   homeFeaturedLimit: 3,
   missionText: 'Where Agri-Intelligence Meets Agricultural Generation. Our mission is to build a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation.',
   primaryColor: '#3D2B1F',
@@ -127,6 +127,15 @@ const DEFAULT_SETTINGS: SiteSettings = {
     { id: 'reviews', label: 'Community Reviews', order: 5, isEnabled: true, itemsToShow: 6 },
     { id: 'mission', label: 'Our Mission', order: 6, isEnabled: true, itemsToShow: 1 },
   ],
+  featureVisibility: {
+    mandi: true,
+    schemes: true,
+    crops: true,
+    journals: true,
+    blogs: true,
+    news: true,
+    store: true
+  },
   seo: {
     metaTitle: 'Agrigence - Where Agri-Intelligence Meets Agricultural Generation',
     metaDescription: 'Where Agri-Intelligence Meets Agricultural Generation. Building a trusted digital ecosystem for agricultural knowledge and research publishing.',
@@ -200,7 +209,7 @@ class FirebaseBackendService {
     
     // Check seed data on load if admin
     onAuthStateChanged(auth, (user) => {
-        if (user && (user.email === 'info@agrigence.in' || user.email === 'admin@agrigence.com')) {
+        if (user && (user.email === 'agrigence@gmail.com' || user.email === 'admin@agrigence.com')) {
             this.checkAndSeedData();
         }
     });
@@ -242,7 +251,11 @@ class FirebaseBackendService {
     const docRef = doc(this.db, 'site_identity', 'global');
     onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
-            const data = docSnap.data() as SiteSettings;
+            const data = { ...DEFAULT_SETTINGS, ...docSnap.data() } as SiteSettings;
+            // Deep merge featureVisibility
+            if (docSnap.data().featureVisibility) {
+                data.featureVisibility = { ...DEFAULT_SETTINGS.featureVisibility, ...docSnap.data().featureVisibility };
+            }
             if (data.navigation) {
                 // Auto-correct legacy label "Board" to "Editorial Board" locally for display
                 // Note: We avoid updateDoc here to prevent potential snapshot loops (flickering)
@@ -406,7 +419,10 @@ class FirebaseBackendService {
   subscribeToSettings(cb: (s: SiteSettings) => void) {
     return onSnapshot(doc(this.db, 'site_identity', 'global'), (docSnap) => {
         if (docSnap.exists()) {
-            const data = docSnap.data() as SiteSettings;
+            const data = { ...DEFAULT_SETTINGS, ...docSnap.data() } as SiteSettings;
+            if (docSnap.data().featureVisibility) {
+                data.featureVisibility = { ...DEFAULT_SETTINGS.featureVisibility, ...docSnap.data().featureVisibility };
+            }
             if (data.logoUrl === 'https://www.agrigence.in/logo.png' || data.logoUrl === '/logo.png' || !data.logoUrl) {
                 data.logoUrl = DEFAULT_SETTINGS.logoUrl;
             }
@@ -421,7 +437,11 @@ class FirebaseBackendService {
     try {
         const docSnap = await getDoc(doc(this.db, 'site_identity', 'global'));
         if (docSnap.exists()) {
-            this.localSettings = docSnap.data() as SiteSettings;
+            const data = { ...DEFAULT_SETTINGS, ...docSnap.data() } as SiteSettings;
+            if (docSnap.data().featureVisibility) {
+                data.featureVisibility = { ...DEFAULT_SETTINGS.featureVisibility, ...docSnap.data().featureVisibility };
+            }
+            this.localSettings = data;
         }
     } catch(e) { console.warn("Refresh settings failed", e); }
   }
@@ -2094,6 +2114,14 @@ class FirebaseBackendService {
 
   async deleteGovtScheme(id: string): Promise<void> {
     await deleteDoc(doc(this.db, 'govt_schemes', id));
+  }
+
+  async getMandiBhav(city?: string): Promise<any[]> {
+    const { mandiPrices } = await import('../src/data/agrigence_engine');
+    if (city) {
+      return mandiPrices.filter(p => p.city.toLowerCase() === city.toLowerCase());
+    }
+    return mandiPrices;
   }
 }
 

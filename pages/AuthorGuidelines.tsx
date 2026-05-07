@@ -306,7 +306,7 @@ const AuthorGuidelines: React.FC = () => {
                   Our editorial office is available to assist with formatting queries and submission technicalities.
                 </p>
                 <div className="flex justify-center gap-6">
-                  <a href="mailto:info@agrigence.in" className="inline-flex items-center gap-2 bg-[#3D2B1F] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#2a1e16] transition-colors">
+                  <a href="mailto:agrigence@gmail.com" className="inline-flex items-center gap-2 bg-[#3D2B1F] text-white px-6 py-3 rounded-xl font-bold hover:bg-[#2a1e16] transition-colors">
                     <Mail size={18}/> Contact Editorial Office
                   </a>
                   <a href="https://www.agrigence.in/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-white text-[#3D2B1F] border border-[#3D2B1F]/20 px-6 py-3 rounded-xl font-bold hover:bg-stone-50 transition-colors">

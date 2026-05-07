@@ -20,7 +20,17 @@ export const SecurePDFViewer: React.FC<SecurePDFViewerProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
 
-  const iframeSrc = `https://drive.google.com/file/d/${fileId}/preview`;
+  React.useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PDF_READY') {
+        setLoading(false);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  const iframeSrc = `/pdf-viewer.html?file=${fileId}&download=${allowDownload}`;
 
   return (
     <div className="w-full mx-auto flex flex-col border border-stone-200 dark:border-stone-800 rounded-3xl overflow-hidden bg-white dark:bg-stone-900 shadow-2xl">
@@ -72,7 +82,6 @@ export const SecurePDFViewer: React.FC<SecurePDFViewerProps> = ({
           className="w-full h-full relative z-20 border-none"
           title={title}
           loading="lazy"
-          onLoad={() => setLoading(false)}
         />
       </div>
     </div>

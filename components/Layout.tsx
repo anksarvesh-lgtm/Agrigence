@@ -121,6 +121,23 @@ const AppLayout: React.FC = () => {
       ? menuItems.map(m => ({...m, icon: defaultItems.find(d => d.path === m.path)?.icon || FileText})) 
       : defaultItems.map(i => ({ ...i, id: i.path, isExternal: false, order: 0, isEnabled: true }));
     
+    // Filter by featureVisibility
+    const visibility = settings?.featureVisibility || {
+      mandi: true, schemes: true, crops: true, journals: true, blogs: true, news: true, store: true
+    };
+
+    let filteredByVisibility = raw.filter(item => {
+      const path = item.path.toLowerCase();
+      if (path === '/journals' && !visibility.journals) return false;
+      if (path === '/news' && !visibility.news) return false;
+      if (path === '/blogs' && !visibility.blogs) return false;
+      if (path === '/products' && !visibility.store) return false;
+      if (path.includes('mandi') && !visibility.mandi) return false;
+      if (path.includes('scheme') && !visibility.schemes) return false;
+      if (path.includes('crop') && !visibility.crops) return false;
+      return true;
+    });
+
     // Ensure Tools and About & Contact Us are always present
     const essentialItems = [
       { label: 'Tools', path: '/tools', icon: Wrench },
@@ -128,17 +145,17 @@ const AppLayout: React.FC = () => {
     ];
 
     essentialItems.forEach(item => {
-      if (!raw.some(i => i.path === item.path || i.label === item.label)) {
-        raw.push({ ...item, id: item.path, isExternal: false, order: 99, isEnabled: true } as any);
+      if (!filteredByVisibility.some(i => (i as any).path === item.path || (i as any).label === item.label)) {
+        filteredByVisibility.push({ ...item, id: item.path, isExternal: false, order: 99, isEnabled: true } as any);
       }
     });
 
-    const hasHome = raw.some(i => i.path === '/' || i.label === 'Home');
+    const hasHome = filteredByVisibility.some(i => (i as any).path === '/' || (i as any).label === 'Home');
     const active = hasHome 
-        ? raw 
-        : [{ label: 'Home', path: '/', id: 'home-auto', isExternal: false, order: -999, isEnabled: true, icon: Home }, ...raw];
+        ? filteredByVisibility 
+        : [{ label: 'Home', path: '/', id: 'home-auto', isExternal: false, order: -999, isEnabled: true, icon: Home }, ...filteredByVisibility];
 
-    const filtered = active.filter(item => {
+    const filtered = (active as any[]).filter(item => {
       const label = item.label?.trim().toLowerCase() || '';
       return !['analytics', 'pipeline builder', 'anova engine'].includes(label);
     });
