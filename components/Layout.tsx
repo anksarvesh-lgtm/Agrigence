@@ -107,7 +107,6 @@ const AppLayout: React.FC = () => {
 
     const defaultItems = [
       { label: 'Home', path: '/', icon: Home },
-      { label: 'AI Hub', path: '/ai-hub', icon: Cpu },
       { label: 'Archive', path: '/journals', icon: BookOpen },
       { label: 'News', path: '/news', icon: Newspaper },
       { label: 'Blogs', path: '/blogs', icon: FileText },

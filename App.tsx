@@ -55,7 +55,6 @@ import MobileAppView from './pages/MobileAppView';
 import MandiCityPage from './pages/MandiCityPage';
 import SchemeDetailPage from './pages/SchemeDetailPage';
 import CropAdvisoryPage from './pages/CropAdvisoryPage';
-import AIHub from './pages/AIHub';
 
 // Lazy loaded tools
 const SeedRatePage = React.lazy(() => import('./tools/Tool01SeedRate/SeedRatePage'));
@@ -263,7 +262,6 @@ const AppContent: React.FC = () => {
               <Route path="mandi-bhav/:city" element={<MandiCityPage />} />
               <Route path="scheme/:slug" element={<SchemeDetailPage />} />
               <Route path="crop/:slug" element={<CropAdvisoryPage />} />
-              <Route path="ai-hub" element={<AIHub />} />
 
               {/* USER DASHBOARD */}
               <Route path="dashboard" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Dashboard /></ProtectedRoute>} />

@@ -196,9 +196,6 @@ const Home: React.FC = () => {
                  </span>
                  <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                </Link>
-               <Link to="/ai-hub" className="group px-6 py-3.5 bg-white/10 backdrop-blur-xl border border-white/10 text-white font-bold text-xs tracking-widest rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
-                 <Cpu size={16} /> AI HUB
-               </Link>
                <Link to="/blogs" className="group px-6 py-3.5 bg-white/10 backdrop-blur-xl border border-white/10 text-white font-bold text-xs tracking-widest rounded-xl hover:bg-white/20 transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
                  <BookOpen size={16} /> RESEARCH LAB
                </Link>
@@ -395,69 +392,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* NEW AI HUB SECTION */}
-      <section className="py-24 relative overflow-hidden bg-stone-900 border-y border-white/5">
-        <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#C29263_1px,transparent_1px)] [background-size:20px_20px]" />
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="lg:w-1/2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-agri-secondary/20 text-agri-secondary rounded-full text-[10px] font-bold uppercase tracking-widest mb-6 border border-agri-secondary/30">
-                <Brain size={14} /> Intelligence Core
-              </div>
-              <h2 className="text-5xl md:text-7xl font-serif font-black text-white mb-8 tracking-tighter leading-none">
-                Open-Source <br />
-                <span className="text-agri-secondary italic">AI Intelligence Hub</span>
-              </h2>
-              <p className="text-stone-400 text-xl font-light mb-10 leading-relaxed max-w-xl">
-                Explore the curated universe of open-source AI frameworks, models, and tools. Bridging the gap between cutting-edge research and agricultural production.
-              </p>
-              <div className="grid grid-cols-2 gap-4 mb-10">
-                {[
-                  { label: 'Foundation Models', desc: 'Llama 3, Mistral, Gemma' },
-                  { label: 'Agentic AI', desc: 'AutoGPT, CrewAI, AutoGen' },
-                  { label: 'Media Gen', desc: 'OpenVoice, AudioLDM' },
-                  { label: 'Serving', desc: 'vLLM, Ollama, Triton' }
-                ].map((item, i) => (
-                  <div key={i} className="p-4 bg-white/5 border border-white/10 rounded-2xl group hover:bg-white/10 transition-all">
-                    <h4 className="text-white font-bold text-sm mb-1">{item.label}</h4>
-                    <p className="text-[10px] text-stone-500 font-medium uppercase tracking-tight">{item.desc}</p>
-                  </div>
-                ))}
-              </div>
-              <Link to="/ai-hub" className="bg-agri-secondary text-agri-primary px-10 py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-white hover:text-agri-primary transition-all shadow-xl shadow-agri-secondary/20 inline-flex items-center gap-3">
-                 Access AI Hub <ArrowRight size={18} />
-              </Link>
-            </div>
-            
-            <div className="lg:w-1/2 relative">
-              <div className="relative z-10 bg-gradient-to-br from-stone-800 to-black p-8 rounded-[3rem] border border-white/10 shadow-2xl">
-                 <div className="flex items-center gap-4 mb-8">
-                    <div className="w-12 h-12 rounded-2xl bg-agri-primary/20 border border-agri-primary/30 flex items-center justify-center p-2">
-                       <Bot className="w-full h-full text-agri-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-white font-bold uppercase tracking-widest text-lg">AI Orchestrator</h3>
-                      <p className="text-stone-500 text-[10px] font-bold uppercase tracking-widest">Guided Intelligence Active</p>
-                    </div>
-                 </div>
-                 <div className="space-y-4 mb-8">
-                    <div className="p-4 bg-white/5 rounded-2xl rounded-tl-none border border-white/5">
-                       <p className="text-stone-400 text-xs italic leading-relaxed">"How can I help you explore the world of open-source AI today? I can explain frameworks like LangChain or models like Llama 3."</p>
-                    </div>
-                    <div className="p-4 bg-agri-primary/10 rounded-2xl rounded-tr-none border border-agri-primary/20 self-end ml-12">
-                       <p className="text-white text-xs font-medium">"Tell me about RAG applications in agriculture."</p>
-                    </div>
-                 </div>
-                 <div className="flex items-center gap-2 text-agri-secondary text-[10px] font-black uppercase tracking-[0.3em] bg-white/5 py-2 px-4 rounded-xl w-fit">
-                    <Sparkles size={12} className="animate-pulse" /> Kawaii Mode Integrated
-                 </div>
-              </div>
-              <div className="absolute -top-10 -right-10 w-40 h-40 bg-agri-secondary/20 blur-[80px] rounded-full" />
-              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-500/10 blur-[80px] rounded-full" />
-            </div>
-          </div>
-        </div>
-      </section>
+
 
 
 

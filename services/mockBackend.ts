@@ -115,7 +115,6 @@ const DEFAULT_SETTINGS: SiteSettings = {
     { id: '5', label: 'Store', path: '/products', isExternal: false, order: 4, isEnabled: true },
     { id: 'sub-nav', label: 'Subscription', path: '/subscription', isExternal: false, order: 4.1, isEnabled: true },
     { id: 'tools-nav', label: 'Tools', path: '/tools', isExternal: false, order: 4.5, isEnabled: true },
-    { id: 'ai-hub-nav', label: 'AI Hub', path: '/ai-hub', isExternal: false, order: 4.6, isEnabled: true },
     { id: '6', label: 'Editorial Board', path: '/editorial-board', isExternal: false, order: 5, isEnabled: true },
     { id: '7', label: 'Author Guidelines', path: '/author-guidelines', isExternal: false, order: 6, isEnabled: true },
     { id: '8', label: 'About', path: '/about-contact', isExternal: false, order: 7, isEnabled: true },
@@ -1271,73 +1270,24 @@ class FirebaseBackendService {
   async uploadFile(file: File, path: string, customName?: string): Promise<string> {
       this.notifyUpload(0, 'UPLOADING', file.name);
 
-      // --- INTERCEPT PROFILE UPLOADS FOR SERVER-SIDE PROCESSING ---
-      if (path === 'users/profiles' && customName) {
-          try {
-              // Fake progress for visual feedback
-              let p = 0;
-              const timer = setInterval(() => {
-                  p = Math.min(p + 10, 90);
-                  this.notifyUpload(p, 'UPLOADING', file.name);
-              }, 200);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('path', path);
 
-              // Extract User ID from customName (format: {userId}.webp)
-              const userId = customName.split('.')[0];
-              
-              const formData = new FormData();
-              formData.append('file', file);
-              formData.append('userId', userId);
+      const response = await fetch('/api/admin/blob/upload', {
+          method: 'POST',
+          body: formData
+      });
 
-              // Use the backend server endpoint for robust processing
-              const response = await fetch(`${SERVER_ENV.BACKEND_URL}/api/uploads/profile`, {
-                  method: 'POST',
-                  body: formData
-              });
-
-              clearInterval(timer);
-
-              if (!response.ok) {
-                  const err = await response.json().catch(() => ({}));
-                  throw new Error(err.error || `Server responded with ${response.status}`);
-              }
-
-              const data = await response.json();
-              this.notifyUpload(100, 'SUCCESS', file.name);
-              
-              // Construct full URL (Backend returns relative path /uploads/users/...)
-              return `${SERVER_ENV.BACKEND_URL}${data.imageUrl}`;
-          } catch (error) {
-              console.warn("Backend processing failed, falling back to Firebase Storage:", error);
-              // Fallthrough to standard upload logic below
-          }
+      if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          this.notifyUpload(0, 'ERROR', file.name);
+          throw new Error(err.error || 'Failed to upload file');
       }
 
-      // --- STANDARD FIREBASE UPLOAD FOR OTHER ASSETS ---
-      // Use custom name if provided (e.g., for overwriting specific user profiles)
-      // Otherwise, generate a timestamped name to prevent collisions
-      const fileName = customName || `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-      const storageRef = ref(this.storage, `${path}/${fileName}`);
-      
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      return new Promise((resolve, reject) => {
-          uploadTask.on('state_changed', 
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                this.notifyUpload(progress, 'UPLOADING', file.name);
-            },
-            (error) => {
-                console.error(error instanceof Error ? error.message : String(error));
-                this.notifyUpload(0, 'ERROR', file.name);
-                reject(error);
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                this.notifyUpload(100, 'SUCCESS', file.name);
-                resolve(downloadURL);
-            }
-          );
-      });
+      const data = await response.json();
+      this.notifyUpload(100, 'SUCCESS', file.name);
+      return data.url;
   }
 
   async incrementVisitorCount() {

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
 import { useAuth } from '../src/authContext';
+import { SecurePDFViewer } from '../components/SecurePDFViewer';
 import { Loader2, AlertCircle, FileText, ArrowLeft, Shield, ShieldAlert, ShieldCheck, AlertTriangle, Activity, Home } from 'lucide-react';
 import { Article } from '../types';
 
@@ -141,7 +142,7 @@ const ViewDocument: React.FC = () => {
 
              {hasFile && (
                  <a 
-                   href={meta?.fileUrl} 
+                   href={`/api/pdf/${id}?download=true`} 
                    download={`${meta?.title || 'document'}.pdf`}
                    className="bg-agri-secondary text-agri-primary px-4 py-2 rounded-lg text-xs font-bold hover:bg-white transition-colors"
                  >
@@ -157,11 +158,16 @@ const ViewDocument: React.FC = () => {
           {/* Main Content */}
           <div className="flex-1 relative">
             {hasFile ? (
-                <iframe 
-                src={meta?.fileUrl} 
-                className="w-full h-full border-none" 
-                title="Secure Document Viewer"
-                />
+                <div className="flex-1 bg-stone-800 flex flex-col">
+                   <div className="flex-1 p-2 md:p-6 overflow-hidden">
+                      <SecurePDFViewer 
+                        fileId={id!} 
+                        title={meta?.title} 
+                        advancedMode={true} 
+                        allowDownload={true} 
+                      />
+                   </div>
+                </div>
             ) : hasText ? (
                 <div className="max-w-4xl mx-auto bg-white min-h-full p-12 md:p-20 shadow-2xl">
                     <h1 className="text-3xl font-serif font-bold text-stone-900 mb-8">{meta?.title}</h1>

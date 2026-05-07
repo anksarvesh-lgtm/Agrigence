@@ -416,6 +416,64 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
     res.status(201).json({ id: '1', ...req.body });
   });
 
+  // Secure PDF Proxy Route
+  // Completely hides Google Drive URL and avoids CORS issues on the frontend
+  app.get('/api/pdf/:fileId', async (req, res) => {
+    try {
+      const { fileId } = req.params;
+      const isDownload = req.query.download === 'true';
+      const range = req.headers.range;
+      
+      const driveUrl = `https://drive.google.com/uc?export=download&id=${fileId}&confirm=t`;
+      
+      const fetchOptions: any = {
+        method: 'GET',
+        headers: {}
+      };
+      
+      if (range) {
+        fetchOptions.headers['Range'] = range;
+      }
+      
+      const response = await fetch(driveUrl, fetchOptions);
+      
+      if (!response.ok && response.status !== 206) {
+        throw new Error(`Failed to fetch PDF: ${response.statusText}`);
+      }
+      
+      // Pass through important headers
+      res.setHeader('Content-Type', 'application/pdf');
+      const dispositionPattern = isDownload ? 'attachment' : 'inline';
+      res.setHeader('Content-Disposition', `${dispositionPattern}; filename="document-${fileId}.pdf"`);
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      res.setHeader('X-Robots-Tag', 'noindex');
+      res.setHeader('Accept-Ranges', 'bytes');
+      
+      if (response.status === 206) {
+        res.status(206);
+        const contentRange = response.headers.get('content-range');
+        if (contentRange) res.setHeader('Content-Range', contentRange);
+      }
+      
+      const contentLength = response.headers.get('content-length');
+      if (contentLength) {
+        res.setHeader('Content-Length', contentLength);
+      }
+      
+      if (response.body) {
+        // @ts-ignore
+        const { Readable } = require('node:stream');
+        Readable.fromWeb(response.body).pipe(res);
+      } else {
+        const arrayBuffer = await response.arrayBuffer();
+        res.send(Buffer.from(arrayBuffer));
+      }
+    } catch (err: any) {
+      console.error('PDF Proxy error:', err);
+      res.status(500).send('Failed to load secure PDF document.');
+    }
+  });
+
   app.get('/sitemap.xml', async (req, res) => {
     try {
       const baseUrl = 'https://www.agrigence.in';

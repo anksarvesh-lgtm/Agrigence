@@ -253,7 +253,7 @@ const SoilAnalyzer: React.FC = () => {
             Soil Health <span className="text-emerald-600">A.I. Analyzer</span>
           </h1>
           <p className="text-stone-500 font-medium max-w-2xl leading-relaxed">
-            Upload your soil test report or enter values manually. Our AI Hub AI Models will analyze your soil health and provide precise fertilization, irrigation, and crop suitability recommendations.
+            Upload your soil test report or enter values manually. Our Advanced AI Models will analyze your soil health and provide precise fertilization, irrigation, and crop suitability recommendations.
           </p>
         </header>
 
@@ -413,7 +413,7 @@ const SoilAnalyzer: React.FC = () => {
               <div className="space-y-8">
                 {[
                   { step: '01', title: 'Submit Data', desc: 'Securely upload your soil test certificate or data.' },
-                  { step: '02', title: 'AI Processing', desc: 'AI Hub AI Models scan values for N, P, K, pH and organic carbon.' },
+                  { step: '02', title: 'AI Processing', desc: 'Advanced AI Models scan values for N, P, K, pH and organic carbon.' },
                   { step: '03', title: 'Insights', desc: 'Get tailored fertilization & crop suitability data.' }
                 ].map((item) => (
                   <div key={item.step} className="flex gap-4">

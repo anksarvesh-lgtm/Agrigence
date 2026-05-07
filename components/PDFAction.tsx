@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { Eye, X } from 'lucide-react';
 import { DownloadAccessLevel } from '../types';
 import { useNavigate } from 'react-router-dom';
+import { SecurePDFViewer } from './SecurePDFViewer';
 
 interface PDFActionProps {
   title: string;
@@ -19,30 +20,49 @@ interface PDFActionProps {
   className?: string;
 }
 
+function extractDriveId(url?: string): string | null {
+  if (!url) return null;
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  return match ? match[1] : null;
+}
+
 const PDFAction: React.FC<PDFActionProps> = ({ title, fileUrl, driveUrl, variant = 'button', id, type, children, className }) => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
 
+  const driveId = extractDriveId(driveUrl);
+
   const handleView = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Determine download URL
+    let downloadUrl = '';
+    if (id) {
+        downloadUrl = `/api/pdf/${id}?download=true`;
+    } else if (driveId) {
+        downloadUrl = `/api/pdf/${driveId}?download=true`;
+    }
+
+    // Trigger direct download
+    if (downloadUrl) {
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${title || 'document'}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
     
-    // Priority 1: Drive Link (Opens in new tab)
-    if (driveUrl && driveUrl !== '' && driveUrl !== '#') {
-        window.open(driveUrl, '_blank');
-        return;
-    }
-
-    if (!fileUrl || fileUrl === '#') {
-        alert("File not available.");
-        return;
-    }
-
     // Use Secure Viewer for Articles/Blogs if ID is present
     if (id && (type === 'ARTICLE' || type === 'BLOG')) {
         navigate(`/view-document/${id}`);
     } else {
-        // Fallback for Magazines or Legacy items - show modal
+        if (!driveId && (!fileUrl || fileUrl === '#')) {
+            alert("File not available.");
+            return;
+        }
+        // Show modal for Magazines or Legacy items
         setShowModal(true);
     }
   };
@@ -53,21 +73,32 @@ const PDFAction: React.FC<PDFActionProps> = ({ title, fileUrl, driveUrl, variant
     const modalContent = (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4 md:p-8">
         <div className="bg-white rounded-2xl w-full max-w-6xl h-full flex flex-col overflow-hidden relative">
-          <div className="flex items-center justify-between p-4 border-b border-stone-200 bg-stone-50">
+          <div className="flex items-center justify-between p-4 border-b border-stone-200 bg-stone-50 shrink-0">
             <h3 className="font-bold text-lg text-stone-800 truncate pr-4">{title}</h3>
             <button 
               onClick={(e) => { e.stopPropagation(); setShowModal(false); }}
-              className="p-2 hover:bg-stone-200 rounded-full transition-colors"
+              className="p-2 hover:bg-stone-200 rounded-full transition-colors shrink-0"
             >
               <X size={20} />
             </button>
           </div>
-          <div className="flex-1 bg-stone-100 relative">
-            <iframe 
-              src={`${fileUrl}#view=FitH`} 
-              className="w-full h-full border-none" 
-              title={title}
-            />
+          <div className="flex-1 bg-stone-100 relative overflow-hidden">
+            {driveId ? (
+                <div className="absolute inset-0">
+                   <SecurePDFViewer 
+                      fileId={driveId} 
+                      title={title} 
+                      advancedMode={true} 
+                      allowDownload={true} 
+                   />
+                </div>
+            ) : (
+                <iframe 
+                  src={`${fileUrl}#view=FitH`} 
+                  className="w-full h-full border-none" 
+                  title={title}
+                />
+            )}
           </div>
         </div>
       </div>
@@ -111,3 +142,4 @@ const PDFAction: React.FC<PDFActionProps> = ({ title, fileUrl, driveUrl, variant
 };
 
 export default PDFAction;
+

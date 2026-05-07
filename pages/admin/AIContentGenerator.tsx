@@ -78,7 +78,7 @@ const AIContentGenerator: React.FC = () => {
   const handleGenerateBlog = async () => {
     setIsGenerating(true);
     setStatus('running');
-    setMessage('Connecting to AI Hub AI Models Engine...');
+    setMessage('Connecting to Advanced AI Models Engine...');
     
     try {
       const prompt = generateDailyBlogPrompt();
@@ -256,7 +256,7 @@ const AIContentGenerator: React.FC = () => {
   const automationStats = [
     { label: 'Cron Status', value: 'Active', icon: RefreshCw, color: 'text-green-600' },
     { label: 'Next Run', value: '07:00 AM (Daily)', icon: Calendar, color: 'text-blue-600' },
-    { label: 'Model', value: 'AI Hub AI Models', icon: Bot, color: 'text-purple-600' },
+    { label: 'Model', value: 'Advanced AI Models', icon: Bot, color: 'text-purple-600' },
     { label: 'Target Regions', value: 'UP, Bihar, RJ', icon: Globe, color: 'text-amber-600' },
   ];
 
@@ -479,7 +479,7 @@ const AIContentGenerator: React.FC = () => {
                  <div>
                     <label className="text-[10px] font-black uppercase tracking-widest text-white/50 block mb-2">Primary AI Engine</label>
                     <p className="text-sm font-bold flex items-center gap-2">
-                       AI Hub AI Models <span className="px-2 py-0.5 bg-green-500 text-white rounded text-[8px] uppercase tracking-tighter">Connected</span>
+                       Advanced AI Models <span className="px-2 py-0.5 bg-green-500 text-white rounded text-[8px] uppercase tracking-tighter">Connected</span>
                     </p>
                  </div>
               </div>

@@ -250,7 +250,7 @@ export const KisanWeather: React.FC = () => {
                             {analyzing ? (
                                 <div className="flex flex-col items-center justify-center py-12 gap-4">
                                     <Loader2 className="animate-spin text-emerald-600" size={40} />
-                                    <p className="text-stone-500 font-bold uppercase tracking-widest text-xs">AI Hub AI Models are analyzing your local climate...</p>
+                                    <p className="text-stone-500 font-bold uppercase tracking-widest text-xs">Advanced AI Models are analyzing your local climate...</p>
                                 </div>
                             ) : (
                                 <div className="prose prose-stone max-w-none prose-p:text-stone-600 prose-li:text-stone-600 prose-strong:text-[#2d5a27]">
