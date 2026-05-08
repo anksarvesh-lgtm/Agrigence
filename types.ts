@@ -563,6 +563,8 @@ export interface PaymentRecord {
   id: string;
   userId: string;
   userName: string;
+  userEmail?: string;
+  userMobile?: string;
   planId: string;
   planName: string;
   amount: number;

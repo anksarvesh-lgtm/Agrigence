@@ -39,11 +39,15 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, plan, on
   }, []);
 
   const totalAmount = typeof plan.price === 'string' ? parseFloat(plan.price) : plan.price;
+  const [guestInfo, setGuestInfo] = useState({ name: '', email: '', mobile: '' });
 
   const handleRazorpay = async () => {
+    // If not logged in, ensure guest info is provided
     if (!user) {
-      alert("Please login to continue payment");
-      return;
+      if (!guestInfo.name || !guestInfo.email || !guestInfo.mobile) {
+        alert("Please provide your Name, Email and Mobile number for the receipt.");
+        return;
+      }
     }
     
     setIsProcessing(true);
@@ -54,7 +58,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, plan, on
       const order = await mockBackend.createRazorpayOrder(totalAmount);
       
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_dummy",
+        key: order.key_id || import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_dummy",
         amount: order.amount,
         currency: order.currency,
         name: "Agrigence Journal",
@@ -66,7 +70,8 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, plan, on
             setIsProcessing(true);
             await mockBackend.verifyRazorpayPayment(response);
             // If verified, process online payment in our DB
-            await mockBackend.processOnlinePayment(user.id, plan.id, response.razorpay_payment_id, totalAmount);
+            const paymentUserId = user?.id || `guest_${Date.now()}`;
+            await mockBackend.processOnlinePayment(paymentUserId, plan.id, response.razorpay_payment_id, totalAmount, !user ? guestInfo : undefined);
             setStatus('SUCCESS');
             onSuccess();
           } catch (err: any) {
@@ -77,9 +82,9 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, plan, on
           }
         },
         prefill: {
-          name: user.name,
-          email: user.email,
-          contact: user.mobileNumber || ""
+          name: user?.name || guestInfo.name,
+          email: user?.email || guestInfo.email,
+          contact: user?.mobileNumber || guestInfo.mobile || ""
         },
         theme: {
           color: "#002147"
@@ -98,9 +103,13 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, plan, on
   };
 
   const handleManualUPI = async () => {
-    if (!user) return;
     if (!txnId) {
       alert("Please enter Transaction ID");
+      return;
+    }
+
+    if (!user && (!guestInfo.name || !guestInfo.email)) {
+      alert("Please provide your Name and Email for verification.");
       return;
     }
 
@@ -113,8 +122,10 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, plan, on
 
       // Add payment record as PENDING
       await mockBackend.addPaymentRecord({
-        userId: user.id,
-        userName: user.name,
+        userId: user?.id || 'GUEST',
+        userName: user?.name || guestInfo.name,
+        userEmail: user?.email || guestInfo.email,
+        userMobile: user?.mobileNumber || guestInfo.mobile,
         planId: plan.id,
         planName: plan.name,
         amount: totalAmount,
@@ -170,8 +181,44 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, plan, on
           </button>
         </div>
 
-        <div className="p-8">
+        <div className="p-8 max-h-[70vh] overflow-y-auto">
           <AnimatePresence mode="wait">
+            {!user && status === 'IDLE' && method !== 'CHOICE' && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mb-6 p-4 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-3"
+              >
+                <div className="flex items-center gap-2 text-blue-700 font-bold text-xs uppercase tracking-wider mb-2">
+                  <AlertCircle size={14} />
+                  Guest Checkout Info
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  <input 
+                    type="text" 
+                    placeholder="Full Name" 
+                    className="w-full p-3 bg-white border border-stone-200 rounded-xl text-sm outline-none focus:border-agri-primary"
+                    value={guestInfo.name}
+                    onChange={e => setGuestInfo({...guestInfo, name: e.target.value})}
+                  />
+                  <input 
+                    type="email" 
+                    placeholder="Email Address" 
+                    className="w-full p-3 bg-white border border-stone-200 rounded-xl text-sm outline-none focus:border-agri-primary"
+                    value={guestInfo.email}
+                    onChange={e => setGuestInfo({...guestInfo, email: e.target.value})}
+                  />
+                  <input 
+                    type="tel" 
+                    placeholder="Mobile Number" 
+                    className="w-full p-3 bg-white border border-stone-200 rounded-xl text-sm outline-none focus:border-agri-primary"
+                    value={guestInfo.mobile}
+                    onChange={e => setGuestInfo({...guestInfo, mobile: e.target.value})}
+                  />
+                </div>
+              </motion.div>
+            )}
+
             {status === 'SUCCESS' ? (
               <motion.div 
                 key="success"

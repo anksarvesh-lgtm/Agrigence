@@ -1103,39 +1103,52 @@ class FirebaseBackendService {
       return id;
   }
 
-  async processOnlinePayment(userId: string, planId: string, paymentId: string, amount: number) {
+  async processOnlinePayment(userId: string, planId: string, paymentId: string, amount: number, guestInfo?: { name: string, email: string, mobile: string }) {
       const planSnap = await getDoc(doc(this.db, 'subscription_plans', planId));
       if (!planSnap.exists()) throw new Error("Plan not found");
       const plan = planSnap.data() as SubscriptionPlan;
-
-      const userRef = doc(this.db, 'users', userId);
-      const userSnap = await getDoc(userRef);
-      if (!userSnap.exists()) throw new Error("User not found");
 
       const now = new Date();
       const expiry = new Date();
       expiry.setMonth(expiry.getMonth() + plan.durationMonths);
 
-      await updateDoc(userRef, {
-          subscriptionTier: plan.name,
-          subscriptionExpiry: expiry.toISOString(),
-          status: 'ACTIVE',
-          articleLimit: plan.articleLimit,
-          blogLimit: plan.blogLimit
-      });
-
       const record: PaymentRecord = {
           id: `pay_${Date.now()}`,
           userId,
-          userName: userSnap.data().name,
+          userName: guestInfo?.name || 'Guest User',
+          userEmail: guestInfo?.email,
+          userMobile: guestInfo?.mobile,
           planId,
           planName: plan.name,
           amount,
-          method: 'INTERNATIONAL', // Or ONLINE
+          method: 'ONLINE',
           status: 'COMPLETED',
-          date: new Date().toISOString(),
-          upiTxnId: paymentId
+          date: now.toISOString(),
+          txnId: paymentId
       };
+
+      if (!userId.startsWith('guest_')) {
+          const userRef = doc(this.db, 'users', userId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+             const userData = userSnap.data() as User;
+             record.userName = userData.name;
+             record.userEmail = userData.email;
+             record.userMobile = userData.mobileNumber;
+
+             await updateDoc(userRef, {
+                 subscriptionTier: plan.name,
+                 subscriptionExpiry: expiry.toISOString(),
+                 status: 'ACTIVE',
+                 articleLimit: plan.articleLimit,
+                 blogLimit: plan.blogLimit,
+                 permissions: {
+                    canDownloadArticles: true,
+                    canDownloadBlogs: true
+                 }
+             });
+          }
+      }
 
       await addDoc(collection(this.db, 'payments'), record);
   }

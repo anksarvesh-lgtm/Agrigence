@@ -366,7 +366,8 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
       };
       
       const order = await razorpayInstance.orders.create(options);
-      res.json(order);
+      // Return order along with public key_id
+      res.json({ ...order, key_id: RAZORPAY_KEY_ID });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
