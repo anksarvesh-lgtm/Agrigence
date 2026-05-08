@@ -67,7 +67,7 @@ const Sitemap: React.FC = () => {
           <div>
             <h2 className="text-xl font-bold text-agri-primary mb-4 border-b border-stone-200 pb-2">Tools & Utilities</h2>
             <ul className="space-y-3">
-              <li><Link to="/image-tools" className="text-stone-600 hover:text-agri-secondary">Image Compressor & Resizer</Link></li>
+              <li><Link to="/img" className="text-stone-600 hover:text-agri-secondary">Image Compressor & Resizer</Link></li>
             </ul>
           </div>
 

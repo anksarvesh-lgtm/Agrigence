@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Upload, Download, Image as ImageIcon, Sparkles, Settings2, Maximize, FileImage, Trash2, SlidersHorizontal, ArrowRight, CheckCircle, RefreshCcw, Shield } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 import SEO from '../components/SEO';
 
 type Extension = 'image/jpeg' | 'image/png' | 'image/webp';
@@ -51,47 +52,30 @@ const ImageTools: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const processImage = useCallback(async (currentImage: ImageFile) => {
-    if (!currentImage.previewUrl) return;
+    if (!currentImage.originalFile) return;
     setIsProcessing(true);
 
     try {
-      const img = new Image();
-      img.src = currentImage.previewUrl;
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
+      const options = {
+        maxSizeMB: ((currentImage.originalSize / 1024 / 1024) * currentImage.quality) || 50,
+        maxWidthOrHeight: Math.max(currentImage.targetWidth, currentImage.targetHeight),
+        useWebWorker: true,
+        initialQuality: currentImage.quality,
+        fileType: currentImage.format,
+      };
+
+      const compressedFile = await imageCompression(currentImage.originalFile, options);
+
+      setImage(prev => {
+        if (!prev) return null;
+        if (prev.processedUrl) URL.revokeObjectURL(prev.processedUrl);
+        return {
+          ...prev,
+          processedBlob: compressedFile,
+          processedUrl: URL.createObjectURL(compressedFile),
+          processedSize: compressedFile.size
+        };
       });
-
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Could not get canvas context');
-
-      canvas.width = currentImage.targetWidth;
-      canvas.height = currentImage.targetHeight;
-
-      if (currentImage.format === 'image/jpeg' || currentImage.format === 'image/webp') {
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob(resolve, currentImage.format, currentImage.quality);
-      });
-
-      if (blob) {
-        setImage(prev => {
-          if (!prev) return null;
-          if (prev.processedUrl) URL.revokeObjectURL(prev.processedUrl);
-          return {
-            ...prev,
-            processedBlob: blob,
-            processedUrl: URL.createObjectURL(blob),
-            processedSize: blob.size
-          };
-        });
-      }
     } catch (e) {
       console.error('Error processing image:', e);
     } finally {
@@ -100,73 +84,39 @@ const ImageTools: React.FC = () => {
   }, []);
 
   const autoCompressToTarget = useCallback(async () => {
-      if (!image || !targetSizeKB) return;
-      const targetBytes = parseFloat(targetSizeKB) * 1024;
-      if (isNaN(targetBytes) || targetBytes <= 0) return;
+      if (!image || !image.originalFile || !targetSizeKB) return;
+      const targetKB = parseFloat(targetSizeKB);
+      if (isNaN(targetKB) || targetKB <= 0) return;
       
       setIsProcessing(true);
-      let minQ = 0.01;
-      let maxQ = 1.0;
-      let bestQ = 0.8;
-      let iterations = 0;
-      let bestBlob: Blob | null = null;
-      let lastDiff = Infinity;
       
       try {
-          const img = new Image();
-          img.src = image.previewUrl;
-          await new Promise((resolve, reject) => {
-              img.onload = resolve;
-              img.onerror = reject;
+          const options = {
+              maxSizeMB: targetKB / 1024,
+              maxWidthOrHeight: Math.max(image.targetWidth, image.targetHeight),
+              useWebWorker: true,
+              fileType: image.format
+          };
+          
+          const compressedFile = await imageCompression(image.originalFile, options);
+          
+          const achievedKB = (compressedFile.size / 1024).toFixed(2);
+          if (compressedFile.size > targetKB * 1024 * 1.05) {
+              alert(`Could not reach target size. Best achieved: ${achievedKB} KB`);
+          } else {
+              alert(`Successfully compressed to ${achievedKB} KB`);
+          }
+          
+          setImage(prev => {
+              if(!prev) return null;
+              if(prev.processedUrl) URL.revokeObjectURL(prev.processedUrl);
+              return {
+                  ...prev,
+                  processedBlob: compressedFile,
+                  processedUrl: URL.createObjectURL(compressedFile),
+                  processedSize: compressedFile.size
+              };
           });
-          const canvas = document.createElement('canvas');
-          canvas.width = image.targetWidth;
-          canvas.height = image.targetHeight;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) throw new Error('No context');
-          
-          if (image.format === 'image/jpeg' || image.format === 'image/webp') {
-              ctx.fillStyle = '#FFFFFF';
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-          }
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          
-          while (iterations < 8) {
-              let midQ = (minQ + maxQ) / 2;
-              const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, image.format, midQ));
-              if (!blob) break;
-              
-              const diff = Math.abs(blob.size - targetBytes);
-              if (diff < lastDiff || blob.size <= targetBytes) {
-                  bestQ = midQ;
-                  bestBlob = blob;
-                  lastDiff = diff;
-              }
-              
-              if (Math.abs(blob.size - targetBytes) < targetBytes * 0.02) {
-                  break; // within 2% margin
-              } else if (blob.size > targetBytes) {
-                  maxQ = midQ; // need smaller size, lower quality
-              } else {
-                  minQ = midQ; // need larger size, increase quality
-              }
-              iterations++;
-          }
-          
-          if (bestBlob) {
-              const finalBlob = bestBlob;
-              setImage(prev => {
-                  if(!prev) return null;
-                  if(prev.processedUrl) URL.revokeObjectURL(prev.processedUrl);
-                  return {
-                      ...prev,
-                      quality: bestQ,
-                      processedBlob: finalBlob,
-                      processedUrl: URL.createObjectURL(finalBlob),
-                      processedSize: finalBlob.size
-                  };
-              });
-          }
       } catch (e) {
           console.error(e);
       } finally {
@@ -297,9 +247,9 @@ const ImageTools: React.FC = () => {
   return (
     <div className="min-h-screen bg-stone-50 pb-20">
       <SEO 
-        title="Free Image Compressor & Resizer | Agrigence"
-        description="Compress, enhance, and resize images easily without losing quality. Free online image utility for agriculture professionals and researchers."
-        keywords="image compressor, image resizer, resize photo online, compress jpeg, optimize webp, agrigence tools"
+        title="Best Online Image Compressor & Resizer | Agrigence"
+        description="Compress, optimize, and resize images instantly with Agrigence's free online tool. Perfect for agricultural research reports, web use, and compliant document uploads."
+        keywords="free image compressor, photo resizer, online image optimizer, compress images for website, image resizer for academic journals, agrigence tools"
       />
 
       <div className="bg-white border-b border-stone-200">

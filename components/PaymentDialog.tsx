@@ -333,6 +333,11 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, plan, on
               </motion.div>
             ) : (
             <motion.div key="upi" className="space-y-6 text-center">
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-left text-sm text-amber-800">
+                  <p className="font-bold mb-1 flex items-center gap-2">⚠️ UPI Payment Note</p>
+                  <p>For better convenience and faster confirmation, kindly share the payment screenshot with us on WhatsApp after completing the UPI payment.</p>
+                  <p className="mt-2 text-amber-900 font-medium">Thank you for your cooperation.</p>
+                </div>
                 <div className="flex justify-center bg-white p-4 rounded-3xl border border-stone-200 shadow-inner relative overflow-hidden group">
                   <img 
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`upi://pay?pa=${settings?.upiId || 'agrigence@upi'}&pn=Agrigence&am=${totalAmount}&cu=INR`)}`} 

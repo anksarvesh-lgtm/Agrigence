@@ -249,8 +249,9 @@ const AppContent: React.FC = () => {
               <Route path="terms" element={<Terms />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="publication-ethics" element={<PublicationEthics />} />
-              <Route path="image-tools" element={<ImageTools />} />
-              <Route path="tools/image-resizer-compressor" element={<ImageTools />} />
+              <Route path="img" element={<ImageTools />} />
+              <Route path="image-tools" element={<Navigate to="/img" replace />} />
+              <Route path="tools/image-resizer-compressor" element={<Navigate to="/img" replace />} />
               <Route path="tools/*" element={<ExternalRedirect />} />
               
               <Route path="farmer-connect" element={<ExternalRedirect />} />

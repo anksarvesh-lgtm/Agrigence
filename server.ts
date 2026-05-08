@@ -591,7 +591,7 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
         '/author-guidelines',
         '/sitemap',
         '/publication-ethics',
-        '/image-tools',
+        '/img',
         '/farmer-connect',
         '/govt-schemes',
         '/mobile-app',
