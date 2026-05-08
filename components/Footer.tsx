@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Mail, Phone, Shield, FileText, Download, Smartphone } from 'lucide-react';
+import { MapPin, Mail, Phone, Shield, FileText, Download, Smartphone, Facebook, Twitter, Instagram, Linkedin, Youtube, MessageCircle, Send } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
 import { SiteSettings } from '../types';
 
@@ -24,6 +24,29 @@ const Footer: React.FC = () => {
             <p className="text-stone-400 text-sm leading-relaxed mb-6">
               Agrigence Journal of Agriculture & Allied Sciences is a peer-reviewed monthly online journal dedicated to building a trusted digital ecosystem for agricultural research in India.
             </p>
+            <div className="flex items-center gap-4">
+              <a href="https://facebook.com/agrigence" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                <Facebook size={16} />
+              </a>
+              <a href="https://twitter.com/agrigence" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-sky-500 hover:text-white transition-all shadow-sm">
+                <Twitter size={16} />
+              </a>
+              <a href="https://instagram.com/agrigence" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-pink-600 hover:text-white transition-all shadow-sm">
+                <Instagram size={16} />
+              </a>
+              <a href="https://linkedin.com/company/agrigence" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-blue-700 hover:text-white transition-all shadow-sm">
+                <Linkedin size={16} />
+              </a>
+              <a href="https://youtube.com/@agrigence" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                <Youtube size={16} />
+              </a>
+              <a href="https://wa.me/919452571317" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-green-500 hover:text-white transition-all shadow-sm">
+                <MessageCircle size={16} />
+              </a>
+              <a href="https://t.me/agrigence" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-sky-600 hover:text-white transition-all shadow-sm">
+                <Send size={16} />
+              </a>
+            </div>
           </div>
           
           <div>
@@ -32,6 +55,8 @@ const Footer: React.FC = () => {
               <li><Link to="/about-journal" className="hover:text-agri-secondary transition-colors">About Journal</Link></li>
               <li><Link to="/aim-scope" className="hover:text-agri-secondary transition-colors">Aim & Scope</Link></li>
               <li><Link to="/editorial-board" className="hover:text-agri-secondary transition-colors">Editorial Board</Link></li>
+              <li><Link to="/submission" className="hover:text-agri-secondary transition-colors font-semibold text-agri-secondary">Manuscript Submission</Link></li>
+              <li><Link to="/subscription" className="hover:text-agri-secondary transition-colors">Journal Subscription</Link></li>
             </ul>
           </div>
 
@@ -39,7 +64,7 @@ const Footer: React.FC = () => {
             <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Policies</h3>
             <ul className="space-y-2 text-sm">
               <li><Link to="/author-guidelines" className="hover:text-agri-secondary transition-colors">Author Guidelines</Link></li>
-              <li><Link to="/pages/publication-ethics" className="hover:text-agri-secondary transition-colors">Publication Ethics</Link></li>
+              <li><Link to="/publication-ethics" className="hover:text-agri-secondary transition-colors">Publication Ethics</Link></li>
               <li><Link to="/privacy" className="hover:text-agri-secondary transition-colors">Privacy Policy</Link></li>
               <li><Link to="/terms" className="hover:text-agri-secondary transition-colors">Terms of Service</Link></li>
             </ul>
@@ -48,11 +73,9 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Resources</h3>
             <ul className="space-y-2 text-sm">
+              <li><a href="https://kisan.agrigence.in/tools" className="hover:text-agri-secondary transition-colors">Agri Intelligence Tools</a></li>
               <li><a href="https://icar.org.in/" target="_blank" rel="noopener noreferrer" className="hover:text-agri-secondary transition-colors">ICAR</a></li>
-              <li><a href="https://www.fao.org/home/en" target="_blank" rel="noopener noreferrer" className="hover:text-agri-secondary transition-colors">FAO</a></li>
               <li><a href="https://agricoop.nic.in/" target="_blank" rel="noopener noreferrer" className="hover:text-agri-secondary transition-colors">Agriculture Dept. India</a></li>
-              <li><a href="https://enam.gov.in/web/" target="_blank" rel="noopener noreferrer" className="hover:text-agri-secondary transition-colors">e-NAM Portal</a></li>
-              <li><Link to="/sitemap" className="hover:text-agri-secondary transition-colors">Sitemap</Link></li>
             </ul>
           </div>
 

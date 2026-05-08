@@ -45,24 +45,21 @@ const Sitemap: React.FC = () => {
             <ul className="space-y-3">
               <li><Link to="/" className="text-stone-600 hover:text-agri-secondary">Home</Link></li>
               <li><Link to="/about-contact" className="text-stone-600 hover:text-agri-secondary">About & Contact</Link></li>
-              <li><Link to="/kisan" className="text-stone-600 hover:text-agri-secondary">Kisan Hub</Link></li>
-              <li><Link to="/farmer-connect" className="text-stone-600 hover:text-agri-secondary">Farmer Connect</Link></li>
-              <li><Link to="/govt-schemes" className="text-stone-600 hover:text-agri-secondary">Govt Schemes</Link></li>
               <li><Link to="/consultation" className="text-stone-600 hover:text-agri-secondary">Consultation</Link></li>
               <li><Link to="/mobile-app" className="text-stone-600 hover:text-agri-secondary">Mobile App</Link></li>
-              <li><Link to="/tools" className="text-stone-600 hover:text-agri-secondary">Agri-Intelligence Tools</Link></li>
               <li><Link to="/journals" className="text-stone-600 hover:text-agri-secondary">Journals</Link></li>
               <li><Link to="/products" className="text-stone-600 hover:text-agri-secondary">Agri-Store</Link></li>
               <li><Link to="/submission" className="text-stone-600 hover:text-agri-secondary">Submit Content</Link></li>
               <li><Link to="/subscription" className="text-stone-600 hover:text-agri-secondary">Subscription Plans</Link></li>
+              <li><Link to="/publication-ethics" className="text-stone-600 hover:text-agri-secondary">Publication Ethics</Link></li>
             </ul>
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-agri-primary mb-4 border-b border-stone-200 pb-2">Dynamic Content</h2>
+            <h2 className="text-xl font-bold text-agri-primary mb-4 border-b border-stone-200 pb-2">Research Repository</h2>
             <ul className="space-y-3">
-              {articles.map(a => <li key={a.id}><Link to={`/blog/${a.id}`} className="text-stone-600 hover:text-agri-secondary">{a.title}</Link></li>)}
-              {magazines.map(m => <li key={m.id}><Link to="/journals" className="text-stone-600 hover:text-agri-secondary">{m.title}</Link></li>)}
+              {articles.map(a => <li key={a.id}><Link to={`/view/${a.id}`} className="text-stone-600 hover:text-agri-secondary">{a.title}</Link></li>)}
+              {magazines.map(m => <li key={m.id}><Link to="/journals" className="text-stone-600 hover:text-agri-secondary">{m.title} (Issue {m.issueNumber})</Link></li>)}
               {products.map(p => <li key={p.id}><Link to="/products" className="text-stone-600 hover:text-agri-secondary">{p.name}</Link></li>)}
             </ul>
           </div>
@@ -73,7 +70,6 @@ const Sitemap: React.FC = () => {
               <li><Link to="/terms" className="text-stone-600 hover:text-agri-secondary">Terms of Service</Link></li>
               <li><Link to="/privacy" className="text-stone-600 hover:text-agri-secondary">Privacy Policy</Link></li>
               <li><Link to="/author-guidelines" className="text-stone-600 hover:text-agri-secondary">Author Guidelines</Link></li>
-              <li><Link to="/sitemap" className="text-stone-600 hover:text-agri-secondary">Sitemap</Link></li>
             </ul>
           </div>
         </div>

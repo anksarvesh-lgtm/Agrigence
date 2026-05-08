@@ -278,9 +278,9 @@ const Home: React.FC = () => {
                   <a href="mailto:agrigence@gmail.com" className="text-white/80 hover:text-white transition-colors">agrigence@gmail.com</a>
                </div>
                <div className="flex items-center gap-6 text-white/50 text-xs font-bold uppercase tracking-widest">
-                  <Link to="/pages/publication-ethics" className="hover:text-white transition-colors">Ethics</Link>
-                  <Link to="/pages/author-guidelines" className="hover:text-white transition-colors">Guidelines</Link>
-                  <Link to="/pages/copyright" className="hover:text-white transition-colors">Copyright</Link>
+                  <Link to="/publication-ethics" className="hover:text-white transition-colors">Ethics</Link>
+                  <Link to="/author-guidelines" className="hover:text-white transition-colors">Guidelines</Link>
+                  <Link to="/copyright" className="hover:text-white transition-colors">Copyright</Link>
                </div>
             </div>
           </div>

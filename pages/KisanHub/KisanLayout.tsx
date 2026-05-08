@@ -18,32 +18,32 @@ const KisanLayoutContent: React.FC = () => {
     {
       title: 'Farm Management',
       items: [
-        { to: '/kisan', label: 'Dashboard', icon: LayoutDashboard, end: true },
-        { to: '/kisan/ledger', label: 'Khatabook', icon: IndianRupee },
-        { to: '/kisan/equipment', label: 'My Assets', icon: Tractor },
+        { to: 'https://kisan.agrigence.in', label: 'Dashboard', icon: LayoutDashboard, end: true },
+        { to: 'https://kisan.agrigence.in/ledger', label: 'Khatabook', icon: IndianRupee },
+        { to: 'https://kisan.agrigence.in/equipment', label: 'My Assets', icon: Tractor },
       ]
     },
     {
       title: 'Advisory Services',
       items: [
-        { to: '/kisan/crop-planner', label: 'AI Crop Planner', icon: Sprout },
-        { to: '/kisan/soil-analyzer', label: 'Soil Analyzer', icon: Beaker },
-        { to: '/kisan/weather', label: 'Weather Alerts', icon: CloudLightning },
-        { to: '/kisan/sop', label: 'Expert SOPs', icon: ClipboardList },
+        { to: 'https://kisan.agrigence.in/crop-planner', label: 'AI Crop Planner', icon: Sprout },
+        { to: 'https://kisan.agrigence.in/soil-analyzer', label: 'Soil Analyzer', icon: Beaker },
+        { to: 'https://kisan.agrigence.in/weather', label: 'Weather Alerts', icon: CloudLightning },
+        { to: 'https://kisan.agrigence.in/sop', label: 'Expert SOPs', icon: ClipboardList },
       ]
     },
     {
       title: 'Marketplace',
       items: [
-        { to: '/kisan/mandi', label: 'Mandi Rates', icon: Smartphone },
-        { to: '/kisan/marketplace', label: 'Kisan Market', icon: Store },
+        { to: 'https://kisan.agrigence.in/mandi', label: 'Mandi Rates', icon: Smartphone },
+        { to: 'https://kisan.agrigence.in/marketplace', label: 'Kisan Market', icon: Store },
       ]
     },
     {
       title: 'Resources',
       items: [
-        { to: '/kisan/schemes', label: 'Govt Schemes', icon: Landmark },
-        { to: '/kisan/land', label: 'Land Records', icon: Map },
+        { to: 'https://kisan.agrigence.in/schemes', label: 'Govt Schemes', icon: Landmark },
+        { to: 'https://kisan.agrigence.in/land', label: 'Land Records', icon: Map },
       ]
     }
   ];
@@ -65,7 +65,7 @@ const KisanLayoutContent: React.FC = () => {
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo area */}
             <div className="flex items-center gap-3 shrink-0">
-               <div className="bg-white rounded-full p-1.5 h-10 w-10 md:h-12 md:w-12 flex items-center justify-center shrink-0 shadow-sm transition-transform active:scale-95 cursor-pointer" onClick={() => navigate('/kisan')}>
+               <div className="bg-white rounded-full p-1.5 h-10 w-10 md:h-12 md:w-12 flex items-center justify-center shrink-0 shadow-sm transition-transform active:scale-95 cursor-pointer" onClick={() => window.location.href = 'https://kisan.agrigence.in'}>
                    {settings?.logoUrl ? (
                        <OptimizedImage src={settings.logoUrl} className="h-full w-full object-contain" alt="Logo" priority={true} />
                    ) : (
@@ -81,23 +81,23 @@ const KisanLayoutContent: React.FC = () => {
             {/* Desktop Navigation */}
             <div className="hidden lg:flex flex-1 items-center justify-center mx-8">
               <nav className="flex space-x-1 items-center bg-black/10 p-1 rounded-2xl relative">
-                <NavLink to="/kisan" end className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+                <a href="https://kisan.agrigence.in" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all text-white/80 hover:bg-white/10 hover:text-white">
                   Dashboard
-                </NavLink>
+                </a>
                 
                 {/* Reorganized Dropdowns can be added here, for now a simplified direct row */}
-                <NavLink to="/kisan/crop-planner" className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+                <a href="https://kisan.agrigence.in/crop-planner" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all text-white/80 hover:bg-white/10 hover:text-white">
                    Crop Planner
-                </NavLink>
-                <NavLink to="/kisan/mandi" className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+                </a>
+                <a href="https://kisan.agrigence.in/mandi" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all text-white/80 hover:bg-white/10 hover:text-white">
                    Mandi Bhav
-                </NavLink>
-                <NavLink to="/kisan/schemes" className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+                </a>
+                <a href="https://kisan.agrigence.in/schemes" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all text-white/80 hover:bg-white/10 hover:text-white">
                    Schemes
-                </NavLink>
-                <NavLink to="/kisan/marketplace" className={({isActive}) => `flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${isActive ? 'bg-white text-[#92745B] shadow-lg' : 'text-white/80 hover:bg-white/10 hover:text-white'}`}>
+                </a>
+                <a href="https://kisan.agrigence.in/marketplace" className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all text-white/80 hover:bg-white/10 hover:text-white">
                    Marketplace
-                </NavLink>
+                </a>
               </nav>
             </div>
 
@@ -118,9 +118,9 @@ const KisanLayoutContent: React.FC = () => {
                   <option value="gu" className="text-stone-900">GU</option>
                 </select>
               </div>
-              <NavLink to="/kisan/dashboard" className="p-2.5 md:p-3 rounded-2xl bg-white/10 hover:bg-white/20 transition-all">
+              <a href="https://kisan.agrigence.in/dashboard" className="p-2.5 md:p-3 rounded-2xl bg-white/10 hover:bg-white/20 transition-all">
                 <User size={20} className="text-white" />
-              </NavLink>
+              </a>
               <button 
                 onClick={() => setIsOpen(true)}
                 className="lg:hidden p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 transition-all"
@@ -217,22 +217,22 @@ const KisanLayoutContent: React.FC = () => {
 
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-xl border border-stone-200/50 shadow-2xl rounded-[2rem] px-8 py-3 flex items-center gap-10 md:gap-16 z-50">
-         <NavLink to="/kisan" end className={({isActive}) => `flex flex-col items-center gap-1 transition-all ${isActive ? 'text-[#92745B] scale-110' : 'text-stone-400 opacity-60'}`}>
+         <a href="https://kisan.agrigence.in" className="flex flex-col items-center gap-1 transition-all text-stone-400 opacity-60">
             <LayoutDashboard size={24} />
             <span className="text-[9px] font-black uppercase tracking-widest">Hub</span>
-         </NavLink>
-         <NavLink to="/kisan/mandi" className={({isActive}) => `flex flex-col items-center gap-1 transition-all ${isActive ? 'text-[#92745B] scale-110' : 'text-stone-400 opacity-60'}`}>
+         </a>
+         <a href="https://kisan.agrigence.in/mandi" className="flex flex-col items-center gap-1 transition-all text-stone-400 opacity-60">
             <IndianRupee size={24} />
             <span className="text-[9px] font-black uppercase tracking-widest">Prices</span>
-         </NavLink>
-         <NavLink to="/kisan/crop-planner" className={({isActive}) => `flex flex-col items-center gap-1 transition-all ${isActive ? 'text-[#92745B] scale-110' : 'text-stone-400 opacity-60'}`}>
+         </a>
+         <a href="https://kisan.agrigence.in/crop-planner" className="flex flex-col items-center gap-1 transition-all text-stone-400 opacity-60">
             <Sprout size={24} />
             <span className="text-[9px] font-black uppercase tracking-widest">Plan</span>
-         </NavLink>
-         <NavLink to="/kisan/dashboard" className={({isActive}) => `flex flex-col items-center gap-1 transition-all ${isActive ? 'text-[#92745B] scale-110' : 'text-stone-400 opacity-60'}`}>
+         </a>
+         <a href="https://kisan.agrigence.in/dashboard" className="flex flex-col items-center gap-1 transition-all text-stone-400 opacity-60">
             <User size={24} />
             <span className="text-[9px] font-black uppercase tracking-widest">Profile</span>
-         </NavLink>
+         </a>
       </nav>
 
       {/* Main Content Area */}

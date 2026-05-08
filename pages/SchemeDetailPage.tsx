@@ -42,7 +42,7 @@ const SchemeDetailPage: React.FC = () => {
         <nav className="flex text-sm text-stone-500 mb-6 font-medium">
           <Link to="/" className="hover:text-emerald-700">Home</Link>
           <span className="mx-2">/</span>
-          <Link to="/kisan/schemes" className="hover:text-emerald-700">Gov Schemes</Link>
+          <a href="https://kisan.agrigence.in/schemes" className="hover:text-emerald-700">Gov Schemes</a>
           <span className="mx-2">/</span>
           <span className="text-stone-800">{scheme.name}</span>
         </nav>

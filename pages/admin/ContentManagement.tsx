@@ -417,6 +417,15 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
                                   <div className="space-y-4">
                                      <input className="w-full bg-white border border-admin-inputBorder rounded-xl p-3 text-xs text-admin-text outline-none focus:border-admin-inputFocus focus:ring-1 focus:ring-admin-inputFocus" placeholder="SEO Meta Title" value={editingArticle.seoTitle || ''} onChange={e => setEditingArticle({...editingArticle, seoTitle: e.target.value})} />
                                      <textarea className="w-full bg-white border border-admin-inputBorder rounded-xl p-3 text-xs text-admin-text outline-none focus:border-admin-inputFocus focus:ring-1 focus:ring-admin-inputFocus h-20" placeholder="Meta Description for Google" value={editingArticle.metaDescription || ''} onChange={e => setEditingArticle({...editingArticle, metaDescription: e.target.value})} />
+                                     <div className="space-y-2 mt-4">
+                                        <label className="text-[9px] uppercase font-bold text-admin-muted">Keywords (Comma separated)</label>
+                                        <input 
+                                          className="w-full bg-white border border-admin-inputBorder rounded-xl p-3 text-xs text-admin-text outline-none focus:border-admin-inputFocus focus:ring-1 focus:ring-admin-inputFocus" 
+                                          placeholder="e.g. agriculture, research, agrigence" 
+                                          value={editingArticle.keywords?.join(', ') || ''} 
+                                          onChange={e => setEditingArticle({...editingArticle, keywords: e.target.value.split(',').map(k => k.trim())})} 
+                                        />
+                                     </div>
                                   </div>
                                </div>
 
@@ -642,6 +651,30 @@ const MagazineManager = () => {
                                <div>
                                   <label className="text-[10px] uppercase font-bold text-admin-secondary mb-2 block tracking-widest">Drive Link (Optional)</label>
                                   <input className="w-full bg-white border border-admin-inputBorder rounded-2xl p-4 text-admin-text outline-none focus:border-admin-inputFocus focus:ring-1 focus:ring-admin-inputFocus" value={editingMag.driveUrl || ''} onChange={e => setEditingMag({...editingMag, driveUrl: e.target.value})} placeholder="https://drive.google.com/..." />
+                               </div>
+                               
+                               <div className="bg-stone-50 p-6 rounded-2xl border border-admin-border space-y-4">
+                                  <h4 className="text-[10px] font-black uppercase text-agri-secondary tracking-widest flex items-center gap-2">
+                                    <Globe size={14}/> Magazine SEO Control
+                                  </h4>
+                                  <input 
+                                    className="w-full bg-white border border-admin-inputBorder rounded-xl p-3 text-xs text-admin-text outline-none focus:border-agri-secondary" 
+                                    placeholder="SEO Title" 
+                                    value={editingMag.seoTitle || ''} 
+                                    onChange={e => setEditingMag({...editingMag, seoTitle: e.target.value})} 
+                                  />
+                                  <textarea 
+                                    className="w-full bg-white border border-admin-inputBorder rounded-xl p-3 text-xs text-admin-text outline-none focus:border-agri-secondary h-20" 
+                                    placeholder="Meta Description" 
+                                    value={editingMag.metaDescription || ''} 
+                                    onChange={e => setEditingMag({...editingMag, metaDescription: e.target.value})} 
+                                  />
+                                  <input 
+                                    className="w-full bg-white border border-admin-inputBorder rounded-xl p-3 text-xs text-admin-text outline-none focus:border-agri-secondary" 
+                                    placeholder="Keywords (comma separated)" 
+                                    value={editingMag.keywords?.join(', ') || ''} 
+                                    onChange={e => setEditingMag({...editingMag, keywords: e.target.value?.split(',').map(k => k.trim()) || []})} 
+                                  />
                                </div>
                             </div>
 

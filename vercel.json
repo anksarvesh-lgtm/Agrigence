@@ -1,4 +1,56 @@
 {
+  "redirects": [
+    {
+      "source": "/tools/:path*",
+      "destination": "https://kisan.agrigence.in/tools/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/tools",
+      "destination": "https://kisan.agrigence.in/tools",
+      "permanent": true
+    },
+    {
+      "source": "/kisan/:path*",
+      "destination": "https://kisan.agrigence.in/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/kisan",
+      "destination": "https://kisan.agrigence.in",
+      "permanent": true
+    },
+    {
+      "source": "/mandi-bhav/:path*",
+      "destination": "https://kisan.agrigence.in/mandi-bhav/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/scheme/:path*",
+      "destination": "https://kisan.agrigence.in/scheme/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/crop/:path*",
+      "destination": "https://kisan.agrigence.in/crop/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/farmer-connect",
+      "destination": "https://kisan.agrigence.in/farmer-connect",
+      "permanent": true
+    },
+    {
+      "source": "/govt-schemes",
+      "destination": "https://kisan.agrigence.in/govt-schemes",
+      "permanent": true
+    },
+    {
+      "source": "/mobile-app",
+      "destination": "https://kisan.agrigence.in/mobile-app",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",

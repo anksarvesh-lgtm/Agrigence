@@ -6,6 +6,7 @@ import { useAuth } from '../src/authContext';
 import { SecurePDFViewer } from '../components/SecurePDFViewer';
 import { Loader2, AlertCircle, FileText, ArrowLeft, Shield, ShieldAlert, ShieldCheck, AlertTriangle, Activity, Home } from 'lucide-react';
 import { Article } from '../types';
+import SEO from '../components/SEO';
 
 const ViewDocument: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -107,6 +108,12 @@ const ViewDocument: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col bg-stone-900 overflow-hidden">
+       <SEO 
+          title={`${meta?.seoTitle || meta?.title} | Agrigence Research`}
+          description={meta?.metaDescription || meta?.excerpt || `Read the full research article: ${meta?.title}`}
+          type="article"
+          keywords={meta?.keywords?.join(', ')}
+       />
        {/* Viewer Toolbar */}
        <div className="bg-[#1C1510] text-white p-4 flex justify-between items-center border-b border-white/10 shrink-0 z-50 shadow-lg">
           <div className="flex items-center gap-4">

@@ -198,18 +198,30 @@ const EditorialBoardManagement: React.FC = () => {
                              <select className="w-full bg-white border border-gray-300 rounded-2xl p-4 text-gray-900 outline-none focus:border-agri-secondary focus:ring-1 focus:ring-agri-secondary" value={editingMember.designation || ''} onChange={e => setEditingMember({...editingMember, designation: e.target.value})}>
                                 <option value="">Select Role</option>
                                 <option value="Editor-in-Chief">Editor-in-Chief</option>
-                                <option value="Associate Editor">Associate Editor</option>
-                                <option value="Reviewer">Reviewer</option>
-                                <option value="Advisory Board">Advisory Board</option>
                                 <option value="Managing Editor">Managing Editor</option>
+                                <option value="Associate Editor">Associate Editor</option>
+                                <option value="Editorial Board Member">Editorial Board Member</option>
+                                <option value="Advisory Board">Advisory Board Member</option>
+                                <option value="Reviewer">Reviewer</option>
                              </select>
                           </div>
                        </div>
 
                        <div className="grid md:grid-cols-2 gap-6">
                           <div>
-                             <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Institution</label>
+                             <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Institution/Affiliation</label>
                              <input className="w-full bg-white border border-gray-300 rounded-2xl p-4 text-gray-900 outline-none focus:border-agri-secondary text-sm" value={editingMember.institution || ''} onChange={e => setEditingMember({...editingMember, institution: e.target.value})} />
+                          </div>
+                          <div>
+                             <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Department</label>
+                             <input className="w-full bg-white border border-gray-300 rounded-2xl p-4 text-gray-900 outline-none focus:border-agri-secondary text-sm" value={editingMember.department || ''} onChange={e => setEditingMember({...editingMember, department: e.target.value})} />
+                          </div>
+                       </div>
+
+                       <div className="grid md:grid-cols-2 gap-6">
+                          <div>
+                             <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Country</label>
+                             <input className="w-full bg-white border border-gray-300 rounded-2xl p-4 text-gray-900 outline-none focus:border-agri-secondary text-sm" value={editingMember.country || ''} onChange={e => setEditingMember({...editingMember, country: e.target.value})} />
                           </div>
                           <div>
                              <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Email</label>

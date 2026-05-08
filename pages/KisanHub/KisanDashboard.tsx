@@ -131,7 +131,7 @@ export const KisanDashboard: React.FC = () => {
                             <Settings2 size={20} className="text-stone-400" /> Farm Management
                         </h3>
                         <div className="space-y-3">
-                            <Link to="/kisan/my-listings" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
+                            <a href="https://kisan.agrigence.in/my-listings" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-emerald-600 group-hover:text-[#2d5a27] shadow-sm">
                                         <Store size={22} />
@@ -142,9 +142,9 @@ export const KisanDashboard: React.FC = () => {
                                     </div>
                                 </div>
                                 <ChevronRight size={20} className="text-stone-300 group-hover:text-white" />
-                            </Link>
+                            </a>
 
-                            <Link to="/kisan/equipment" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
+                            <a href="https://kisan.agrigence.in/equipment" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-amber-600 group-hover:text-[#2d5a27] shadow-sm">
                                         <Tractor size={22} />
@@ -155,9 +155,9 @@ export const KisanDashboard: React.FC = () => {
                                     </div>
                                 </div>
                                 <ChevronRight size={20} className="text-stone-300 group-hover:text-white" />
-                            </Link>
+                            </a>
 
-                            <Link to="/kisan/schemes" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
+                            <a href="https://kisan.agrigence.in/schemes" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-blue-600 group-hover:text-[#2d5a27] shadow-sm">
                                         <FileText size={22} />
@@ -168,7 +168,7 @@ export const KisanDashboard: React.FC = () => {
                                     </div>
                                 </div>
                                 <ChevronRight size={20} className="text-stone-300 group-hover:text-white" />
-                            </Link>
+                            </a>
                         </div>
                     </div>
 

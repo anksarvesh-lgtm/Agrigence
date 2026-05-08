@@ -475,6 +475,7 @@ export interface Magazine {
   downloadAccess: DownloadAccessLevel;
   seoTitle?: string;
   metaDescription?: string;
+  keywords?: string[];
 }
 
 export interface NewsItem {

@@ -41,12 +41,12 @@ import ResearchDataLab from './pages/ResearchDataLab';
 import AdvancedResearchSuite from './pages/AdvancedResearchSuite/AdvancedResearchSuite';
 import AdvancedStatsSuite from './pages/AdvancedStatsSuite';
 import ViewDocument from './pages/ViewDocument';
+import PublicationEthics from './pages/PublicationEthics';
 import Submission from './pages/Submission';
 import Subscription from './pages/Subscription';
 import MySubscription from './pages/MySubscription';
 import ToolHistoryDetail from './pages/ToolHistoryDetail';
 import ToolsPage from './pages/ToolsPage';
-import Sitemap from './pages/Sitemap';
 import FarmerConnect from './pages/FarmerConnect';
 import { GovSchemes } from './pages/KisanHub/GovSchemes';
 import MobileAppView from './pages/MobileAppView';
@@ -151,6 +151,14 @@ const App: React.FC = () => {
   );
 };
 
+const ExternalRedirect: React.FC = () => {
+   const location = useLocation();
+   useEffect(() => {
+      window.location.replace(`https://kisan.agrigence.in${location.pathname}${location.search}`);
+   }, [location]);
+   return <div className="min-h-screen flex items-center justify-center text-agri-primary font-serif">Redirecting...</div>;
+};
+
 const FaviconUpdater: React.FC = () => {
   useEffect(() => {
     return mockBackend.subscribeToSettings((data) => {
@@ -216,6 +224,9 @@ const AppContent: React.FC = () => {
               <Route path="board" element={<Navigate to="/editorial-board" replace />} />
               {/* Updated Author Guidelines Route */}
               <Route path="author-guidelines" element={<AuthorGuidelines />} />
+              {/* Redirect legacy paths */}
+              <Route path="pages/publication-ethics" element={<Navigate to="/publication-ethics" replace />} />
+              <Route path="pages/author-guidelines" element={<Navigate to="/author-guidelines" replace />} />
               <Route path="guidelines" element={<Navigate to="/author-guidelines" replace />} />
               
 
@@ -229,33 +240,17 @@ const AppContent: React.FC = () => {
               <Route path="forgot-password" element={<ForgotPassword />} />
               <Route path="terms" element={<Terms />} />
               <Route path="privacy" element={<Privacy />} />
-              <Route path="sitemap" element={<Sitemap />} />
-              <Route path="tools" element={<ToolsPage />} />
-              <Route path="tools/seed-rate" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><SeedRatePage /></React.Suspense>} />
-              <Route path="tools/nutrient-req" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><NutrientPage /></React.Suspense>} />
-              <Route path="tools/inm-planner" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><INMPage /></React.Suspense>} />
-              <Route path="tools/water-req" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><WaterPage /></React.Suspense>} />
-              <Route path="tools/economics" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><EconomicsPage /></React.Suspense>} />
-              <Route path="tools/land-converter" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><LandPage /></React.Suspense>} />
-              <Route path="tools/spray-calculator" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><SprayPage /></React.Suspense>} />
-              <Route path="tools/yield-estimator" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><YieldPage /></React.Suspense>} />
-              <Route path="tools/kpi-dashboard" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><KPIPage /></React.Suspense>} />
-              <Route path="tools/experiment-builder" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><ExperimentPage /></React.Suspense>} />
-              <Route path="tools/plot-dose" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><PlotDosePage /></React.Suspense>} />
-              <Route path="tools/factorial-generator" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><FactorialPage /></React.Suspense>} />
-              <Route path="tools/climate-analyzer" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><ClimatePage /></React.Suspense>} />
-              <Route path="tools/anova" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><ANOVAPage /></React.Suspense>} />
-              <Route path="tools/statistical-analysis" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><StatisticalAnalysisPage /></React.Suspense>} />
-              <Route path="tools/auto-graph" element={<React.Suspense fallback={<div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading Tool...</div>}><GraphPage /></React.Suspense>} />
+              <Route path="publication-ethics" element={<PublicationEthics />} />
+              <Route path="tools/*" element={<ExternalRedirect />} />
               
-              <Route path="farmer-connect" element={<FarmerConnect />} />
-              <Route path="govt-schemes" element={<GovSchemes hideBack={true} />} />
-              <Route path="mobile-app" element={<MobileAppView />} />
+              <Route path="farmer-connect" element={<ExternalRedirect />} />
+              <Route path="govt-schemes" element={<ExternalRedirect />} />
+              <Route path="mobile-app" element={<ExternalRedirect />} />
               
               {/* Programmatic SEO Pages */}
-              <Route path="mandi-bhav/:city" element={<MandiCityPage />} />
-              <Route path="scheme/:slug" element={<SchemeDetailPage />} />
-              <Route path="crop/:slug" element={<CropAdvisoryPage />} />
+              <Route path="mandi-bhav/:city" element={<ExternalRedirect />} />
+              <Route path="scheme/:slug" element={<ExternalRedirect />} />
+              <Route path="crop/:slug" element={<ExternalRedirect />} />
 
               {/* USER DASHBOARD */}
               <Route path="dashboard" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Dashboard /></ProtectedRoute>} />
@@ -283,25 +278,7 @@ const AppContent: React.FC = () => {
                <Route path="history" element={<ReviewerDashboard />} /> 
             </Route>
 
-            <Route path="/kisan" element={<KisanLayout />}>
-              <Route path="login" element={<KisanLogin />} />
-              <Route index element={<HubDashboard />} />
-              <Route path="mandi" element={<MandiBhav />} />
-              <Route path="ledger" element={<KisanProtectedRoute><Khatabook /></KisanProtectedRoute>} />
-              <Route path="sop" element={<KisanProtectedRoute><SOPChecklist /></KisanProtectedRoute>} />
-              <Route path="weather" element={<KisanWeather />} />
-              <Route path="equipment" element={<EquipmentRental />} />
-              <Route path="marketplace" element={<FarmerMarketplace />} />
-              <Route path="land" element={<LandListing />} />
-              <Route path="dashboard" element={<KisanProtectedRoute><KisanDashboard /></KisanProtectedRoute>} />
-              <Route path="schemes" element={<GovSchemes />} />
-              <Route path="post-requirement" element={<KisanProtectedRoute><PostRequirement /></KisanProtectedRoute>} />
-              <Route path="my-requirements" element={<KisanProtectedRoute><MyRequirements /></KisanProtectedRoute>} />
-              <Route path="my-listings" element={<KisanProtectedRoute><MyListings /></KisanProtectedRoute>} />
-              <Route path="list-item" element={<KisanProtectedRoute><ListYourItem /></KisanProtectedRoute>} />
-              <Route path="crop-planner" element={<CropPlanner />} />
-              <Route path="soil-analyzer" element={<SoilAnalyzer />} />
-            </Route>
+            <Route path="/kisan/*" element={<ExternalRedirect />} />
 
             <Route path="/analytics" element={<DashboardHome />} />
             <Route path="/analytics/pipeline" element={<PipelineBuilder />} />

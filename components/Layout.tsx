@@ -111,7 +111,7 @@ const AppLayout: React.FC = () => {
       { label: 'Archive', path: '/journals', icon: BookOpen },
       { label: 'Author Guidelines', path: '/author-guidelines', icon: FileText },
       { label: 'Editorial Board', path: '/editorial-board', icon: Users },
-      { label: 'Publication Ethics', path: '/pages/publication-ethics', icon: Shield },
+      { label: 'Publication Ethics', path: '/publication-ethics', icon: Shield },
       { label: 'Aim & Scope', path: '/aim-scope', icon: Info },
       { label: 'About Journal', path: '/about-journal', icon: Info },
       { label: 'Contact Us', path: '/about-contact', icon: Mail },
@@ -284,47 +284,137 @@ const AppLayout: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-                {/* Top App Bar */}
-         <header className="h-16 flex items-center justify-between px-4 sm:px-6 glossy border-b border-white/10 z-30 shrink-0">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2 -ml-2 text-stone-900 dark:text-stone-100">
-               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-            <Link to="/" className="flex items-center gap-3">
-              <Logo className="h-8" />
-              <div className="flex flex-col">
-                <span className="font-serif font-bold text-agri-primary dark:text-stone-100 text-lg leading-none tracking-tight">
-                  Agrigence
-                </span>
-                <span className="font-serif italic text-agri-secondary dark:text-agri-secondary/80 text-[9px] leading-tight mt-0.5">
-                  Where Agri-Intelligence Meets Agricultural Generation
-                </span>
+        {/* Futurized App Bar */}
+        <header className="z-40 shrink-0 border-b border-stone-200/50 dark:border-white/5 bg-white/70 dark:bg-stone-950/70 backdrop-blur-xl">
+          <div className="h-20 max-w-screen-2xl mx-auto flex items-center justify-between px-4 sm:px-8">
+            <div className="flex items-center gap-10">
+              <button 
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+                className="lg:hidden p-2.5 -ml-2 text-stone-900 dark:text-stone-100 bg-stone-100 dark:bg-white/5 rounded-xl transition-all active:scale-95"
+              >
+                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+              
+              <Link to="/" className="flex items-center gap-4 group">
+                <div className="p-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-white/10 rounded-2xl group-hover:scale-105 transition-transform duration-500">
+                  <Logo className="h-8 w-8" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-serif font-bold text-agri-primary dark:text-stone-100 text-xl leading-none tracking-tight">
+                    Agrigence
+                  </span>
+                  <span className="font-serif italic text-agri-secondary dark:text-agri-secondary/80 text-[9px] leading-tight mt-1 opacity-80">
+                    Agricultural Intelligence Platform
+                  </span>
+                </div>
+              </Link>
+
+              {/* Desktop Navigation */}
+              <nav className="hidden lg:flex items-center gap-8 text-[10px] font-black uppercase tracking-[0.15em] text-stone-500 dark:text-stone-400">
+                <Link to="/journals" className="hover:text-agri-primary dark:hover:text-white transition-all hover:translate-y-[-1px]">Archive</Link>
+                <Link to="/editorial-board" className="hover:text-agri-primary dark:hover:text-white transition-all hover:translate-y-[-1px]">Editorial Board</Link>
+                <Link to="/submission" className="bg-agri-secondary/10 text-agri-secondary px-3 py-1 rounded-full hover:bg-agri-secondary hover:text-white transition-all">Submit Manuscript</Link>
+                <Link to="/about-journal" className="hover:text-agri-primary dark:hover:text-white transition-all hover:translate-y-[-1px]">About</Link>
+                <Link to="/about-contact" className="hover:text-agri-primary dark:hover:text-white transition-all hover:translate-y-[-1px]">Contact</Link>
+              </nav>
+            </div>
+
+            <div className="flex items-center gap-3 sm:gap-5">
+              {/* Search Trigger */}
+              <div className="hidden sm:flex items-center px-4 py-2 bg-stone-100 dark:bg-white/5 border border-stone-200 dark:border-white/10 rounded-2xl gap-3 w-40 xl:w-64 focus-within:w-48 xl:focus-within:w-80 transition-all duration-300">
+                <Search size={16} className="text-stone-400" />
+                <input 
+                  type="text"
+                  placeholder="Find research..."
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  className="bg-transparent border-none outline-none text-[10px] uppercase font-black tracking-widest w-full text-stone-600 dark:text-stone-300 placeholder:text-stone-400"
+                />
               </div>
-            </Link>
+
+              <div className="flex items-center gap-2">
+                <ThemeToggle />
+              </div>
+            </div>
           </div>
-          
-          <nav className="hidden md:flex items-center gap-6 text-sm font-bold text-stone-600 dark:text-stone-300 uppercase tracking-widest text-[11px]">
-             <Link to="/journals" className="hover:text-agri-primary transition-colors">Archive</Link>
-             <Link to="/editorial-board" className="hover:text-agri-primary transition-colors">Editorial Board</Link>
-             <Link to="/submission" className="hover:text-agri-primary transition-colors">Manuscript Submission</Link>
-             <Link to="/about-journal" className="hover:text-agri-primary transition-colors">About</Link>
-             <Link to="/about-contact" className="hover:text-agri-primary transition-colors">Contact</Link>
-          </nav>
 
           <AnimatePresence>
             {isMobileMenuOpen && (
                <motion.nav 
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="absolute top-16 left-0 right-0 bg-white dark:bg-stone-950 border-b border-stone-200 dark:border-white/10 p-4 flex flex-col gap-4 text-sm font-bold text-stone-600 dark:text-stone-300 uppercase tracking-widest text-[11px] md:hidden shadow-xl z-20"
+                  initial={{ opacity: 0, y: -20, height: 0 }}
+                  animate={{ opacity: 1, y: 0, height: 'auto' }}
+                  exit={{ opacity: 0, y: -20, height: 0 }}
+                  className="absolute top-full left-0 right-0 bg-white/95 dark:bg-stone-950/95 backdrop-blur-2xl border-b border-stone-200 dark:border-white/10 p-6 flex flex-col gap-2 text-xs font-black text-stone-600 dark:text-stone-300 uppercase tracking-[0.2em] lg:hidden shadow-2xl z-20 overflow-hidden"
                >
-                  <Link to="/journals" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-agri-primary py-2">Archive</Link>
-                  <Link to="/editorial-board" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-agri-primary py-2">Editorial Board</Link>
-                  <Link to="/submission" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-agri-primary py-2">Manuscript Submission</Link>
-                  <Link to="/about-journal" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-agri-primary py-2">About</Link>
-                  <Link to="/about-contact" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-agri-primary py-2">Contact</Link>
+                  <Link to="/journals" onClick={() => setIsMobileMenuOpen(false)} className="hover:bg-stone-50 dark:hover:bg-white/5 p-4 rounded-2xl transition-all flex items-center justify-between">
+                    Archive <ChevronRight size={14} className="opacity-40" />
+                  </Link>
+                  <Link to="/editorial-board" onClick={() => setIsMobileMenuOpen(false)} className="hover:bg-stone-50 dark:hover:bg-white/5 p-4 rounded-2xl transition-all flex items-center justify-between">
+                    Editorial Board <ChevronRight size={14} className="opacity-40" />
+                  </Link>
+                  <Link to="/submission" onClick={() => setIsMobileMenuOpen(false)} className="hover:bg-agri-secondary/10 text-agri-secondary p-4 rounded-2xl transition-all flex items-center justify-between font-black">
+                    Manuscript Submission <ChevronRight size={14} />
+                  </Link>
+                  <Link to="/about-journal" onClick={() => setIsMobileMenuOpen(false)} className="hover:bg-stone-50 dark:hover:bg-white/5 p-4 rounded-2xl transition-all flex items-center justify-between">
+                    About Journal <ChevronRight size={14} className="opacity-40" />
+                  </Link>
+                  <Link to="/about-contact" onClick={() => setIsMobileMenuOpen(false)} className="hover:bg-stone-50 dark:hover:bg-white/5 p-4 rounded-2xl transition-all flex items-center justify-between">
+                    Contact Us <ChevronRight size={14} className="opacity-40" />
+                  </Link>
+                  
+                  <div className="mt-4 sm:hidden p-4 bg-stone-100 dark:bg-white/5 rounded-2xl flex items-center gap-3">
+                    <Search size={16} className="text-stone-400" />
+                    <input 
+                      type="text"
+                      placeholder="Search..."
+                      value={searchTerm}
+                      onChange={handleSearch}
+                      className="bg-transparent border-none outline-none text-[10px] font-black tracking-widest w-full"
+                    />
+                  </div>
                </motion.nav>
+            )}
+          </AnimatePresence>
+
+          {/* Search Dropdown Results */}
+          <AnimatePresence>
+            {searchTerm.length > 2 && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="absolute top-full left-1/2 -translate-x-1/2 w-full max-w-3xl mt-4 bg-white/95 dark:bg-stone-900/95 backdrop-blur-2xl border border-stone-200 dark:border-white/10 rounded-3xl shadow-2xl z-50 overflow-hidden"
+              >
+                <div className="p-4 border-b border-stone-100 dark:border-white/5 flex justify-between items-center">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Search Results ({searchResults.length})</span>
+                  <button onClick={() => setSearchTerm('')} className="p-1 hover:bg-stone-100 dark:hover:bg-white/5 rounded-lg"><X size={14}/></button>
+                </div>
+                <div className="max-h-[60vh] overflow-y-auto p-2">
+                  {searchResults.length > 0 ? (
+                    searchResults.map((res, i) => (
+                      <Link 
+                        key={i}
+                        to={res.resultType === 'Product' ? `/products` : `/journals`}
+                        onClick={() => setSearchTerm('')}
+                        className="flex items-center gap-4 p-4 hover:bg-stone-50 dark:hover:bg-white/5 rounded-2xl transition-all group"
+                      >
+                        <div className="w-10 h-10 bg-stone-100 dark:bg-stone-800 rounded-xl flex items-center justify-center shrink-0">
+                          {res.resultType === 'Product' ? <ShoppingBag size={16}/> : <FileText size={16}/>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-sm truncate group-hover:text-agri-primary transition-colors">{res.name || res.title}</h4>
+                          <p className="text-[10px] text-stone-500 uppercase tracking-widest mt-0.5">{res.resultType}</p>
+                        </div>
+                        <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" />
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="p-12 text-center">
+                      <p className="text-stone-400 text-sm italic">No matching records found for "{searchTerm}"</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             )}
           </AnimatePresence>
         </header>
