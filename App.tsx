@@ -272,7 +272,7 @@ const AppContent: React.FC = () => {
               <Route path="dashboard/advanced-stats" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><AdvancedStatsSuite /></ProtectedRoute>} />
               <Route path="dashboard/tool-history/:id" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><ToolHistoryDetail /></ProtectedRoute>} />
               <Route path="submission" element={<Submission />} />
-              <Route path="subscription" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Subscription /></ProtectedRoute>} />
+              <Route path="subscription" element={<Subscription />} />
             </Route>
 
 

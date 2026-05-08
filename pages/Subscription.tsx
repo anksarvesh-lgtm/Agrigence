@@ -5,9 +5,11 @@ import PaymentDialog from '../components/PaymentDialog';
 import { useNavigate } from 'react-router-dom';
 import { mockBackend } from '../services/mockBackend';
 import { SubscriptionPlan } from '../types';
+import { useAuth } from '../src/authContext';
 
 const Subscription: React.FC = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [selectedPlan, setSelectedPlan] = useState<any>(null);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -86,7 +88,12 @@ const Subscription: React.FC = () => {
                 plan={selectedPlan}
                 onSuccess={() => {
                     setTimeout(() => {
-                        navigate('/dashboard');
+                        if (user) {
+                            navigate('/dashboard');
+                        } else {
+                            // For guest users, just stay on the page or go to home with success
+                            navigate('/', { state: { paymentSuccess: true } });
+                        }
                     }, 2000);
                 }}
             />

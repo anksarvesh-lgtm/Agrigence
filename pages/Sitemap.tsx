@@ -58,7 +58,7 @@ const Sitemap: React.FC = () => {
           <div>
             <h2 className="text-xl font-bold text-agri-primary mb-4 border-b border-stone-200 pb-2">Research Repository</h2>
             <ul className="space-y-3">
-              {articles.map(a => <li key={a.id}><Link to={`/view/${a.id}`} className="text-stone-600 hover:text-agri-secondary">{a.title}</Link></li>)}
+              {articles.map(a => <li key={a.id}><Link to={`/view-document/${a.id}`} className="text-stone-600 hover:text-agri-secondary">{a.title}</Link></li>)}
               {magazines.map(m => <li key={m.id}><Link to="/journals" className="text-stone-600 hover:text-agri-secondary">{m.title} (Issue {m.issueNumber})</Link></li>)}
               {products.map(p => <li key={p.id}><Link to="/products" className="text-stone-600 hover:text-agri-secondary">{p.name}</Link></li>)}
             </ul>
