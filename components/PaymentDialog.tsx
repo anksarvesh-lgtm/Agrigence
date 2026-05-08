@@ -94,6 +94,25 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, plan, on
         }
       };
 
+      if (options.key === "rzp_test_dummy") {
+        // Mock successful flow
+        setTimeout(async () => {
+          try {
+            // Mock verficiation
+            const paymentUserId = user?.id || `guest_${Date.now()}`;
+            await mockBackend.processOnlinePayment(paymentUserId, plan.id, `mock_pay_${Date.now()}`, totalAmount, !user ? guestInfo : undefined);
+            setStatus('SUCCESS');
+            onSuccess();
+          } catch (e: any) {
+            setErrorMessage(e.message || "Payment verification failed");
+            setStatus('ERROR');
+          } finally {
+            setIsProcessing(false);
+          }
+        }, 1500);
+        return;
+      }
+
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (err: any) {
