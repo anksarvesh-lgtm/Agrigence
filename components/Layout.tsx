@@ -301,10 +301,10 @@ const AppLayout: React.FC = () => {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-serif font-bold text-agri-primary dark:text-stone-100 text-xl leading-none tracking-tight">
-                    Agrigence
+                    Agrigence Journal of
                   </span>
                   <span className="font-serif italic text-agri-secondary dark:text-agri-secondary/80 text-[9px] leading-tight mt-1 opacity-80">
-                    Agricultural Intelligence Platform
+                    Agriculture & Allied Sciences
                   </span>
                 </div>
               </Link>

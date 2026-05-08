@@ -42,6 +42,7 @@ import AdvancedResearchSuite from './pages/AdvancedResearchSuite/AdvancedResearc
 import AdvancedStatsSuite from './pages/AdvancedStatsSuite';
 import ViewDocument from './pages/ViewDocument';
 import PublicationEthics from './pages/PublicationEthics';
+import ImageTools from './pages/ImageTools';
 import Submission from './pages/Submission';
 import Subscription from './pages/Subscription';
 import MySubscription from './pages/MySubscription';
@@ -241,6 +242,8 @@ const AppContent: React.FC = () => {
               <Route path="terms" element={<Terms />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="publication-ethics" element={<PublicationEthics />} />
+              <Route path="image-tools" element={<ImageTools />} />
+              <Route path="tools/image-resizer-compressor" element={<ImageTools />} />
               <Route path="tools/*" element={<ExternalRedirect />} />
               
               <Route path="farmer-connect" element={<ExternalRedirect />} />
