@@ -1072,29 +1072,57 @@ class FirebaseBackendService {
   }
 
   async createRazorpayOrder(amount: number, currency: string = "INR") {
-      const resp = await fetch('/api/mobile/razorpay/create-order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount, currency })
-      });
-      if (!resp.ok) {
-          const err = await resp.json();
-          throw new Error(err.error || 'Failed to create Razorpay order');
+      try {
+          const resp = await fetch('/api/mobile/razorpay/create-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ amount, currency })
+          });
+          
+          const text = await resp.text();
+          let data;
+          try {
+              data = text ? JSON.parse(text) : {};
+          } catch(e) {
+              console.error("Failed to parse Razorpay create response:", text);
+              throw new Error("Invalid response from payment server");
+          }
+
+          if (!resp.ok) {
+              throw new Error(data.error || 'Failed to create Razorpay order');
+          }
+          return data;
+      } catch (err: any) {
+          console.error('Razorpay Create Error:', err);
+          throw new Error(err.message || "Failed to connect to payment server");
       }
-      return resp.json();
   }
 
   async verifyRazorpayPayment(paymentData: any) {
-      const resp = await fetch('/api/mobile/razorpay/verify-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(paymentData)
-      });
-      if (!resp.ok) {
-          const err = await resp.json();
-          throw new Error(err.error || 'Payment verification failed');
+      try {
+          const resp = await fetch('/api/mobile/razorpay/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(paymentData)
+          });
+          
+          const text = await resp.text();
+          let data;
+          try {
+              data = text ? JSON.parse(text) : {};
+          } catch(e) {
+              console.error("Failed to parse Razorpay verify response:", text);
+              throw new Error("Invalid response from payment server");
+          }
+
+          if (!resp.ok) {
+              throw new Error(data.error || 'Payment verification failed');
+          }
+          return data;
+      } catch (err: any) {
+          console.error('Razorpay Verify Error:', err);
+          throw new Error(err.message || "Failed to verify payment");
       }
-      return resp.json();
   }
 
   async addPaymentRecord(record: Omit<PaymentRecord, 'id'>) {
@@ -1105,8 +1133,27 @@ class FirebaseBackendService {
 
   async processOnlinePayment(userId: string, planId: string, paymentId: string, amount: number, guestInfo?: { name: string, email: string, mobile: string }) {
       const planSnap = await getDoc(doc(this.db, 'subscription_plans', planId));
-      if (!planSnap.exists()) throw new Error("Plan not found");
-      const plan = planSnap.data() as SubscriptionPlan;
+      let plan: SubscriptionPlan;
+
+      if (!planSnap.exists()) {
+          console.warn(`Plan ${planId} not found in DB. Trying to recover using default plans.`);
+          const defaultPlans: SubscriptionPlan[] = [
+               { id: 'free', name: 'Free Tier', type: 'ARTICLE_ACCESS', price: 0, durationMonths: 12, description: 'Basic access', features: ['Read Only'], isActive: true, validityLabel: '1 Year', articleLimit: 0, blogLimit: 0, is_research_enabled: false },
+               { id: 'art-sub', name: 'Single Article Subscription', type: 'ARTICLE_ACCESS', price: 149, durationMonths: 1, description: 'Access to 1 article', features: ['Full article PDF access', 'Research download access', 'Citation-ready format'], isActive: true, validityLabel: '1 Month', articleLimit: 1, blogLimit: 0, is_research_enabled: false },
+               { id: 'premium', name: 'Annual Subscription', type: 'COMBO_ACCESS', price: 499, durationMonths: 12, description: 'Full access for 1 year', features: ['Multi-article access', 'Current issue access', 'Archive access', 'Priority updates'], isActive: true, validityLabel: '12 Months', articleLimit: 8, blogLimit: 'UNLIMITED', is_research_enabled: true },
+               { id: 'lifetime', name: 'Lifetime Subscription', type: 'COMBO_ACCESS', price: 1999, durationMonths: 60, description: '5 years of premium access', features: ['Extended research access', 'Archive access', 'Priority notifications'], isActive: true, validityLabel: '5 Years', articleLimit: 'UNLIMITED', blogLimit: 'UNLIMITED', is_research_enabled: true },
+               { id: 'institute', name: 'Institute Subscription', type: 'COMBO_ACCESS', price: 4999, durationMonths: 60, description: 'Institutional access', features: ['Multi-user usage', 'Archive availability', 'Institutional support'], isActive: true, validityLabel: '5 Years', articleLimit: 'UNLIMITED', blogLimit: 'UNLIMITED', is_research_enabled: true },
+               { id: 'kisan-pro', name: 'Kisan Pro', type: 'KISAN_ACCESS', price: 199, durationMonths: 12, description: 'Premium farming capabilities', features: ['Priority Marketplace Listings', 'Advanced Weather Alerts', 'Dedicated Expert Access'], isActive: true, validityLabel: '1 Year', articleLimit: 0, blogLimit: 0, is_research_enabled: false }
+          ];
+          const found = defaultPlans.find(p => p.id === planId);
+          if (found) {
+             plan = found;
+          } else {
+             throw new Error("Plan not found");
+          }
+      } else {
+          plan = planSnap.data() as SubscriptionPlan;
+      }
 
       const now = new Date();
       const expiry = new Date();

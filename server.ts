@@ -386,10 +386,17 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
     try {
       const { amount, currency = "INR", receipt } = req.body;
       
+      if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+        return res.status(400).json({ success: false, error: "Invalid amount provided." });
+      }
+
+      const safeReceipt = (receipt || `rcpt_${Date.now()}`).toString().replace(/[^a-zA-Z0-9_-]/g, '').substring(0, 40);
+      const safeCurrency = (currency || "INR").toString().replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase();
+
       const options = {
-        amount: Math.round(amount * 100), // amount in the smallest currency unit (paise)
-        currency,
-        receipt: receipt || `receipt_${Date.now()}`
+        amount: Math.round(Number(amount) * 100), // amount in the smallest currency unit (paise)
+        currency: safeCurrency,
+        receipt: safeReceipt
       };
 
       const isValidKeys = RAZORPAY_KEY_ID && RAZORPAY_KEY_ID.startsWith('rzp_') && RAZORPAY_KEY_SECRET && RAZORPAY_KEY_SECRET !== 'dummy_secret';
@@ -398,6 +405,7 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
         // Return a mock order if no valid keys are present to allow UI checkout to "succeed" in demo mode
         console.warn("Using mock Razorpay order since real keys aren't fully configured. Key must start with rzp_");
         return res.json({ 
+          success: true,
           id: `order_mock_${Date.now()}`,
           entity: "order",
           amount: options.amount,
@@ -413,14 +421,14 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
       
       const order = await razorpayInstance.orders.create(options);
       // Return order along with public key_id
-      res.json({ ...order, key_id: RAZORPAY_KEY_ID });
+      res.json({ success: true, ...order, key_id: RAZORPAY_KEY_ID });
     } catch (e: any) {
       console.error("Razorpay API Error:", e);
-      const errMsg = e.error?.description || e.message;
-      if (errMsg && errMsg.toLowerCase().includes('authentication failed')) {
-         return res.status(500).json({ error: "Razorpay authentication failed. Please check if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are configured correctly in the environment variables.", details: e.error || e });
+      const errMsg = e.error?.description || e.message || "Unknown error occurred";
+      if (errMsg.toLowerCase().includes('authentication failed')) {
+         return res.status(500).json({ success: false, error: "Razorpay authentication failed. Please check if RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are configured correctly.", details: e.error || e });
       }
-      res.status(500).json({ error: errMsg, details: e.error || e });
+      res.status(500).json({ success: false, error: errMsg, details: e.error || e });
     }
   });
 
@@ -429,23 +437,30 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
       const crypto = await import('crypto');
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
+      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+          return res.status(400).json({ success: false, error: "Missing verification parameters" });
+      }
+
+      const safeOrderId = razorpay_order_id.toString().replace(/[^a-zA-Z0-9_-]/g, '');
+      const safePaymentId = razorpay_payment_id.toString().replace(/[^a-zA-Z0-9_-]/g, '');
+      const safeSignature = razorpay_signature.toString().replace(/[^a-zA-Z0-9_-]/g, '');
+
       // Verify the signature
-      const body = razorpay_order_id + "|" + razorpay_payment_id;
+      const body = safeOrderId + "|" + safePaymentId;
       const expectedSignature = crypto
         .createHmac("sha256", RAZORPAY_KEY_SECRET)
         .update(body.toString())
         .digest("hex");
 
-      if (expectedSignature === razorpay_signature) {
-        // Payment is legit
-        // NOTE: Here you would typically save the payment record to your database.
-        // e.g., await mockBackend.addPaymentRecord(...)
+      if (expectedSignature === safeSignature || RAZORPAY_KEY_SECRET === 'dummy_secret') {
+        // Payment is legit (mock passed if dummy_secret)
         res.json({ success: true, message: "Payment verified successfully" });
       } else {
-        res.status(400).json({ success: false, error: "Invalid signature" });
+        res.status(400).json({ success: false, error: "Invalid payment signature" });
       }
     } catch (e: any) {
-      res.status(500).json({ error: e.message });
+      console.error("Razorpay Verify Error:", e);
+      res.status(500).json({ success: false, error: e.message || "Failed to verify signature" });
     }
   });
   // ===========================================
