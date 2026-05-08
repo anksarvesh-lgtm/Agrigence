@@ -20,7 +20,8 @@ const Footer: React.FC = () => {
       <div className="container mx-auto max-w-7xl">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
           <div>
-            <h3 className="text-xl font-serif font-bold text-white mb-4">Agrigence</h3>
+            <h3 className="text-xl font-serif font-bold text-white mb-1">Agrigence</h3>
+            <p className="text-agri-secondary text-[10px] font-medium italic mb-4">Where Agri-Intelligence Meets Agricultural Generations</p>
             <p className="text-stone-400 text-sm leading-relaxed mb-6">
               Agrigence Journal of Agriculture and Allied Science. is a peer-reviewed monthly online journal dedicated to building a trusted digital ecosystem for agricultural research in India.
             </p>

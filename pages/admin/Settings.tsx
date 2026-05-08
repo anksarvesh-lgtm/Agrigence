@@ -42,15 +42,40 @@ const Settings: React.FC = () => {
   const handleFileUpload = (field: keyof SiteSettings) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && settings) {
+      // Validate file size on client side (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert('File is too large. Max size is 10MB.');
+        return;
+      }
+
       setUploadingField(field);
       try {
         const url = await mockBackend.uploadToBlob(file, 'settings');
-        setSettings({ ...settings, [field]: url });
+        const updatedSettings = { ...settings, [field]: url };
+        setSettings(updatedSettings);
+        
+        // Auto-save strictly for branding/logo to provide immediate feedback
+        if (field === 'logoUrl' || field === 'upiQrUrl') {
+          await mockBackend.updateSettings(updatedSettings);
+          console.log(`Branding asset ${field} auto-saved successfully.`);
+        }
       } catch (err: any) {
-        console.error('Upload failed:', err);
-        alert(err.message || 'Failed to upload image. Please check your connection and configuration.');
+        console.error('Frontend upload failure:', err);
+        // Extract server-side error if available
+        let detailedMsg = 'Failed to upload image. Please check your connection.';
+        if (err.message && err.message.includes('{')) {
+          try {
+            const parsed = JSON.parse(err.message);
+            detailedMsg = parsed.error || detailedMsg;
+          } catch (pErr) {}
+        } else if (err.message) {
+          detailedMsg = err.message;
+        }
+        alert(detailedMsg);
       } finally {
         setUploadingField(null);
+        // Clear the input value so the same file can be selected again if needed
+        e.target.value = '';
       }
     }
   };
@@ -164,6 +189,14 @@ const Settings: React.FC = () => {
                   />
               </div>
               <div className="grid grid-cols-2 gap-4">
+                 <div className="col-span-2">
+                    <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Site Tagline</label>
+                    <input 
+                      className="w-full bg-white border border-gray-300 rounded-xl p-4 text-gray-900 outline-none focus:border-agri-secondary text-xs" 
+                      value={settings.tagline} 
+                      onChange={e => setSettings({...settings, tagline: e.target.value})} 
+                    />
+                 </div>
                  <div>
                     <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Home Featured Limit</label>
                     <input type="number" className="w-full bg-white border border-gray-300 rounded-xl p-4 text-gray-900 outline-none focus:border-agri-secondary" value={settings.homeFeaturedLimit} onChange={e => setSettings({...settings, homeFeaturedLimit: parseInt(e.target.value)})} />

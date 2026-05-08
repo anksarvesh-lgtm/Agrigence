@@ -95,6 +95,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   upiId: 'agrigence@upi',
   upiQrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=agrigence@upi&pn=Agrigence',
   whatsappNumber: '+919452571317',
+  tagline: 'Where Agri-Intelligence Meets Agricultural Generations',
   contactEmail: 'agrigence@gmail.com',
   homeFeaturedLimit: 3,
   missionText: 'Agrigence Journal of Agriculture and Allied Science. is a monthly international peer-reviewed online journal dedicated to building a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation.',
@@ -1239,9 +1240,16 @@ class FirebaseBackendService {
       });
 
       if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
+          let errorMsg = 'Failed to upload file';
+          try {
+              const err = await response.json();
+              errorMsg = err.error || errorMsg;
+          } catch (e) {
+              const text = await response.text();
+              errorMsg = text || `Server error (${response.status})`;
+          }
           this.notifyUpload(0, 'ERROR', file.name);
-          throw new Error(err.error || 'Failed to upload file');
+          throw new Error(errorMsg);
       }
 
       const data = await response.json();

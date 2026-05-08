@@ -29,21 +29,25 @@ async function startServer() {
     limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
   });
   const projectId = 'gen-lang-client-0276037966';
-
-  const databaseId = 'ai-studio-3e16a161-237b-431f-b594-a3f4635b9cc5';
+  const databaseId = '(default)';
 
   // Helper to fetch document
   async function getDoc(collection: string, id: string) {
-    const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/${databaseId}/documents/${collection}/${id}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    const doc: any = {};
-    if (data.fields) {
-      for (const [key, value] of Object.entries(data.fields)) {
-        doc[key] = (value as any).stringValue || (value as any).integerValue || (value as any).booleanValue;
+    try {
+      const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/${databaseId}/documents/${collection}/${id}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const doc: any = {};
+      if (data.fields) {
+        for (const [key, value] of Object.entries(data.fields)) {
+          doc[key] = (value as any).stringValue || (value as any).integerValue || (value as any).booleanValue;
+        }
       }
+      return doc;
+    } catch (err) {
+      console.error(`Error fetching meta doc ${collection}/${id}:`, err);
+      return null;
     }
-    return doc;
   }
 
   // Helper to inject meta tags and Schema
@@ -129,22 +133,28 @@ async function startServer() {
   app.post('/api/admin/blob/upload', upload.single('file'), async (req, res) => {
     try {
       console.log('Blob upload request received');
-      if (!req.file) {
-        console.error('Upload failed: No file in request');
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-
       const token = process.env.BLOB_READ_WRITE_TOKEN;
-      if (!token || token === 'undefined' || token === 'null') {
-        console.error('Upload failed: BLOB_READ_WRITE_TOKEN is missing or invalid');
+      
+      // Diagnostics for the token
+      if (!token || token === 'undefined' || token === 'null' || token.trim() === '') {
+        console.error('CRITICAL: BLOB_READ_WRITE_TOKEN is strictly required for logo uploads but is missing.');
         return res.status(500).json({ 
-          error: 'Vercel Blob Storage is not configured. Please set BLOB_READ_WRITE_TOKEN environment variable.' 
+          error: 'Vercel Blob Storage is not configured on the server. Please check environment variables.',
+          code: 'MISSING_BLOB_TOKEN'
         });
       }
 
+      if (!req.file) {
+        console.error('Upload failed: No file in request');
+        return res.status(400).json({ error: 'No file detected. Please ensure you selected an image.' });
+      }
+
       const { path = 'general' } = req.body;
-      const fileName = `${path}/${Date.now()}-${req.file.originalname}`;
-      console.log(`Uploading to Vercel Blob: ${fileName}`);
+      // Sanitize filename to avoid weird characters in URL
+      const sanitizedName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const fileName = `${path}/${Date.now()}-${sanitizedName}`;
+      
+      console.log(`Starting Vercel Blob put: ${fileName} (${req.file.size} bytes)`);
 
       const blob = await put(fileName, req.file.buffer, {
         access: 'public',
@@ -155,8 +165,11 @@ async function startServer() {
       console.log('Upload successful:', blob.url);
       res.json({ url: blob.url });
     } catch (error: any) {
-      console.error('Blob Upload Error Details:', error);
-      res.status(500).json({ error: error.message || 'Server failed to process upload' });
+      console.error('BLOB_UPLOAD_STRICT_FAILURE:', error);
+      res.status(500).json({ 
+        error: error.message || 'Server failed to process upload',
+        code: 'UPLOAD_PROCESSING_ERROR'
+      });
     }
   });
 
@@ -496,7 +509,6 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
   app.get('/sitemap.xml', async (req, res) => {
     try {
       const baseUrl = 'https://www.agrigence.in';
-      const databaseId = 'ai-studio-3e16a161-237b-431f-b594-a3f4635b9cc5';
       
       const staticRoutes = [
         '',

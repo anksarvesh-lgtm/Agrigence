@@ -8,25 +8,27 @@ interface LogoProps {
 }
 
 const Logo: React.FC<LogoProps> = ({ className = "h-12 w-auto", variant = 'dark', showText = false }) => {
+  const [tagline, setTagline] = useState('Where Agri-Intelligence Meets Agricultural Generations');
   const defaultLogo = "/logo.png";
   const [logoPath, setLogoPath] = useState(defaultLogo);
 
   useEffect(() => {
-    const handleUrl = (url?: string) => {
+    const handleUrl = (url?: string, tag?: string) => {
       if (!url || url === 'null' || url === 'undefined') {
         setLogoPath(defaultLogo);
       } else {
         setLogoPath(url);
       }
+      if (tag) setTagline(tag);
     };
 
     // Initial fetch
     const settings = mockBackend.getSettings();
-    handleUrl(settings?.logoUrl);
+    handleUrl(settings?.logoUrl, settings?.tagline);
 
     // Subscribe to future updates
     const unsub = mockBackend.subscribeToSettings((data) => {
-      handleUrl(data?.logoUrl);
+      handleUrl(data?.logoUrl, data?.tagline);
     });
 
     return () => unsub();
@@ -53,7 +55,7 @@ const Logo: React.FC<LogoProps> = ({ className = "h-12 w-auto", variant = 'dark'
             Agrigence
           </span>
           <span className={`text-[9px] sm:text-[10px] font-medium tracking-wide mt-1 leading-tight ${variant === 'dark' ? 'text-stone-500' : 'text-white/80'}`}>
-            Where Agri-Intelligence Meets<br/>Agricultural Generations.
+            {tagline}
           </span>
         </div>
       )}

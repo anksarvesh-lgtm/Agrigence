@@ -271,12 +271,12 @@ const AppLayout: React.FC = () => {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-sans">
       <Helmet>
-        <title>{`${pageTitle} | Agrigence`}</title>
+        <title>{`${pageTitle} | Agrigence Journal of Agriculture and Allied Science.`}</title>
         <meta name="description" content={`Explore ${pageTitle} on Agrigence - The futuristic agricultural intelligence platform.`} />
         <link rel="canonical" href={canonicalUrl} />
         
         {/* Open Graph Tags for sharing */}
-        <meta property="og:title" content={`${pageTitle} | Agrigence`} />
+        <meta property="og:title" content={`${pageTitle} | Agrigence Journal of Agriculture and Allied Science.`} />
         <meta property="og:description" content={`Explore ${pageTitle} on Agrigence - The futuristic agricultural intelligence platform.`} />
         <meta property="og:url" content={canonicalUrl} />
       </Helmet>
@@ -301,10 +301,10 @@ const AppLayout: React.FC = () => {
                 </div>
                 <div className="flex flex-col">
                   <span className="font-serif font-bold text-agri-primary dark:text-stone-100 text-xl leading-none tracking-tight">
-                    Agrigence Journal of
+                    Agrigence
                   </span>
-                  <span className="font-serif italic text-agri-secondary dark:text-agri-secondary/80 text-[9px] leading-tight mt-1 opacity-80">
-                    Agriculture & Allied Sciences
+                  <span className="font-serif italic text-agri-secondary dark:text-agri-secondary/80 text-[8px] leading-tight mt-1 animate-pulse font-medium">
+                    {settings?.tagline || 'Where Agri-Intelligence Meets Agricultural Generations'}
                   </span>
                 </div>
               </Link>

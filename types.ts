@@ -318,6 +318,7 @@ export interface SiteSettings {
   upiId: string;
   upiQrUrl: string;
   whatsappNumber: string;
+  tagline: string;
   contactEmail: string;
   homeFeaturedLimit: number;
   missionText: string;
