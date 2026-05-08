@@ -1,15 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Check, Star, ShieldCheck, Zap, Mail, MessageCircle, FileText, PenTool } from 'lucide-react';
 import SEO from '../components/SEO';
+import PaymentDialog from '../components/PaymentDialog';
+import { useNavigate } from 'react-router-dom';
 
 const Subscription: React.FC = () => {
+    const navigate = useNavigate();
+    const [selectedPlan, setSelectedPlan] = useState<any>(null);
+    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
     
     const plans = [
-        { name: 'Single Article Subscription', price: '149', validity: '1 Article', features: ['Full article PDF access', 'Research download access', 'Citation-ready format'] },
-        { name: 'Annual Subscription', price: '499', validity: '8 Articles OR 12 Months', features: ['Multi-article access', 'Current issue access', 'Archive access during subscription period', 'Priority research updates'] },
-        { name: 'Lifetime Subscription', price: '1999', validity: '5 Years', features: ['Extended research access', 'Current and archived issue access', 'Priority journal notifications', 'Academic resource access'] },
-        { name: 'Institute / Library Subscription', price: '4999', validity: '5 Years', features: ['Institutional research access', 'Multi-user academic usage', 'Journal archive availability', 'Institutional support access'] },
+        { id: 'art-sub', name: 'Single Article Subscription', price: '149', validity: '1 Article', features: ['Full article PDF access', 'Research download access', 'Citation-ready format'] },
+        { id: 'premium', name: 'Annual Subscription', price: '499', validity: '8 Articles OR 12 Months', features: ['Multi-article access', 'Current issue access', 'Archive access during subscription period', 'Priority research updates'] },
+        { id: 'lifetime', name: 'Lifetime Subscription', price: '1999', validity: '5 Years', features: ['Extended research access', 'Current and archived issue access', 'Priority journal notifications', 'Academic resource access'] },
+        { id: 'institute', name: 'Institute / Library Subscription', price: '4999', validity: '5 Years', features: ['Institutional research access', 'Multi-user academic usage', 'Journal archive availability', 'Institutional support access'] },
     ];
+
+    const handlePayNow = (plan: any) => {
+        setSelectedPlan(plan);
+        setIsPaymentOpen(true);
+    };
 
   return (
     <div className="min-h-screen py-20 bg-stone-50">
@@ -23,8 +33,8 @@ const Subscription: React.FC = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
             {plans.map((plan, i) => (
-                <div key={i} className="bg-white p-8 rounded-3xl shadow-sm border border-stone-200 flex flex-col">
-                    <h3 className="text-xl font-bold text-agri-primary mb-2 line-clamp-2">{plan.name}</h3>
+                <div key={i} className="bg-white p-8 rounded-3xl shadow-sm border border-stone-200 flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                    <h3 className="text-xl font-bold text-agri-primary mb-2 line-clamp-2 min-h-[3.5rem]">{plan.name}</h3>
                     <div className="text-4xl font-black text-agri-primary my-6">₹{plan.price}<span className="text-sm text-stone-500 font-normal">/-</span></div>
                     <p className="text-xs font-bold text-agri-secondary uppercase tracking-widest mb-6">Validity: {plan.validity}</p>
                     
@@ -37,12 +47,28 @@ const Subscription: React.FC = () => {
                         ))}
                     </ul>
 
-                    <button className="w-full bg-agri-primary text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-agri-secondary transition-all">
+                    <button 
+                        onClick={() => handlePayNow(plan)}
+                        className="w-full bg-agri-primary text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-agri-secondary transition-all active:scale-95"
+                    >
                         Pay Now
                     </button>
                 </div>
             ))}
         </div>
+
+        {selectedPlan && (
+            <PaymentDialog 
+                isOpen={isPaymentOpen}
+                onClose={() => setIsPaymentOpen(false)}
+                plan={selectedPlan}
+                onSuccess={() => {
+                    setTimeout(() => {
+                        navigate('/dashboard');
+                    }, 2000);
+                }}
+            />
+        )}
 
         <div className="bg-white p-12 rounded-3xl shadow-sm border border-stone-200 mb-20">
             <h2 className="text-2xl font-serif font-bold text-agri-primary mb-10">Payment Options</h2>

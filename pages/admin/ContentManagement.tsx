@@ -157,6 +157,9 @@ const ArticleManager = ({ type, isSuperAdmin }: { type: string, isSuperAdmin: bo
         try {
             const url = await mockBackend.uploadToBlob(file, 'articles');
             setEditingArticle({ ...editingArticle, featuredImage: url });
+        } catch (err: any) {
+            console.error("Upload failed", err);
+            alert(err.message || "Failed to upload image.");
         } finally {
             setIsUploading(false);
         }

@@ -283,7 +283,10 @@ class FirebaseBackendService {
         if (plans.length === 0) {
             const defaultPlans: SubscriptionPlan[] = [
                 { id: 'free', name: 'Free Tier', type: 'ARTICLE_ACCESS', price: 0, durationMonths: 12, description: 'Basic access', features: ['Read Only'], isActive: true, validityLabel: '1 Year', articleLimit: 0, blogLimit: 0, is_research_enabled: false },
-                { id: 'premium', name: 'Premium Researcher', type: 'COMBO_ACCESS', price: 999, durationMonths: 12, description: 'Full access', features: ['Submit Articles', 'Read All'], isActive: true, validityLabel: '1 Year', articleLimit: 5, blogLimit: 'UNLIMITED', is_research_enabled: true },
+                { id: 'art-sub', name: 'Single Article Subscription', type: 'ARTICLE_ACCESS', price: 149, durationMonths: 1, description: 'Access to 1 article', features: ['Full article PDF access', 'Research download access', 'Citation-ready format'], isActive: true, validityLabel: '1 Month', articleLimit: 1, blogLimit: 0, is_research_enabled: false },
+                { id: 'premium', name: 'Annual Subscription', type: 'COMBO_ACCESS', price: 499, durationMonths: 12, description: 'Full access for 1 year', features: ['Multi-article access', 'Current issue access', 'Archive access', 'Priority updates'], isActive: true, validityLabel: '12 Months', articleLimit: 8, blogLimit: 'UNLIMITED', is_research_enabled: true },
+                { id: 'lifetime', name: 'Lifetime Subscription', type: 'COMBO_ACCESS', price: 1999, durationMonths: 60, description: '5 years of premium access', features: ['Extended research access', 'Archive access', 'Priority notifications'], isActive: true, validityLabel: '5 Years', articleLimit: 'UNLIMITED', blogLimit: 'UNLIMITED', is_research_enabled: true },
+                { id: 'institute', name: 'Institute Subscription', type: 'COMBO_ACCESS', price: 4999, durationMonths: 60, description: 'Institutional access', features: ['Multi-user usage', 'Archive availability', 'Institutional support'], isActive: true, validityLabel: '5 Years', articleLimit: 'UNLIMITED', blogLimit: 'UNLIMITED', is_research_enabled: true },
                 { id: 'kisan-pro', name: 'Kisan Pro', type: 'KISAN_ACCESS', price: 199, durationMonths: 12, description: 'Premium farming capabilities', features: ['Priority Marketplace Listings', 'Advanced Weather Alerts', 'Dedicated Expert Access'], isActive: true, validityLabel: '1 Year', articleLimit: 0, blogLimit: 0, is_research_enabled: false }
             ];
             for (const p of defaultPlans) {
@@ -1065,6 +1068,38 @@ class FirebaseBackendService {
       }, (error) => {
           console.warn("User payments subscription error:", error);
       });
+  }
+
+  async createRazorpayOrder(amount: number, currency: string = "INR") {
+      const resp = await fetch('/api/mobile/razorpay/create-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, currency })
+      });
+      if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.error || 'Failed to create Razorpay order');
+      }
+      return resp.json();
+  }
+
+  async verifyRazorpayPayment(paymentData: any) {
+      const resp = await fetch('/api/mobile/razorpay/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(paymentData)
+      });
+      if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.error || 'Payment verification failed');
+      }
+      return resp.json();
+  }
+
+  async addPaymentRecord(record: Omit<PaymentRecord, 'id'>) {
+      const id = `pay_${Date.now()}`;
+      await setDoc(doc(this.db, 'payments', id), { ...record, id });
+      return id;
   }
 
   async processOnlinePayment(userId: string, planId: string, paymentId: string, amount: number) {

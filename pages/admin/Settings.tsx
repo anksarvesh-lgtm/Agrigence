@@ -5,7 +5,7 @@ import { mockBackend } from '../../services/mockBackend';
 import { SiteSettings } from '../../types';
 import { 
   Save, Twitter, Instagram, Facebook, Linkedin, Youtube, 
-  Smartphone, Mail, Globe, Hash, Upload, ShieldAlert, Palette, Type, Layout, Share2, Loader2, CreditCard, Eye, EyeOff
+  Smartphone, Mail, Globe, Hash, Upload, ShieldAlert, Palette, Type, Layout, Share2, Loader2, CreditCard, Eye, EyeOff, QrCode
 } from 'lucide-react';
 
 const Settings: React.FC = () => {
@@ -46,6 +46,9 @@ const Settings: React.FC = () => {
       try {
         const url = await mockBackend.uploadToBlob(file, 'settings');
         setSettings({ ...settings, [field]: url });
+      } catch (err: any) {
+        console.error('Upload failed:', err);
+        alert(err.message || 'Failed to upload image. Please check your connection and configuration.');
       } finally {
         setUploadingField(null);
       }
@@ -185,7 +188,24 @@ const Settings: React.FC = () => {
               <div className="grid gap-6">
                  <div>
                     <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block">Merchant UPI ID</label>
-                    <input className="w-full bg-white border border-gray-300 rounded-xl p-4 text-gray-900 outline-none focus:border-agri-secondary font-mono" value={settings.upiId} onChange={e => setSettings({...settings, upiId: e.target.value})} />
+                    <input className="w-full bg-white border border-gray-300 rounded-xl p-4 text-gray-900 outline-none focus:border-agri-secondary font-mono text-sm" value={settings.upiId} onChange={e => setSettings({...settings, upiId: e.target.value})} />
+                 </div>
+
+                 <div>
+                    <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block">UPI QR Code Image</label>
+                    <div className="flex items-center gap-4">
+                        <div className="w-20 h-20 bg-stone-50 border border-dashed border-stone-300 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
+                            {settings.upiQrUrl ? (
+                                <img src={settings.upiQrUrl} className="w-full h-full object-contain" alt="QR" />
+                            ) : <QrCode size={20} className="text-stone-300" />}
+                        </div>
+                        <div className="flex-1">
+                            <input type="file" id="upi-qr-up" className="hidden" accept="image/*" onChange={handleFileUpload('upiQrUrl')} />
+                            <label htmlFor="upi-qr-up" className="w-full bg-white border border-stone-200 hover:bg-stone-50 rounded-xl p-3 text-[10px] font-bold flex items-center justify-center gap-2 cursor-pointer transition-all">
+                                <Upload size={14} /> {uploadingField === 'upiQrUrl' ? 'UPLOADING...' : 'CHANGE QR CODE'}
+                            </label>
+                        </div>
+                    </div>
                  </div>
                  
                  <div>

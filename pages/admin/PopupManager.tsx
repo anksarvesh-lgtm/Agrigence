@@ -33,6 +33,9 @@ const PopupManager: React.FC = () => {
       try {
         const url = await mockBackend.uploadToBlob(file, 'popup');
         setPopup({ ...popup, imageUrl: url });
+      } catch (error: any) {
+        console.error("Upload failed", error);
+        alert(error.message || "Failed to upload image.");
       } finally {
         setIsUploading(false);
       }

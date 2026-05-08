@@ -11,12 +11,17 @@ import { processAndSaveMandiPage, MandiDataInput, processAndSaveDailyBlog } from
 import { GoogleGenAI } from "@google/genai";
 import { put } from '@vercel/blob';
 import multer from 'multer';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
   
   app.use(cors());
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
   
   // Multer setup for memory storage
   const upload = multer({ 
@@ -130,9 +135,11 @@ async function startServer() {
       }
 
       const token = process.env.BLOB_READ_WRITE_TOKEN;
-      if (!token) {
-        console.error('Upload failed: BLOB_READ_WRITE_TOKEN is missing');
-        throw new Error('BLOB_READ_WRITE_TOKEN is not configured on server');
+      if (!token || token === 'undefined' || token === 'null') {
+        console.error('Upload failed: BLOB_READ_WRITE_TOKEN is missing or invalid');
+        return res.status(500).json({ 
+          error: 'Vercel Blob Storage is not configured. Please set BLOB_READ_WRITE_TOKEN environment variable.' 
+        });
       }
 
       const { path = 'general' } = req.body;
@@ -154,7 +161,7 @@ async function startServer() {
   });
 
   // API routes
-  app.use(express.json());
+  // express.json() moved to top
 
   // Manual trigger endpoint for testing
   app.post('/api/admin/generate-daily-blog', async (req, res) => {

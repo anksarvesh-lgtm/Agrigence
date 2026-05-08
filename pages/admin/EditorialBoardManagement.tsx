@@ -63,8 +63,9 @@ const EditorialBoardManagement: React.FC = () => {
       try {
         const url = await mockBackend.uploadToBlob(file, 'editorial');
         setEditingMember((prev) => prev ? {...prev, imageUrl: url} : prev);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Upload failed", err);
+        alert(err.message || "Failed to upload image.");
       } finally {
         setIsUploading(false);
       }

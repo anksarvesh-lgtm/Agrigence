@@ -74,6 +74,9 @@ const LeadershipManagement: React.FC = () => {
       try {
         const url = await mockBackend.uploadToBlob(file, 'leadership');
         updateLeader(id, 'imageUrl', url);
+      } catch (err: any) {
+        console.error("Upload failed", err);
+        alert(err.message || "Failed to upload image. Please check your configuration.");
       } finally {
         setUploadingId(null);
       }
