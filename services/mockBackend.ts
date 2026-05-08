@@ -1240,6 +1240,21 @@ class FirebaseBackendService {
       return this.uploadFile(file, path);
   }
 
+  async deleteFromBlob(url: string): Promise<void> {
+      try {
+          const response = await fetch('/api/admin/blob/delete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ url })
+          });
+          if (!response.ok) {
+              console.error('Failed to delete blob:', await response.text());
+          }
+      } catch (err) {
+          console.error('Error deleting blob:', err);
+      }
+  }
+
   async uploadFile(file: File, path: string, customName?: string): Promise<string> {
       this.notifyUpload(0, 'UPLOADING', file.name);
 
@@ -1247,27 +1262,33 @@ class FirebaseBackendService {
       formData.append('file', file);
       formData.append('path', path);
 
-      const response = await fetch('/api/admin/blob/upload', {
-          method: 'POST',
-          body: formData
-      });
+      try {
+          const response = await fetch('/api/admin/blob/upload', {
+              method: 'POST',
+              body: formData
+          });
 
-      if (!response.ok) {
-          let errorMsg = 'Failed to upload file';
-          try {
-              const err = await response.json();
-              errorMsg = err.error || errorMsg;
-          } catch (e) {
-              const text = await response.text();
-              errorMsg = text || `Server error (${response.status})`;
+          if (!response.ok) {
+              let errorMsg = 'Failed to upload file';
+              try {
+                  const err = await response.json();
+                  errorMsg = err.error || errorMsg;
+              } catch (e) {
+                  const text = await response.text();
+                  errorMsg = text || `Server error (${response.status})`;
+              }
+              this.notifyUpload(0, 'ERROR', file.name);
+              throw new Error(errorMsg);
           }
-          this.notifyUpload(0, 'ERROR', file.name);
-          throw new Error(errorMsg);
-      }
 
-      const data = await response.json();
-      this.notifyUpload(100, 'SUCCESS', file.name);
-      return data.url;
+          const data = await response.json();
+          this.notifyUpload(100, 'SUCCESS', file.name);
+          return data.url;
+      } catch (error: any) {
+          console.error('Blob Storage Upload Error:', error);
+          this.notifyUpload(0, 'ERROR', file.name);
+          throw new Error(error.message || 'Failed to upload file');
+      }
   }
 
   async incrementVisitorCount() {

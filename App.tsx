@@ -163,19 +163,24 @@ const ExternalRedirect: React.FC = () => {
 const FaviconUpdater: React.FC = () => {
   useEffect(() => {
     return mockBackend.subscribeToSettings((data) => {
-        if (data && data.logoUrl) {
-            const updateFavicon = (url: string) => {
-                const linkId = 'dynamic-favicon';
-                const oldLink = document.getElementById(linkId);
-                const newLink = document.createElement('link');
-                newLink.id = linkId;
-                newLink.rel = 'shortcut icon';
-                newLink.type = 'image/png';
-                newLink.href = url;
-                if (oldLink) document.head.removeChild(oldLink);
-                else document.querySelectorAll("link[rel*='icon']").forEach(el => el.remove());
-                document.head.appendChild(newLink);
-            };
+        if (!data) return;
+        
+        const updateFavicon = (url: string) => {
+            const linkId = 'dynamic-favicon';
+            const oldLink = document.getElementById(linkId);
+            const newLink = document.createElement('link');
+            newLink.id = linkId;
+            newLink.rel = 'shortcut icon';
+            newLink.type = 'image/png';
+            newLink.href = url;
+            if (oldLink) document.head.removeChild(oldLink);
+            else document.querySelectorAll("link[rel*='icon']").forEach(el => el.remove());
+            document.head.appendChild(newLink);
+        };
+
+        if (data.faviconUrl) {
+            updateFavicon(data.faviconUrl);
+        } else if (data.logoUrl) {
             const canvas = document.createElement('canvas');
             canvas.width = 64; canvas.height = 64;
             const ctx = canvas.getContext('2d');
@@ -194,6 +199,8 @@ const FaviconUpdater: React.FC = () => {
                 };
                 img.onerror = () => updateFavicon(data.logoUrl);
                 img.src = data.logoUrl;
+            } else {
+                updateFavicon(data.logoUrl);
             }
         }
     });

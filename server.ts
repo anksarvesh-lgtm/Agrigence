@@ -9,7 +9,7 @@ import { whatsappRouter } from './src/server/whatsapp/api.ts';
 import { mandiPrices, schemes, cropAdvisory } from './src/data/agrigence_engine.ts';
 import { processAndSaveMandiPage, MandiDataInput, processAndSaveDailyBlog } from './src/server/autoContentGenerator.ts';
 import { GoogleGenAI } from "@google/genai";
-import { put } from '@vercel/blob';
+import { put, del } from '@vercel/blob';
 import multer from 'multer';
 import * as dotenv from 'dotenv';
 
@@ -133,11 +133,11 @@ async function startServer() {
   app.post('/api/admin/blob/upload', upload.single('file'), async (req, res) => {
     try {
       console.log('Blob upload request received');
-      const token = process.env.BLOB_READ_WRITE_TOKEN;
+      const token = process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_BLOB_TOKEN || process.env.VERCEL_BLOB_READ_WRITE_TOKEN;
       
       // Diagnostics for the token
       if (!token || token === 'undefined' || token === 'null' || token.trim() === '') {
-        console.error('CRITICAL: BLOB_READ_WRITE_TOKEN is strictly required for logo uploads but is missing.');
+        console.error('CRITICAL: Vercel Blob Token is strictly required for logo uploads but is missing.');
         return res.status(500).json({ 
           error: 'Vercel Blob Storage is not configured on the server. Please check environment variables.',
           code: 'MISSING_BLOB_TOKEN'
@@ -148,8 +148,20 @@ async function startServer() {
         console.error('Upload failed: No file in request');
         return res.status(400).json({ error: 'No file detected. Please ensure you selected an image.' });
       }
-
+      
       const { path = 'general' } = req.body;
+      
+      // Branding assets specific validation
+      if (path.startsWith('branding/')) {
+        if (req.file.size > 5 * 1024 * 1024) {
+          return res.status(400).json({ error: 'File is too large. Max size is 5MB for branding assets.' });
+        }
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/svg+xml', 'image/webp', 'image/x-icon'];
+        if (!allowedMimeTypes.includes(req.file.mimetype)) {
+           return res.status(400).json({ error: 'Invalid file format. Allowed formats are PNG, JPG, JPEG, SVG, WEBP.' });
+        }
+      }
+
       // Sanitize filename to avoid weird characters in URL
       const sanitizedName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
       const fileName = `${path}/${Date.now()}-${sanitizedName}`;
@@ -170,6 +182,24 @@ async function startServer() {
         error: error.message || 'Server failed to process upload',
         code: 'UPLOAD_PROCESSING_ERROR'
       });
+    }
+  });
+
+  app.post('/api/admin/blob/delete', async (req, res) => {
+    try {
+      const { url } = req.body;
+      if (!url) return res.status(400).json({ error: 'URL is required' });
+      
+      const token = process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_BLOB_TOKEN || process.env.VERCEL_BLOB_READ_WRITE_TOKEN;
+      if (!token) {
+        return res.status(500).json({ error: 'Blob token missing' });
+      }
+
+      await del(url, { token });
+      res.json({ success: true });
+    } catch (error: any) {
+      console.error('BLOB_DELETE_ERROR:', error);
+      res.status(500).json({ error: error.message || 'Failed to delete blob' });
     }
   });
 
@@ -338,15 +368,15 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
   });
 
   // === Razorpay Integration for Mobile App ===
-  const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || 'dummy_key';
-  const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || 'dummy_secret';
+  const RAZORPAY_KEY_ID = (process.env.RAZORPAY_KEY_ID || 'dummy_key').trim();
+  const RAZORPAY_KEY_SECRET = (process.env.RAZORPAY_KEY_SECRET || 'dummy_secret').trim();
   let razorpayInstance: any = null;
 
   try {
     const Razorpay = (await import('razorpay')).default;
     razorpayInstance = new Razorpay({
-      key_id: RAZORPAY_KEY_ID,
-      key_secret: RAZORPAY_KEY_SECRET,
+      key_id: RAZORPAY_KEY_ID.trim(),
+      key_secret: RAZORPAY_KEY_SECRET.trim(),
     });
   } catch (e) {
     console.warn("Razorpay SDK not installed or configured. Install with: npm install razorpay");
@@ -369,7 +399,9 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
       // Return order along with public key_id
       res.json({ ...order, key_id: RAZORPAY_KEY_ID });
     } catch (e: any) {
-      res.status(500).json({ error: e.message });
+      console.error("Razorpay API Error:", e);
+      const errMsg = e.error?.description || e.message;
+      res.status(500).json({ error: errMsg, details: e.error || e });
     }
   });
 

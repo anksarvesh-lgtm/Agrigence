@@ -305,6 +305,7 @@ export interface CookiePreferences {
 
 export interface SiteSettings {
   logoUrl: string;
+  faviconUrl?: string;
   apkUrl?: string;
   playStoreUrl?: string;
   issn?: string;
