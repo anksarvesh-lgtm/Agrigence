@@ -83,7 +83,7 @@ export const onAuthStateChanged = (authObj: any, cb: (user: FirebaseUser | null)
 
 // Default settings fallback
 const DEFAULT_SETTINGS: SiteSettings = {
-  logoUrl: 'https://kpnttmkkjq9kpa0f.public.blob.vercel-storage.com/settings/1778090902639-WhatsApp_Image_2026-04-05_at_21.20.18-removebg-preview.png', 
+  logoUrl: '/logo.png', 
   issn: 'Applied For',
   footerSocials: {
     twitter: 'https://x.com/agrigence',
@@ -265,7 +265,7 @@ class FirebaseBackendService {
                     if (!exists) data.navigation.push(rp);
                 });
             }
-            if (data.logoUrl === 'https://www.agrigence.in/logo.png' || data.logoUrl === '/logo.png' || !data.logoUrl) {
+            if (!data.logoUrl) {
                 data.logoUrl = DEFAULT_SETTINGS.logoUrl;
             }
             this.localSettings = data;
@@ -409,7 +409,7 @@ class FirebaseBackendService {
             if (docSnap.data().featureVisibility) {
                 data.featureVisibility = { ...DEFAULT_SETTINGS.featureVisibility, ...docSnap.data().featureVisibility };
             }
-            if (data.logoUrl === 'https://www.agrigence.in/logo.png' || data.logoUrl === '/logo.png' || !data.logoUrl) {
+            if (!data.logoUrl) {
                 data.logoUrl = DEFAULT_SETTINGS.logoUrl;
             }
             cb(data);

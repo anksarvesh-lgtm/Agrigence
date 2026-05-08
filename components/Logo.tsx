@@ -8,12 +8,12 @@ interface LogoProps {
 }
 
 const Logo: React.FC<LogoProps> = ({ className = "h-12 w-auto", variant = 'dark', showText = false }) => {
-  const defaultLogo = "https://kpnttmkkjq9kpa0f.public.blob.vercel-storage.com/settings/1778090902639-WhatsApp_Image_2026-04-05_at_21.20.18-removebg-preview.png";
+  const defaultLogo = "/logo.png";
   const [logoPath, setLogoPath] = useState(defaultLogo);
 
   useEffect(() => {
     const handleUrl = (url?: string) => {
-      if (!url || url.includes('/logo.png') || url === 'null' || url === 'undefined') {
+      if (!url || url === 'null' || url === 'undefined') {
         setLogoPath(defaultLogo);
       } else {
         setLogoPath(url);
