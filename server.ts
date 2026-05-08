@@ -221,7 +221,7 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
     try {
       const ai = getAI();
       const { messages, model = 'gemini-1.5-flash' } = req.body;
-      const parsedInstruction = req.body.systemInstruction || (await import('./src/lib/khetai.ts')).KHETAI_SYSTEM_INSTRUCTION;
+      const parsedInstruction = req.body.systemInstruction || (await import('./src/lib/agrigenceAssistant.ts')).AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION;
       
       const result = await ai.models.generateContentStream({
         model,
@@ -250,7 +250,7 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
     try {
       const ai = getAI();
       const { prompt, image, model = 'gemini-1.5-flash', jsonMode = false } = req.body;
-      const parsedInstruction = req.body.systemInstruction || (await import('./src/lib/khetai.ts')).KHETAI_SYSTEM_INSTRUCTION;
+      const parsedInstruction = req.body.systemInstruction || (await import('./src/lib/agrigenceAssistant.ts')).AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION;
       
       let contents: any[] = [];
       if (typeof prompt === 'string') {

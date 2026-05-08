@@ -22,60 +22,26 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-xl font-serif font-bold text-white mb-4">Agrigence</h3>
             <p className="text-stone-400 text-sm leading-relaxed mb-6">
-              Where Agri-Intelligence Meets Agricultural Generation. Connecting researchers, students, and farmers through high-quality publications and tools.
+              Agrigence Journal of Agriculture & Allied Sciences is a peer-reviewed monthly online journal dedicated to building a trusted digital ecosystem for agricultural research in India.
             </p>
-            <div className="flex flex-wrap gap-3">
-              {settings?.apkUrl && (
-                <a href={settings.apkUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-3 bg-agri-secondary/20 hover:bg-agri-secondary text-agri-secondary hover:text-white rounded-xl transition-colors text-[10px] font-bold uppercase tracking-widest border border-agri-secondary/30">
-                  <Smartphone size={14} />
-                  <span>Get APK</span>
-                  <Download size={12} />
-                </a>
-              )}
-              {settings?.playStoreUrl && (
-                <a href={settings.playStoreUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-4 py-3 bg-[#4285F4]/20 hover:bg-[#4285F4] text-[#4285F4] hover:text-white rounded-xl transition-colors text-[10px] font-bold uppercase tracking-widest border border-[#4285F4]/30">
-                  <Smartphone size={14} />
-                  <span>Play Store</span>
-                  <Download size={12} />
-                </a>
-              )}
-            </div>
           </div>
           
           <div>
-            <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Quick Links</h3>
+            <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Journal</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/about-contact" className="hover:text-agri-secondary transition-colors">About Us</Link></li>
-              {settings?.featureVisibility?.journals !== false && (
-                <li><Link to="/journals" className="hover:text-agri-secondary transition-colors">Journals</Link></li>
-              )}
-              {settings?.featureVisibility?.news !== false && (
-                <li><Link to="/news" className="hover:text-agri-secondary transition-colors">News</Link></li>
-              )}
-              {settings?.featureVisibility?.store !== false && (
-                <li><Link to="/products" className="hover:text-agri-secondary transition-colors">Store</Link></li>
-              )}
+              <li><Link to="/about-journal" className="hover:text-agri-secondary transition-colors">About Journal</Link></li>
+              <li><Link to="/aim-scope" className="hover:text-agri-secondary transition-colors">Aim & Scope</Link></li>
+              <li><Link to="/editorial-board" className="hover:text-agri-secondary transition-colors">Editorial Board</Link></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Legal</h3>
+            <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Policies</h3>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/privacy" className="flex items-center gap-2 hover:text-agri-secondary transition-colors">
-                  <Shield size={14} /> Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link to="/terms" className="flex items-center gap-2 hover:text-agri-secondary transition-colors">
-                  <FileText size={14} /> Terms of Service
-                </Link>
-              </li>
-              <li>
-                <Link to="/author-guidelines" className="flex items-center gap-2 hover:text-agri-secondary transition-colors">
-                  <FileText size={14} /> Author Guidelines
-                </Link>
-              </li>
+              <li><Link to="/author-guidelines" className="hover:text-agri-secondary transition-colors">Author Guidelines</Link></li>
+              <li><Link to="/pages/publication-ethics" className="hover:text-agri-secondary transition-colors">Publication Ethics</Link></li>
+              <li><Link to="/privacy" className="hover:text-agri-secondary transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-agri-secondary transition-colors">Terms of Service</Link></li>
             </ul>
           </div>
 

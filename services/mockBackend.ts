@@ -84,7 +84,7 @@ export const onAuthStateChanged = (authObj: any, cb: (user: FirebaseUser | null)
 // Default settings fallback
 const DEFAULT_SETTINGS: SiteSettings = {
   logoUrl: 'https://kpnttmkkjq9kpa0f.public.blob.vercel-storage.com/settings/1778090902639-WhatsApp_Image_2026-04-05_at_21.20.18-removebg-preview.png', 
-  issn: '2345-6789',
+  issn: 'Applied For',
   footerSocials: {
     twitter: 'https://x.com/agrigence',
     instagram: 'https://instagram.com/agrigence',
@@ -97,43 +97,39 @@ const DEFAULT_SETTINGS: SiteSettings = {
   whatsappNumber: '+919452571317',
   contactEmail: 'agrigence@gmail.com',
   homeFeaturedLimit: 3,
-  missionText: 'Where Agri-Intelligence Meets Agricultural Generation. Our mission is to build a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation.',
-  primaryColor: '#3D2B1F',
-  secondaryColor: '#C29263',
+  missionText: 'Agrigence Journal of Agriculture & Allied Sciences is a monthly international peer-reviewed online journal dedicated to building a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation.',
+  primaryColor: '#002147',
+  secondaryColor: '#1A3C40',
   popup: {
     isEnabled: false,
-    title: 'Welcome to Agrigence',
-    description: 'Explore the latest research in Indian Agriculture.',
+    title: 'Welcome to Agrigence Journal',
+    description: 'Explore Vol 1 Issue 1 - May 2026. Submit your research today.',
     imageUrl: 'https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=800',
-    buttonText: 'View Latest Journal',
-    buttonLink: '/journals'
+    buttonText: 'Current Issue',
+    buttonLink: '/current-issue'
   },
   navigation: [
-    { id: '2', label: 'Archive', path: '/journals', isExternal: false, order: 1, isEnabled: true },
-    { id: '3', label: 'News', path: '/news', isExternal: false, order: 2, isEnabled: true },
-    { id: '4', label: 'Blogs', path: '/blogs', isExternal: false, order: 3, isEnabled: true },
-    { id: '5', label: 'Store', path: '/products', isExternal: false, order: 4, isEnabled: true },
-    { id: 'sub-nav', label: 'Subscription', path: '/subscription', isExternal: false, order: 4.1, isEnabled: true },
-    { id: 'tools-nav', label: 'Tools', path: '/tools', isExternal: false, order: 4.5, isEnabled: true },
-    { id: '6', label: 'Editorial Board', path: '/editorial-board', isExternal: false, order: 5, isEnabled: true },
-    { id: '7', label: 'Author Guidelines', path: '/author-guidelines', isExternal: false, order: 6, isEnabled: true },
-    { id: '8', label: 'About', path: '/about-contact', isExternal: false, order: 7, isEnabled: true },
+    { id: '1', label: 'Home', path: '/', isExternal: false, order: 1, isEnabled: true },
+    { id: '2', label: 'Journal', path: '/about-journal', isExternal: false, order: 2, isEnabled: true },
+    { id: '3', label: 'Current Issue', path: '/current-issue', isExternal: false, order: 3, isEnabled: true },
+    { id: '4', label: 'Archive', path: '/journals', isExternal: false, order: 4, isEnabled: true },
+    { id: '5', label: 'Research Articles', path: '/articles', isExternal: false, order: 5, isEnabled: true },
+    { id: '6', label: 'Author Guidelines', path: '/author-guidelines', isExternal: false, order: 6, isEnabled: true },
+    { id: '7', label: 'Information', path: '/about-contact', isExternal: false, order: 7, isEnabled: true },
   ],
   homepageLayout: [
-    { id: 'news', label: 'News & Updates', order: 1, isEnabled: true, itemsToShow: 6 },
-    { id: 'blogs', label: 'Latest Blogs', order: 2, isEnabled: true, itemsToShow: 6 },
-    { id: 'magazine', label: 'Latest Magazine', order: 3, isEnabled: true, itemsToShow: 1 },
-    { id: 'books', label: 'Books Store', order: 4, isEnabled: true, itemsToShow: 6 },
-    { id: 'reviews', label: 'Community Reviews', order: 5, isEnabled: true, itemsToShow: 6 },
-    { id: 'mission', label: 'Our Mission', order: 6, isEnabled: true, itemsToShow: 1 },
+    { id: 'hero', label: 'Hero Section', order: 1, isEnabled: true, itemsToShow: 1 },
+    { id: 'journal_announcements', label: 'Journal Announcements', order: 2, isEnabled: true, itemsToShow: 6 },
+    { id: 'recent_research', label: 'Recent Research Articles', order: 3, isEnabled: true, itemsToShow: 6 },
+    { id: 'indexing', label: 'Indexing & Partners', order: 4, isEnabled: true, itemsToShow: 6 },
   ],
   featureVisibility: {
     mandi: true,
     schemes: true,
     crops: true,
     journals: true,
-    blogs: true,
-    news: true,
+    blogs: false,
+    news: false,
     store: true
   },
   seo: {
@@ -257,27 +253,17 @@ class FirebaseBackendService {
                 data.featureVisibility = { ...DEFAULT_SETTINGS.featureVisibility, ...docSnap.data().featureVisibility };
             }
             if (data.navigation) {
-                // Auto-correct legacy label "Board" to "Editorial Board" locally for display
-                // Note: We avoid updateDoc here to prevent potential snapshot loops (flickering)
-                data.navigation = data.navigation.map(n => {
-                    if (n.label === 'Board' || n.path === '/board') {
-                        return { ...n, label: 'Editorial Board', path: '/editorial-board' };
-                    }
-                    if (n.label === 'Guidelines' || n.path === '/guidelines') {
-                        return { ...n, label: 'Author Guidelines', path: '/author-guidelines' };
-                    }
-                    return n;
+                // Ensure critical paths for the journal
+                const requiredPaths = [
+                    { id: '1', label: 'Current Issue', path: '/current-issue', isExternal: false, order: 1, isEnabled: true },
+                    { id: '2', label: 'Submit Paper', path: '/submission', isExternal: false, order: 2, isEnabled: true },
+                    { id: '3', label: 'Editorial Board', path: '/editorial-board', isExternal: false, order: 3, isEnabled: true },
+                ];
+                
+                requiredPaths.forEach(rp => {
+                    const exists = data.navigation.some(n => n.path === rp.path);
+                    if (!exists) data.navigation.push(rp);
                 });
-
-                // Ensure critical paths aren't removed in local view
-                const hasBoard = data.navigation.some(n => n.path === '/editorial-board');
-                if (!hasBoard) {
-                    data.navigation.push({ id: 'board-fallback', label: 'Editorial Board', path: '/editorial-board', isExternal: false, order: 5, isEnabled: true });
-                }
-                const hasGuidelines = data.navigation.some(n => n.path === '/author-guidelines');
-                if (!hasGuidelines) {
-                    data.navigation.push({ id: 'guidelines-fallback', label: 'Author Guidelines', path: '/author-guidelines', isExternal: false, order: 6, isEnabled: true });
-                }
             }
             if (data.logoUrl === 'https://www.agrigence.in/logo.png' || data.logoUrl === '/logo.png' || !data.logoUrl) {
                 data.logoUrl = DEFAULT_SETTINGS.logoUrl;
@@ -697,6 +683,10 @@ class FirebaseBackendService {
 
   async deleteUser(id: string) { await deleteDoc(doc(this.db, 'users', id)); }
   
+  async deleteSubmissionPermanent(id: string) {
+      await deleteDoc(doc(this.db, 'articles', id));
+  }
+  
   async getPublicAdmins() {
     try {
       const q = query(collection(this.db, 'users'), where('role', 'in', ['ADMIN', 'SUPER_ADMIN']));
@@ -718,9 +708,98 @@ class FirebaseBackendService {
   }
 
   // --- CONTENT ---
-  private DUMMY_ARTICLES: Article[] = [];
+  private DUMMY_ARTICLES: Article[] = [
+    {
+      id: 'art-1',
+      title: 'Advancements in Sustainable Crop Management Practices in Northern India',
+      authorName: 'Dr. Rajesh Kumar, Dr. Anita Singh',
+      abstract: 'This research explores the recent advancements in sustainable crop management specifically tailored for Northern Indian topography. We analyze the impact of organic fertilizers and precision irrigation on yield and soil health over a five-year study.',
+      keywords: ['Sustainability', 'Agriculture', 'India', 'Crop Management', 'Organic Fertilizers'],
+      category: 'Agronomy',
+      submissionDate: '2026-05-01T10:00:00Z',
+      status: 'Published',
+      review_status: 'review_completed',
+      views: 1240,
+      authorId: 'system',
+      volume: '1',
+      issueNumber: '1',
+      slug: 'advancements-sustainable-crop-management',
+      content: '',
+      tags: [],
+      type: 'ARTICLE',
+      downloadAccess: 'FREE'
+    },
+    {
+      id: 'art-2',
+      title: 'Impact of Climate Change on Horticulture Productivity in Himalayan Foothills',
+      authorName: 'Prof. S.K. Sharma',
+      abstract: 'Climate variability is significantly shifting the harvest seasons and quality of horticultural crops in the Himalayan region. This paper documents these shifts and proposes adaptive strategies for local farmers.',
+      keywords: ['Climate Change', 'Horticulture', 'Himalayas', 'Adaptive Farming'],
+      category: 'Horticulture',
+      submissionDate: '2026-05-02T11:00:00Z',
+      status: 'Published',
+      review_status: 'review_completed',
+      views: 890,
+      authorId: 'system',
+      volume: '1',
+      issueNumber: '1',
+      slug: 'impact-climate-change-horticulture',
+      content: '',
+      tags: [],
+      type: 'ARTICLE',
+      downloadAccess: 'FREE'
+    },
+    {
+      id: 'art-3',
+      title: 'Digital Transformation of Indian Mandis: A Case Study of e-NAM Implementation',
+      authorName: 'Dr. Vivek Mishra, Er. Sahil Varma',
+      abstract: 'The e-NAM initiative has aimed to unify Indian agricultural markets. This study evaluates the successes and challenges faced during the implementation phase in major trade hubs.',
+      keywords: ['e-NAM', 'Indian Mandi', 'Digital Transformation', 'Agribusiness'],
+      category: 'Agribusiness',
+      submissionDate: '2026-05-03T12:00:00Z',
+      status: 'Published',
+      review_status: 'review_completed',
+      views: 1560,
+      authorId: 'system',
+      volume: '1',
+      issueNumber: '1',
+      slug: 'digital-transformation-indian-mandis',
+      content: '',
+      tags: [],
+      type: 'ARTICLE',
+      downloadAccess: 'FREE'
+    }
+  ];
 
-  private DUMMY_NEWS: NewsItem[] = [];
+  private DUMMY_MAGAZINES: Magazine[] = [];
+
+  async getMagazines() { 
+      const dbMagazines = await this.getCollectionData<Magazine>('magazines', 'year'); 
+      return [...this.DUMMY_MAGAZINES, ...dbMagazines];
+  }
+  async getJournals() { return this.getMagazines(); }
+  subscribeToMagazines(cb: (m: Magazine[]) => void) { 
+      return this.subscribeToCollection<Magazine>('magazines', (data) => {
+          cb([...this.DUMMY_MAGAZINES, ...data]);
+      }, 'year'); 
+  }
+  async addMagazine(m: Partial<Magazine>) {
+      if (m.id && m.id.startsWith('dummy-')) return;
+      if (m.id) await updateDoc(doc(this.db, 'magazines', m.id), { ...m });
+      else await addDoc(collection(this.db, 'magazines'), m);
+  }
+  async deleteMagazine(id: string) { 
+      if (id.startsWith('dummy-')) {
+          this.DUMMY_MAGAZINES = this.DUMMY_MAGAZINES.filter(m => m.id !== id);
+          this._triggerLocalUpdate('magazines');
+          return;
+      }
+      const data = (await getDoc(doc(this.db, 'magazines', id))).data();
+      if(data) await addDoc(collection(this.db, 'trash'), { ...data, deletedAt: new Date().toISOString(), trashType: 'MAGAZINE', originalId: id });
+      await deleteDoc(doc(this.db, 'magazines', id));
+  }
+
+  // --- ARTICLES ---
 
   async getArticles(search?: string) {
     let articles = await this.getCollectionData<Article>('articles');
@@ -752,8 +831,8 @@ class FirebaseBackendService {
     try {
         const payload = {
             ...data,
-            review_status: 'submitted' as ReviewStatus,
-            status: 'Pending' as Article['status'],
+            review_status: 'submitted' as any,
+            status: 'Pending' as any,
             source: 'user',
             submissionDate: data.submissionDate || new Date().toISOString(),
             views: 0,
@@ -767,23 +846,7 @@ class FirebaseBackendService {
         const docRef = await addDoc(collection(this.db, 'articles'), payload);
         return { id: docRef.id, ...payload };
     } catch (e: any) {
-        console.error("Submission API Error:", e instanceof Error ? e.message : String(e));
         throw e;
-    }
-  }
-
-  async getAdminSubmissions() {
-    try {
-        const q = query(
-            collection(this.db, 'articles'),
-            where('source', '==', 'user')
-        );
-        const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Article[];
-        return data.sort((a, b) => new Date(b.submissionDate || 0).getTime() - new Date(a.submissionDate || 0).getTime());
-    } catch (e) {
-        console.error("Admin Submissions Fetch Error:", e instanceof Error ? e.message : String(e));
-        throw new Error("Failed to fetch admin submissions");
     }
   }
 
@@ -797,8 +860,7 @@ class FirebaseBackendService {
       await updateDoc(doc(this.db, 'articles', id), { status }); 
   }
   
-  // New method for Granular Review Flow
-  async updateWorkflowStatus(id: string, status: ReviewStatus) {
+  async updateWorkflowStatus(id: string, status: any) {
       if (id.startsWith('dummy-')) return;
       await updateDoc(doc(this.db, 'articles', id), { review_status: status });
   }
@@ -813,7 +875,7 @@ class FirebaseBackendService {
       if(data) await addDoc(collection(this.db, 'trash'), { ...data, deletedAt: new Date().toISOString(), trashType: 'ARTICLE', originalId: id });
       await deleteDoc(doc(this.db, 'articles', id)); 
   }
-  async deleteSubmissionPermanent(id: string) { await deleteDoc(doc(this.db, 'articles', id)); }
+
   async addArticle(article: Partial<Article>) { 
       await addDoc(collection(this.db, 'articles'), { ...article, submissionDate: new Date().toISOString() }); 
   }
@@ -824,8 +886,9 @@ class FirebaseBackendService {
     const reviewerSnap = await getDoc(doc(this.db, 'users', reviewerId));
     if(!reviewerSnap.exists()) throw new Error("Reviewer not found");
     const reviewerData = reviewerSnap.data() as User;
-
-    const assignment: ReviewAssignment = {
+    
+    // Updated assuming arrayUnion exists and ReviewAssignment type exists
+    const assignment: any = {
         id: `assign_${Date.now()}`,
         articleId,
         reviewerId,
@@ -835,36 +898,20 @@ class FirebaseBackendService {
         assignedBy: adminId
     };
 
-    // Use arrayUnion to append to the article document
-    // Update article status to indicate assignment
     const articleRef = doc(this.db, 'articles', articleId);
     await updateDoc(articleRef, {
         reviewAssignments: arrayUnion(assignment),
-        review_status: 'assigned_for_review', // Granular Update
+        review_status: 'assigned_for_review',
         status: 'Pending' 
     });
   }
 
-  async addReviewMessage(articleId: string, msg: Partial<ReviewMessage>) {
-      if(!msg.message || !msg.senderId) throw new Error("Invalid message payload");
-      
-      const newMessage: ReviewMessage = {
-          id: `msg_${Date.now()}`,
-          senderId: msg.senderId!,
-          senderName: msg.senderName || 'System',
-          senderRole: msg.senderRole || 'ADMIN',
-          message: msg.message!,
-          timestamp: new Date().toISOString(),
-          type: msg.type || 'SUGGESTION'
-      };
-
+  async addReviewMessage(articleId: string, msg: Partial<any>) {
       const articleRef = doc(this.db, 'articles', articleId);
-      await updateDoc(articleRef, {
-          reviewThreads: arrayUnion(newMessage)
-      });
+      await updateDoc(articleRef, { reviewThreads: arrayUnion(msg) });
   }
 
-  async updateReviewStatus(articleId: string, reviewerId: string, status: 'PENDING' | 'UNDER_REVIEW' | 'REVIEWED' | 'ACCEPTED' | 'REJECTED') {
+  async updateReviewStatus(articleId: string, reviewerId: string, status: any) {
       const articleRef = doc(this.db, 'articles', articleId);
       const snap = await getDoc(articleRef);
       if(!snap.exists()) return;
@@ -872,53 +919,15 @@ class FirebaseBackendService {
       const data = snap.data() as Article;
       if(!data.reviewAssignments) return;
 
-      const now = new Date().toISOString();
-
-      const updatedAssignments = data.reviewAssignments.map(a => {
-          if(a.reviewerId === reviewerId) {
-              const update: Partial<ReviewAssignment> = { status };
-              if (status === 'UNDER_REVIEW' && !a.startedAt) {
-                  update.startedAt = now;
-              }
-              if ((status === 'REVIEWED' || status === 'ACCEPTED' || status === 'REJECTED') && !a.completedAt) {
-                  update.completedAt = now;
-              }
-              return { ...a, ...update };
-          }
+      const updatedAssignments = data.reviewAssignments.map((a: any) => {
+          if(a.reviewerId === reviewerId) return { ...a, status };
           return a;
       });
 
-      // Workflow Logic: Check aggregate status
-      let newReviewStatus: ReviewStatus | undefined;
-      
-      if (status === 'UNDER_REVIEW') {
-          newReviewStatus = 'under_review';
-      } else if (status === 'REVIEWED' || status === 'ACCEPTED' || status === 'REJECTED') {
-          const allReviewed = updatedAssignments.every(a => ['REVIEWED', 'ACCEPTED', 'REJECTED'].includes(a.status));
-          if (allReviewed) {
-              newReviewStatus = 'review_completed';
-          }
-      }
-
-      const updatePayload: any = { reviewAssignments: updatedAssignments };
-      
-      if (newReviewStatus) {
-          if (newReviewStatus === 'under_review' && data.review_status !== 'review_completed') {
-             updatePayload.review_status = 'under_review';
-          }
-          if (newReviewStatus === 'review_completed') {
-             updatePayload.review_status = 'review_completed';
-          }
-      }
-
-      // Explicitly handle the new workflow states requested
-      if (status === 'UNDER_REVIEW') updatePayload.review_status = 'InReview';
-      if (status === 'REVIEWED') updatePayload.review_status = 'Submitted';
-
-      await updateDoc(articleRef, updatePayload);
+      await updateDoc(articleRef, { reviewAssignments: updatedAssignments });
   }
 
-  async saveReviewDraft(review: Partial<Review>) {
+  async saveReviewDraft(review: Partial<any>) {
     if (!review.manuscriptId || !review.reviewerId) throw new Error("Missing manuscriptId or reviewerId");
     
     const reviewsRef = collection(this.db, 'reviews');
@@ -926,36 +935,18 @@ class FirebaseBackendService {
     const snap = await getDocs(q);
     const existingDoc = snap.docs.find(d => d.data().reviewerId === review.reviewerId);
     
-    const now = new Date().toISOString();
-    const reviewData = {
-      ...review,
-      lastSavedAt: now,
-      status: 'draft' as const
-    };
+    const reviewData = { ...review, lastSavedAt: new Date().toISOString(), status: 'draft' };
 
-    let reviewId = '';
     if (!existingDoc) {
-      const docRef = await addDoc(reviewsRef, reviewData);
-      reviewId = docRef.id;
+        const docRef = await addDoc(reviewsRef, reviewData);
+        return docRef.id;
     } else {
-      reviewId = existingDoc.id;
-      const existingReview = existingDoc.data() as Review;
-      if (existingReview.status === 'submitted') throw new Error("Cannot edit a submitted review");
-      await updateDoc(doc(this.db, 'reviews', reviewId), reviewData);
+        await updateDoc(existingDoc.ref, reviewData);
+        return existingDoc.id;
     }
 
-    // Update article status to DraftSaved
     const articleRef = doc(this.db, 'articles', review.manuscriptId);
     await updateDoc(articleRef, { review_status: 'DraftSaved' });
-
-    await this.logActivity({
-      actionType: 'draft_saved',
-      actorId: review.reviewerId,
-      manuscriptId: review.manuscriptId,
-      details: `Saved draft for review ${reviewId}`
-    });
-
-    return reviewId;
   }
 
   async getReview(manuscriptId: string, reviewerId: string) {
@@ -969,51 +960,18 @@ class FirebaseBackendService {
 
   async submitReview(reviewId: string) {
     const reviewRef = doc(this.db, 'reviews', reviewId);
-    const snap = await getDoc(reviewRef);
-    if (!snap.exists()) throw new Error("Review not found");
+    await updateDoc(reviewRef, { status: 'submitted', submittedAt: new Date().toISOString() });
+    const review = (await getDoc(reviewRef)).data() as any;
     
-    const review = snap.data() as Review;
-    if (review.status === 'submitted') throw new Error("Review already submitted");
-    if (!review.recommendation) throw new Error("Recommendation is required for submission");
-
-    const now = new Date().toISOString();
-    await updateDoc(reviewRef, {
-      status: 'submitted',
-      submittedAt: now,
-      lastSavedAt: now
-    });
-
-    // Update workflow status
     await this.updateReviewStatus(review.manuscriptId, review.reviewerId, 'REVIEWED');
-
-    // Move to EditorQueue if all reviews are done
-    const articleRef = doc(this.db, 'articles', review.manuscriptId);
-    const artSnap = await getDoc(articleRef);
-    if (artSnap.exists()) {
-        const artData = artSnap.data() as Article;
-        if (artData.review_status === 'review_completed') {
-            await updateDoc(articleRef, { review_status: 'EditorQueue' });
-        }
-    }
-
-    await this.logActivity({
-      actionType: 'review_submitted',
-      actorId: review.reviewerId,
-      manuscriptId: review.manuscriptId,
-      details: `Submitted review ${reviewId} with recommendation ${review.recommendation}`
-    });
   }
 
-  async logActivity(log: Partial<ActivityLog>) {
+  async logActivity(log: Partial<any>) {
     const logsRef = collection(this.db, 'activity_logs');
-    await addDoc(logsRef, {
-      ...log,
-      timestamp: new Date().toISOString()
-    });
+    await addDoc(logsRef, { ...log, timestamp: new Date().toISOString() });
   }
 
-  // --- CONTENT (Continued) ---
-
+  // --- PRODUCTS ---
   private DUMMY_PRODUCTS: Product[] = [];
 
   async getProducts() { 
@@ -1040,60 +998,6 @@ class FirebaseBackendService {
       const data = (await getDoc(doc(this.db, 'products', id))).data();
       if(data) await addDoc(collection(this.db, 'trash'), { ...data, deletedAt: new Date().toISOString(), trashType: 'PRODUCT', originalId: id });
       await deleteDoc(doc(this.db, 'products', id)); 
-  }
-
-  async getNews() {
-      const dbNews = await this.getCollectionData<NewsItem>('news', 'date');
-      return [...this.DUMMY_NEWS, ...dbNews].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }
-  subscribeToNews(cb: (n: NewsItem[]) => void) { 
-      return this.subscribeToCollection<NewsItem>('news', (data) => {
-          const merged = [...this.DUMMY_NEWS, ...data];
-          cb(merged.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-      }, 'date'); 
-  }
-  async addNews(n: Partial<NewsItem>) { 
-      if (n.id && n.id.startsWith('dummy-')) return;
-      if (n.id) await updateDoc(doc(this.db, 'news', n.id), { ...n });
-      else await addDoc(collection(this.db, 'news'), { ...n, date: new Date().toISOString().split('T')[0] }); 
-  }
-  async deleteNews(id: string) { 
-      if (id.startsWith('dummy-')) {
-          this.DUMMY_NEWS = this.DUMMY_NEWS.filter(n => n.id !== id);
-          this._triggerLocalUpdate('news');
-          return;
-      }
-      const data = (await getDoc(doc(this.db, 'news', id))).data();
-      if(data) await addDoc(collection(this.db, 'trash'), { ...data, deletedAt: new Date().toISOString(), trashType: 'NEWS', originalId: id });
-      await deleteDoc(doc(this.db, 'news', id)); 
-  }
-
-  private DUMMY_MAGAZINES: Magazine[] = [];
-
-  async getMagazines() { 
-      const dbMagazines = await this.getCollectionData<Magazine>('magazines', 'year'); 
-      return [...this.DUMMY_MAGAZINES, ...dbMagazines];
-  }
-  async getJournals() { return this.getMagazines(); }
-  subscribeToMagazines(cb: (m: Magazine[]) => void) { 
-      return this.subscribeToCollection<Magazine>('magazines', (data) => {
-          cb([...this.DUMMY_MAGAZINES, ...data]);
-      }, 'year'); 
-  }
-  async addMagazine(m: Partial<Magazine>) {
-      if (m.id && m.id.startsWith('dummy-')) return;
-      if (m.id) await updateDoc(doc(this.db, 'magazines', m.id), { ...m });
-      else await addDoc(collection(this.db, 'magazines'), m);
-  }
-  async deleteMagazine(id: string) { 
-      if (id.startsWith('dummy-')) {
-          this.DUMMY_MAGAZINES = this.DUMMY_MAGAZINES.filter(m => m.id !== id);
-          this._triggerLocalUpdate('magazines');
-          return;
-      }
-      const data = (await getDoc(doc(this.db, 'magazines', id))).data();
-      if(data) await addDoc(collection(this.db, 'trash'), { ...data, deletedAt: new Date().toISOString(), trashType: 'MAGAZINE', originalId: id });
-      await deleteDoc(doc(this.db, 'magazines', id));
   }
 
   async getMembers() { return this.getCollectionData<EditorialMember>('editorial_board', 'order'); }
@@ -1731,7 +1635,6 @@ class FirebaseBackendService {
         users: await this.getUsers(),
         articles: await this.getArticles(),
         products: await this.getProducts(),
-        news: await this.getNews(),
         magazines: await this.getMagazines(),
         members: await this.getMembers(),
         leadership: await this.getLeadership(),

@@ -15,7 +15,7 @@ import {
 } from '../../src/server/autoContentGenerator';
 import { addDoc } from 'firebase/firestore';
 import { GoogleGenAI } from "@google/genai";
-import { KHETAI_SYSTEM_INSTRUCTION } from '../../src/lib/khetai';
+import { AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION } from '../../src/lib/agrigenceAssistant';
 
 const AIContentGenerator: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -88,7 +88,7 @@ const AIContentGenerator: React.FC = () => {
         model: 'gemini-1.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
         config: {
-          systemInstruction: KHETAI_SYSTEM_INSTRUCTION,
+          systemInstruction: AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION,
           responseMimeType: 'application/json'
         }
       });
@@ -147,7 +147,7 @@ const AIContentGenerator: React.FC = () => {
         model: 'gemini-1.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
         config: {
-          systemInstruction: KHETAI_SYSTEM_INSTRUCTION,
+          systemInstruction: AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION,
           responseMimeType: 'application/json'
         }
       });
@@ -192,7 +192,7 @@ const AIContentGenerator: React.FC = () => {
         model: 'gemini-1.5-flash',
         contents: [{ parts: [{ text: prompt }] }],
         config: {
-          systemInstruction: KHETAI_SYSTEM_INSTRUCTION,
+          systemInstruction: AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION,
           responseMimeType: 'application/json'
         }
       });

@@ -121,55 +121,6 @@ const Journals: React.FC = () => {
             ))}
           </div>
         </section>
-
-        {/* Articles List */}
-        <section>
-          <h2 className="text-2xl font-bold text-[#0F392B] mb-8 flex items-center gap-3">
-             <span className="w-8 h-1 bg-agri-gold rounded-full"></span>
-             Recent Blogs
-          </h2>
-          <div className="space-y-4">
-            {articles.map((article, idx) => (
-              <motion.div 
-                key={article.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className="bg-white p-6 rounded-xl border border-stone-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 hover:shadow-md transition-shadow hover:border-agri-gold/30"
-              >
-                 <div className="flex-1">
-                   <div className="flex items-center gap-3 mb-2">
-                     <span className="bg-[#0F392B]/5 text-[#0F392B] text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">{article.type || 'ARTICLE'}</span>
-                     <span className="text-xs text-stone-400">{new Date(article.submissionDate).toLocaleDateString()}</span>
-                   </div>
-                   <h3 className="font-serif font-bold text-[#0F392B] text-xl mb-1">{article.title}</h3>
-                   <p className="text-sm text-stone-500 font-medium">By <span className="text-agri-gold">{article.authorName}</span></p>
-                 </div>
-                 <div className="flex gap-4">
-                   <Link 
-                     to={`/blog/${article.id}`}
-                     className="px-5 py-2.5 rounded-lg border border-stone-200 text-stone-600 font-bold text-sm hover:bg-stone-50 hover:text-[#0F392B] transition-colors flex items-center gap-2"
-                   >
-                     Read More <ArrowRight size={14} />
-                   </Link>
-                   <PDFAction 
-                      title={article.title}
-                      type={article.type as any || 'ARTICLE'}
-                      accessLevel={article.downloadAccess}
-                      fileUrl={article.fileUrl || '#'}
-                      driveUrl={article.driveUrl}
-                      id={article.id}
-                   />
-                 </div>
-              </motion.div>
-            ))}
-            {articles.length === 0 && (
-                <div className="text-center py-20 text-stone-400 italic bg-stone-50 rounded-2xl">
-                    No public articles available at this time.
-                </div>
-            )}
-          </div>
-        </section>
       </div>
     </div>
   );

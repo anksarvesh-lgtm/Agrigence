@@ -24,12 +24,10 @@ import ScrollToTop from './components/ScrollToTop';
 
 import Home from './pages/Home';
 import EditorialBoard from './pages/EditorialBoard';
+import AboutJournal from './pages/AboutJournal';
+import AimScope from './pages/AimScope';
 import AuthorGuidelines from './pages/AuthorGuidelines';
-import News from './pages/News';
-import NewsView from './pages/NewsView';
 import Journals from './pages/Journals';
-import Blogs from './pages/Blogs';
-import BlogView from './pages/BlogView';
 import AboutContact from './pages/AboutContact';
 import Products from './pages/Products';
 import Consultation from './pages/Consultation';
@@ -81,7 +79,6 @@ import ProductManagement from './pages/admin/ProductManagement';
 import ContentManagement from './pages/admin/ContentManagement';
 import SubscriptionPlans from './pages/admin/SubscriptionPlans';
 import Payments from './pages/admin/Payments';
-import AdminNewsManagement from './pages/admin/AdminNewsManagement';
 import EditorialBoardManagement from './pages/admin/EditorialBoardManagement';
 import LeadershipManagement from './pages/admin/LeadershipManagement';
 import PopupManager from './pages/admin/PopupManager';
@@ -108,7 +105,6 @@ import WhapiDashboard from './pages/admin/WhapiDashboard';
 import FarmerConnectManagement from './pages/admin/FarmerConnectManagement';
 import CookieConsentManager from './components/CookieConsentManager';
 import AddDobModal from './components/AddDobModal';
-import { KisanMitraChatbot } from './components/KisanMitraChatbot';
 
 import DashboardHome from './pages/DashboardHome';
 import PipelineBuilder from './pages/PipelineBuilder';
@@ -203,7 +199,6 @@ const AppContent: React.FC = () => {
       <FaviconUpdater />
       <GlobalUploadIndicator />
       <CookieConsentManager />
-      <KisanMitraChatbot />
       {showDobModal && <AddDobModal onClose={() => setShowDobModal(false)} />}
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <ScrollToTop />
@@ -223,11 +218,10 @@ const AppContent: React.FC = () => {
               <Route path="author-guidelines" element={<AuthorGuidelines />} />
               <Route path="guidelines" element={<Navigate to="/author-guidelines" replace />} />
               
-              <Route path="news" element={<News />} />
-              <Route path="news/:id" element={<NewsView />} />
+
               <Route path="journals" element={<Journals />} />
-              <Route path="blogs" element={<Blogs />} />
-              <Route path="blog/:id" element={<BlogView />} />
+              <Route path="about-journal" element={<AboutJournal />} />
+              <Route path="aim-scope" element={<AimScope />} />
               <Route path="about-contact" element={<AboutContact />} />
               <Route path="products" element={<Products />} />
               <Route path="consultation" element={<Consultation />} />
@@ -271,7 +265,7 @@ const AppContent: React.FC = () => {
               <Route path="dashboard/advanced-research" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><AdvancedResearchSuite /></ProtectedRoute>} />
               <Route path="dashboard/advanced-stats" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><AdvancedStatsSuite /></ProtectedRoute>} />
               <Route path="dashboard/tool-history/:id" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><ToolHistoryDetail /></ProtectedRoute>} />
-              <Route path="submission" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Submission /></ProtectedRoute>} />
+              <Route path="submission" element={<Submission />} />
               <Route path="subscription" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Subscription /></ProtectedRoute>} />
             </Route>
 
@@ -327,8 +321,7 @@ const AppContent: React.FC = () => {
               <Route path="dashboard" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><AdminDashboard /></ProtectedRoute>} />
               <Route path="submissions" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><SubmissionAdminPanel /></ProtectedRoute>} />
               <Route path="payments" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><Payments /></ProtectedRoute>} />
-              <Route path="news" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><AdminNewsManagement /></ProtectedRoute>} />
-              <Route path="blogs" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><ContentManagement /></ProtectedRoute>} />
+
               <Route path="inquiries" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><InquiryManager /></ProtectedRoute>} />
               <Route path="broadcast" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><NotificationManager /></ProtectedRoute>} />
               <Route path="web-intelligence" element={<ProtectedRoute allowedRoles={['SUPER_ADMIN', 'ADMIN']}><WebIntelligence /></ProtectedRoute>} />

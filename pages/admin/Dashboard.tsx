@@ -6,14 +6,13 @@ import {
   ShieldCheck, Megaphone, Terminal, Hash, Activity, BookOpen, CreditCard, Tag 
 } from 'lucide-react';
 import { mockBackend } from '../../services/mockBackend';
-import { User, Article, Product, PaymentRecord, NewsItem, SiteSettings, Magazine, Coupon } from '../../types';
+import { User, Article, Product, PaymentRecord, SiteSettings, Magazine, Coupon } from '../../types';
 
 const Dashboard: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [payments, setPayments] = useState<PaymentRecord[]>([]);
-  const [news, setNews] = useState<NewsItem[]>([]);
   const [magazines, setMagazines] = useState<Magazine[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
@@ -23,8 +22,7 @@ const Dashboard: React.FC = () => {
     const unsubArticles = mockBackend.subscribeToArticles(setArticles);
     const unsubProducts = mockBackend.subscribeToProducts(setProducts);
     const unsubPayments = mockBackend.subscribeToPayments(setPayments);
-    const unsubNews = mockBackend.subscribeToNews(setNews);
-    const unsubMags = mockBackend.subscribeToMagazines(setMagazines);
+    const unsubMagazines = mockBackend.subscribeToMagazines(setMagazines);
     
     mockBackend.getCoupons().then(setCoupons);
     setSettings(mockBackend.getSettings());
@@ -48,8 +46,7 @@ const Dashboard: React.FC = () => {
         unsubArticles();
         unsubProducts();
         unsubPayments();
-        unsubNews();
-        unsubMags();
+        unsubMagazines();
     };
   }, []);
 
@@ -75,7 +72,6 @@ const Dashboard: React.FC = () => {
     { label: 'Research Articles', count: publications.length, icon: FileText },
     { label: 'Community Blogs', count: blogs.length, icon: Rss },
     { label: 'Magazines', count: magazines.length, icon: BookOpen },
-    { label: 'News Updates', count: news.length, icon: Newspaper },
     { label: 'Store Products', count: products.length, icon: ShoppingBag },
     { label: 'Active Coupons', count: coupons.length, icon: Tag },
   ];
@@ -159,7 +155,7 @@ const Dashboard: React.FC = () => {
          <div className="bg-white border border-gray-200 rounded-[2rem] p-10 flex flex-col justify-between shadow-sm">
             <div>
                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-agri-secondary mb-6">Action Hub</h3>
-               <p className="text-gray-600 text-sm leading-relaxed mb-10">All platform controls are live. You can manage <b>{articles.length + news.length}</b> content entries and <b>{products.length}</b> store products.</p>
+               <p className="text-gray-600 text-sm leading-relaxed mb-10">All platform controls are live. You can manage <b>{articles.length}</b> content entries and <b>{products.length}</b> store products.</p>
             </div>
             <div className="grid gap-3">
                <button className="w-full bg-agri-secondary text-white py-4 rounded-xl font-bold shadow-lg shadow-agri-secondary/20 hover:scale-105 transition-all text-xs uppercase tracking-widest">

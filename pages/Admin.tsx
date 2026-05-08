@@ -15,9 +15,8 @@ interface PasswordResetRequest {
 }
 
 const Admin: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'articles' | 'news' | 'journals' | 'members' | 'products' | 'password_resets'>('articles');
+  const [activeTab, setActiveTab] = useState<'articles' | 'journals' | 'members' | 'products' | 'password_resets'>('articles');
   const [articles, setArticles] = useState<Article[]>([]);
-  const [news, setNews] = useState<NewsItem[]>([]);
   const [members, setMembers] = useState<EditorialMember[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [passwordResets, setPasswordResets] = useState<PasswordResetRequest[]>([]);
@@ -25,7 +24,6 @@ const Admin: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       setArticles(await mockBackend.getArticles());
-      setNews(await mockBackend.getNews());
       setMembers(await mockBackend.getMembers());
       setProducts(await mockBackend.getProducts());
       
@@ -45,24 +43,6 @@ const Admin: React.FC = () => {
   const handleArticleAction = async (id: string, status: 'APPROVED' | 'REJECTED') => {
     await mockBackend.updateArticleStatus(id, status);
     setArticles(await mockBackend.getArticles());
-  };
-
-  // News Management
-  const [newNews, setNewNews] = useState({ title: '', desc: '', content: '' });
-  const handleAddNews = async () => {
-    if (!newNews.title) return;
-    await mockBackend.addNews({ 
-      title: newNews.title, 
-      description: newNews.desc, 
-      content: newNews.content, 
-      date: new Date().toISOString().split('T')[0] 
-    });
-    setNews(await mockBackend.getNews());
-    setNewNews({ title: '', desc: '', content: '' });
-  };
-  const handleDeleteNews = async (id: string) => {
-    await mockBackend.deleteNews(id);
-    setNews(await mockBackend.getNews());
   };
 
   // Member Management (Simplified)
@@ -120,7 +100,6 @@ const Admin: React.FC = () => {
 
   const tabs = [
     { id: 'articles', label: 'Review Articles' },
-    { id: 'news', label: 'Manage News' },
     { id: 'members', label: 'Editorial Board' },
     { id: 'products', label: 'Manage Store' },
     { id: 'password_resets', label: 'Password Reset Requests' },
@@ -184,29 +163,6 @@ const Admin: React.FC = () => {
         </div>
       )}
 
-      {/* NEWS TAB */}
-      {activeTab === 'news' && (
-        <div>
-          <div className="bg-stone-50 p-4 rounded-lg mb-6 border border-stone-200">
-            <h3 className="font-bold mb-3">Add Announcement</h3>
-            <input className="w-full mb-2 p-2 rounded border" placeholder="Title" value={newNews.title} onChange={e => setNewNews({...newNews, title: e.target.value})} />
-            <textarea className="w-full mb-2 p-2 rounded border" placeholder="Description" value={newNews.desc} onChange={e => setNewNews({...newNews, desc: e.target.value})} />
-            <button onClick={handleAddNews} className="bg-agri-green text-white px-4 py-2 rounded text-sm"><Plus size={16} className="inline" /> Add News</button>
-          </div>
-          <div className="space-y-3">
-            {news.map(item => (
-              <div key={item.id} className="bg-white p-4 rounded border flex justify-between items-start">
-                 <div>
-                   <h4 className="font-bold">{item.title}</h4>
-                   <p className="text-xs text-stone-500">{item.date}</p>
-                   <p className="text-sm mt-1">{item.description}</p>
-                 </div>
-                 <button onClick={() => handleDeleteNews(item.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* MEMBERS TAB */}
       {activeTab === 'members' && (

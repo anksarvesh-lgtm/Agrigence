@@ -162,6 +162,7 @@ const ViewDocument: React.FC = () => {
                    <div className="flex-1 p-2 md:p-6 overflow-hidden">
                       <SecurePDFViewer 
                         fileId={id!} 
+                        fileUrl={meta?.fileUrl}
                         title={meta?.title} 
                         advancedMode={true} 
                         allowDownload={true} 

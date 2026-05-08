@@ -2,11 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { mockBackend } from '../services/mockBackend';
-import { Article, NewsItem, Magazine, Product } from '../types';
+import { Article, Magazine, Product } from '../types';
 
 const Sitemap: React.FC = () => {
   const [articles, setArticles] = useState<Article[]>([]);
-  const [news, setNews] = useState<NewsItem[]>([]);
   const [magazines, setMagazines] = useState<Magazine[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
 
@@ -22,12 +21,10 @@ const Sitemap: React.FC = () => {
     };
     fetchData();
     
-    const unsubNews = mockBackend.subscribeToNews(setNews);
     const unsubMagazines = mockBackend.subscribeToMagazines(setMagazines);
     const unsubProducts = mockBackend.subscribeToProducts(setProducts);
     
     return () => {
-        unsubNews();
         unsubMagazines();
         unsubProducts();
     };
@@ -54,7 +51,6 @@ const Sitemap: React.FC = () => {
               <li><Link to="/consultation" className="text-stone-600 hover:text-agri-secondary">Consultation</Link></li>
               <li><Link to="/mobile-app" className="text-stone-600 hover:text-agri-secondary">Mobile App</Link></li>
               <li><Link to="/tools" className="text-stone-600 hover:text-agri-secondary">Agri-Intelligence Tools</Link></li>
-              <li><Link to="/blogs" className="text-stone-600 hover:text-agri-secondary">Research & Knowledge (Blogs)</Link></li>
               <li><Link to="/journals" className="text-stone-600 hover:text-agri-secondary">Journals</Link></li>
               <li><Link to="/products" className="text-stone-600 hover:text-agri-secondary">Agri-Store</Link></li>
               <li><Link to="/submission" className="text-stone-600 hover:text-agri-secondary">Submit Content</Link></li>
@@ -66,7 +62,6 @@ const Sitemap: React.FC = () => {
             <h2 className="text-xl font-bold text-agri-primary mb-4 border-b border-stone-200 pb-2">Dynamic Content</h2>
             <ul className="space-y-3">
               {articles.map(a => <li key={a.id}><Link to={`/blog/${a.id}`} className="text-stone-600 hover:text-agri-secondary">{a.title}</Link></li>)}
-              {news.map(n => <li key={n.id}><Link to={`/news/${n.id}`} className="text-stone-600 hover:text-agri-secondary">{n.title}</Link></li>)}
               {magazines.map(m => <li key={m.id}><Link to="/journals" className="text-stone-600 hover:text-agri-secondary">{m.title}</Link></li>)}
               {products.map(p => <li key={p.id}><Link to="/products" className="text-stone-600 hover:text-agri-secondary">{p.name}</Link></li>)}
             </ul>

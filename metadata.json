@@ -1,6 +1,6 @@
 {
-  "name": "Agrigence",
-  "description": "Agrigence (https://agrigence.in) is a production-ready agriculture platform for Indian farmers, optimized for SEO and AI answer engines. Features daily Mandi Bhav, Government Schemes, and Crop Advisory with structured data for maximum discoverability.",
+  "name": "Agrigence Journal of Agriculture & Allied Sciences",
+  "description": "Agrigence Journal of Agriculture & Allied Sciences is a peer-reviewed monthly online journal focusing on advanced agricultural research, innovation, and practices in India. Volume 1 | Issue 1 | May 2026. ISSN: Applied For. Publisher: Agrigence Teams, India.",
   "requestFramePermissions": [
     "geolocation"
   ]

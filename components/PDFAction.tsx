@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Eye, X } from 'lucide-react';
+import { Eye, X, Download } from 'lucide-react';
 import { DownloadAccessLevel } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { SecurePDFViewer } from './SecurePDFViewer';
@@ -36,34 +36,13 @@ const PDFAction: React.FC<PDFActionProps> = ({ title, fileUrl, driveUrl, variant
     e.preventDefault();
     e.stopPropagation();
 
-    // Determine download URL
-    let downloadUrl = '';
-    if (id) {
-        downloadUrl = `/api/pdf/${id}?download=true`;
-    } else if (driveId) {
-        downloadUrl = `/api/pdf/${driveId}?download=true`;
-    }
-
-    // Trigger direct download
-    if (downloadUrl) {
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = `${title || 'document'}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
+    // Direct redirect to the Drive URL or File URL
+    const targetUrl = driveUrl || fileUrl;
     
-    // Use Secure Viewer for Articles/Blogs if ID is present
-    if (id && (type === 'ARTICLE' || type === 'BLOG')) {
-        navigate(`/view-document/${id}`);
+    if (targetUrl && targetUrl !== '#') {
+        window.location.href = targetUrl;
     } else {
-        if (!driveId && (!fileUrl || fileUrl === '#')) {
-            alert("File not available.");
-            return;
-        }
-        // Show modal for Magazines or Legacy items
-        setShowModal(true);
+        alert("File not available.");
     }
   };
 
@@ -114,7 +93,7 @@ const PDFAction: React.FC<PDFActionProps> = ({ title, fileUrl, driveUrl, variant
           onClick={handleView}
           className={className || "flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-agri-primary hover:text-agri-secondary transition-colors"}
         >
-          {children || <><Eye size={12} /> Read PDF</>}
+          {children || <><Download size={12} /> Download PDF</>}
         </button>
         {renderModal()}
       </>
@@ -130,8 +109,8 @@ const PDFAction: React.FC<PDFActionProps> = ({ title, fileUrl, driveUrl, variant
         >
           {children || (
             <>
-              <Eye size={16} className="group-hover:scale-110 transition-transform" />
-              <span>Read PDF Online</span>
+              <Download size={16} className="group-hover:scale-110 transition-transform" />
+              <span>Download PDF</span>
             </>
           )}
         </button>

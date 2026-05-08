@@ -12,7 +12,6 @@ const MediaLibrary: React.FC = () => {
         const articles = await mockBackend.getArticles();
         const magazines = await mockBackend.getMagazines();
         const products = await mockBackend.getProducts();
-        const news = await mockBackend.getNews();
         const lead = await mockBackend.getLeadership();
         const members = await mockBackend.getMembers();
 
@@ -20,7 +19,6 @@ const MediaLibrary: React.FC = () => {
         ...articles.filter(a => a.featuredImage).map(a => ({ url: a.featuredImage!, source: 'Article' })),
         ...magazines.filter(m => m.coverImage).map(m => ({ url: m.coverImage!, source: 'Magazine' })),
         ...products.filter(p => p.imageUrl).map(p => ({ url: p.imageUrl!, source: 'Store' })),
-        ...news.filter(n => n.thumbnail).map(n => ({ url: n.thumbnail!, source: 'News' })),
         ...lead.map(l => ({ url: l.imageUrl, source: 'Leadership' })),
         ...members.map(m => ({ url: m.imageUrl, source: 'Board' }))
         ];

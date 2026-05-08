@@ -239,7 +239,7 @@ export const KisanWeather: React.FC = () => {
                                     <Zap size={24} className={analyzing ? "animate-pulse" : "fill-white"} />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-bold">KhetAI Advisory</h3>
+                                     <h3 className="text-xl font-bold">Agricultural Advisory</h3>
                                     <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em]">Risk Assessment & Crop Guidance</p>
                                 </div>
                             </div>
