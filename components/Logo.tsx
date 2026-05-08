@@ -48,9 +48,14 @@ const Logo: React.FC<LogoProps> = ({ className = "h-12 w-auto", variant = 'dark'
         key={logoPath}
       />
       {showText && (
-        <span className={`font-serif font-bold text-2xl ${variant === 'dark' ? 'text-agri-primary' : 'text-white'}`}>
-          Agrigence
-        </span>
+        <div className="flex flex-col justify-center">
+          <span className={`font-serif font-bold text-2xl leading-none ${variant === 'dark' ? 'text-agri-primary' : 'text-white'}`}>
+            Agrigence
+          </span>
+          <span className={`text-[9px] sm:text-[10px] font-medium tracking-wide mt-1 leading-tight ${variant === 'dark' ? 'text-stone-500' : 'text-white/80'}`}>
+            Where Agri-Intelligence Meets<br/>Agricultural Generations.
+          </span>
+        </div>
       )}
     </div>
   );

@@ -130,7 +130,7 @@ const Home: React.FC = () => {
       <div className="fixed top-[40%] left-[60%] w-[30%] h-[30%] rounded-full bg-green-500/5 blur-[100px] pointer-events-none" />
 
       <SEO 
-        title="Agricultural Intelligence & Education Platform | Agrigence"
+        title="Agrigence Journal of Agriculture and Allied Science."
         description="Smart agricultural tools, academic resources, and research insights for farmers and students. Optimize your farming and studies with data-driven decisions."
         schema={faqSchema}
       />
@@ -222,7 +222,7 @@ const Home: React.FC = () => {
             <div>
               <h2 className="text-4xl font-serif font-bold text-agri-primary mb-6">Our Aim & Scope</h2>
               <p className="text-stone-500 text-lg leading-relaxed mb-8">
-                {settings?.missionText || "Agrigence Journal of Agriculture & Allied Sciences is a monthly international peer-reviewed online journal dedicated to building a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation."}
+                {settings?.missionText || "Agrigence Journal of Agriculture and Allied Science. is a monthly international peer-reviewed online journal dedicated to building a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation."}
               </p>
               <div className="space-y-4 mb-8">
                 {[
@@ -262,7 +262,7 @@ const Home: React.FC = () => {
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-4xl font-serif font-bold mb-6">Ready to publish your research?</h2>
             <p className="text-white/70 text-lg mb-10 leading-relaxed">
-              Agrigence Journal of Agriculture & Allied Sciences invites original research papers, reviews, and short communications.
+              Agrigence Journal of Agriculture and Allied Science. invites original research papers, reviews, and short communications.
             </p>
             <div className="flex flex-wrap justify-center gap-6">
               <Link to="/submission" className="px-10 py-4 bg-agri-secondary text-agri-primary font-bold rounded-xl hover:bg-white transition-all transform hover:-translate-y-1 shadow-lg">

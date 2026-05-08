@@ -266,9 +266,19 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, plan, on
                 </button>
               </motion.div>
             ) : (
-              <motion.div key="upi" className="space-y-6">
-                <div className="flex justify-center bg-white p-4 rounded-3xl border border-stone-200 shadow-inner">
-                  <img src={settings?.upiQrUrl} alt="UPI QR" className="w-48 h-48 object-contain" />
+            <motion.div key="upi" className="space-y-6 text-center">
+                <div className="flex justify-center bg-white p-4 rounded-3xl border border-stone-200 shadow-inner relative overflow-hidden group">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`upi://pay?pa=${settings?.upiId || 'agrigence@upi'}&pn=Agrigence&am=${totalAmount}&cu=INR`)}`} 
+                    alt="UPI QR" 
+                    className="w-48 h-48 object-contain" 
+                  />
+                  <div className="absolute inset-0 bg-agri-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                </div>
+
+                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-100">
+                  <p className="text-stone-500 text-xs uppercase font-bold tracking-widest mb-1">Payable Amount</p>
+                  <p className="text-2xl font-black text-agri-primary">₹{totalAmount}</p>
                 </div>
 
                 <div className="flex flex-col gap-2">

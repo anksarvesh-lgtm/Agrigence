@@ -60,7 +60,7 @@ const PublicationEthics: React.FC = () => {
              </div>
              <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6">Publication Ethics</h1>
              <p className="text-xl text-stone-300 font-light max-w-2xl leading-relaxed">
-               Agrigence Journal of Agriculture & Allied Sciences is committed to maintaining the highest standards of transparency, integrity, and professional scholarly practices.
+               Agrigence Journal of Agriculture and Allied Science. is committed to maintaining the highest standards of transparency, integrity, and professional scholarly practices.
              </p>
            </motion.div>
         </div>
@@ -237,7 +237,7 @@ const PublicationEthics: React.FC = () => {
                 </h2>
                 <div className="bg-[#3D2B1F] text-white p-8 rounded-3xl shadow-xl">
                   <p className="leading-relaxed opacity-90">
-                    Agrigence Journal of Agriculture & Allied Sciences promotes responsible scientific communication, ethical publishing standards, interdisciplinary collaboration, and credible knowledge dissemination for the advancement of agriculture and allied sciences.
+                    Agrigence Journal of Agriculture and Allied Science. promotes responsible scientific communication, ethical publishing standards, interdisciplinary collaboration, and credible knowledge dissemination for the advancement of agriculture and allied sciences.
                   </p>
                 </div>
               </section>

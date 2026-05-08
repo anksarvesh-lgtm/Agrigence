@@ -7,7 +7,7 @@ const AboutJournal: React.FC = () => {
         <div className="min-h-screen py-20 bg-stone-50">
             <SEO 
                 title="About the Journal | Agrigence"
-                description="Learn about Agrigence Journal of Agriculture & Allied Sciences, its mission, frequency, and scope."
+                description="Learn about Agrigence Journal of Agriculture and Allied Science., its mission, frequency, and scope."
             />
             
             <div className="container mx-auto px-6 max-w-4xl">
@@ -21,7 +21,7 @@ const AboutJournal: React.FC = () => {
 
                     <div className="prose prose-lg text-stone-600 leading-relaxed space-y-6 mb-12">
                         <p>
-                            <strong>Agrigence Journal of Agriculture & Allied Sciences</strong> is an international peer-reviewed monthly online journal dedicated to promoting scientific research, innovation, and knowledge dissemination in the fields of agriculture and allied sciences. The journal serves as an academic platform for researchers, scientists, academicians, students, industry professionals, and policymakers to publish high-quality original research articles, review papers, technical notes, short communications, and case studies.
+                            <strong>Agrigence Journal of Agriculture and Allied Science.</strong> is an international peer-reviewed monthly online journal dedicated to promoting scientific research, innovation, and knowledge dissemination in the fields of agriculture and allied sciences. The journal serves as an academic platform for researchers, scientists, academicians, students, industry professionals, and policymakers to publish high-quality original research articles, review papers, technical notes, short communications, and case studies.
                         </p>
 
                         <p>
@@ -29,7 +29,7 @@ const AboutJournal: React.FC = () => {
                         </p>
 
                         <p>
-                            Agrigence Journal of Agriculture & Allied Sciences follows a structured academic publication framework emphasizing originality, ethical publishing practices, peer review standards, and professional scholarly communication. The journal is committed to providing accessible, credible, and research-oriented content for the academic and scientific community at both national and international levels.
+                            Agrigence Journal of Agriculture and Allied Science. follows a structured academic publication framework emphasizing originality, ethical publishing practices, peer review standards, and professional scholarly communication. The journal is committed to providing accessible, credible, and research-oriented content for the academic and scientific community at both national and international levels.
                         </p>
 
                         <p>
@@ -41,7 +41,7 @@ const AboutJournal: React.FC = () => {
                     
                     <div className="grid md:grid-cols-2 gap-y-6 gap-x-12">
                         {[
-                            { label: 'Journal Name', value: 'Agrigence Journal of Agriculture & Allied Sciences' },
+                            { label: 'Journal Name', value: 'Agrigence Journal of Agriculture and Allied Science.' },
                             { label: 'Starting Year', value: '2026' },
                             { label: 'Frequency', value: 'Monthly' },
                             { label: 'Format', value: 'Online' },

@@ -22,7 +22,7 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="text-xl font-serif font-bold text-white mb-4">Agrigence</h3>
             <p className="text-stone-400 text-sm leading-relaxed mb-6">
-              Agrigence Journal of Agriculture & Allied Sciences is a peer-reviewed monthly online journal dedicated to building a trusted digital ecosystem for agricultural research in India.
+              Agrigence Journal of Agriculture and Allied Science. is a peer-reviewed monthly online journal dedicated to building a trusted digital ecosystem for agricultural research in India.
             </p>
             <div className="flex items-center gap-4">
               <a href="https://facebook.com/agrigence" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm">

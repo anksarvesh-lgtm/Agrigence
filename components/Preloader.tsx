@@ -88,7 +88,7 @@ const Preloader: React.FC = () => {
           transition={{ delay: 2.0, duration: 1 }}
         >
           <p className="text-[#4A7C59] text-xs font-bold uppercase tracking-[0.2em] whitespace-nowrap px-1">
-            Where Agri-Intelligence Meets Agricultural Generation
+            Where Agri-Intelligence Meets Agricultural Generations.
           </p>
         </motion.div>
       </div>

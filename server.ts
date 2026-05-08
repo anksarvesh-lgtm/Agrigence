@@ -699,7 +699,7 @@ ${allRoutes.map(route => `  <url>
         }
       } else if (req.path === '/' || req.path === '') {
         html = injectMeta(html, { 
-          title: 'Agricultural Intelligence & Education Platform', 
+          title: 'Agrigence Journal of Agriculture and Allied Science.', 
           description: 'Smart agricultural tools, academic resources, and research insights for farmers and students. Optimize your farming and studies with data-driven decisions.', 
           image: fallbackImage, 
           url: baseUrl,

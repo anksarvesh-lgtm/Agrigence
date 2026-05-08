@@ -8,7 +8,7 @@ const AimScope: React.FC = () => {
     <div className="bg-agri-bg min-h-screen py-20">
       <SEO 
         title="Aim & Scope | Agrigence"
-        description="Learn about the aim and scope of Agrigence Journal of Agriculture & Allied Sciences."
+        description="Learn about the aim and scope of Agrigence Journal of Agriculture and Allied Science."
       />
       
       <div className="container mx-auto px-6 max-w-4xl">
@@ -22,7 +22,7 @@ const AimScope: React.FC = () => {
 
             <div className="prose prose-lg text-stone-600 leading-relaxed space-y-6">
                 <p>
-                    Agrigence Journal of Agriculture & Allied Sciences aims to provide a professional academic platform for researchers, academicians, scientists, students, extension professionals, policymakers, and industry experts to publish and disseminate high-quality scientific research and innovative developments in the field of agriculture and allied sciences. The journal is committed to promoting interdisciplinary research, scientific advancement, sustainable agricultural practices, and knowledge exchange at national and international levels.
+                    Agrigence Journal of Agriculture and Allied Science. aims to provide a professional academic platform for researchers, academicians, scientists, students, extension professionals, policymakers, and industry experts to publish and disseminate high-quality scientific research and innovative developments in the field of agriculture and allied sciences. The journal is committed to promoting interdisciplinary research, scientific advancement, sustainable agricultural practices, and knowledge exchange at national and international levels.
                 </p>
 
                 <p>

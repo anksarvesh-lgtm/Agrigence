@@ -97,7 +97,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   whatsappNumber: '+919452571317',
   contactEmail: 'agrigence@gmail.com',
   homeFeaturedLimit: 3,
-  missionText: 'Agrigence Journal of Agriculture & Allied Sciences is a monthly international peer-reviewed online journal dedicated to building a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation.',
+  missionText: 'Agrigence Journal of Agriculture and Allied Science. is a monthly international peer-reviewed online journal dedicated to building a trusted digital ecosystem for agriculture knowledge, research publishing, and practical innovation.',
   primaryColor: '#002147',
   secondaryColor: '#1A3C40',
   popup: {
@@ -133,8 +133,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
     store: true
   },
   seo: {
-    metaTitle: 'Agrigence - Where Agri-Intelligence Meets Agricultural Generation',
-    metaDescription: 'Where Agri-Intelligence Meets Agricultural Generation. Building a trusted digital ecosystem for agricultural knowledge and research publishing.',
+    metaTitle: 'Agrigence Journal of Agriculture and Allied Science.',
+    metaDescription: 'Where Agri-Intelligence Meets Agricultural Generations.',
     ogImage: '',
     googleAnalyticsId: '',
     robotsTxt: 'User-agent: *\nAllow: /',
