@@ -68,6 +68,7 @@ const Footer: React.FC = () => {
               <li><Link to="/publication-ethics" className="hover:text-agri-secondary transition-colors">Publication Ethics</Link></li>
               <li><Link to="/privacy" className="hover:text-agri-secondary transition-colors">Privacy Policy</Link></li>
               <li><Link to="/terms" className="hover:text-agri-secondary transition-colors">Terms of Service</Link></li>
+              <li><Link to="/copyright" className="hover:text-agri-secondary transition-colors">Copyright Notice</Link></li>
             </ul>
           </div>
 

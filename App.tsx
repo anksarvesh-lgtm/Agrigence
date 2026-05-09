@@ -35,6 +35,7 @@ import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import Copyright from './pages/Copyright';
 import Dashboard from './pages/Dashboard';
 import DashboardTools from './pages/DashboardTools';
 import ResearchDataLab from './pages/ResearchDataLab';
@@ -242,6 +243,7 @@ const AppContent: React.FC = () => {
               <Route path="forgot-password" element={<ForgotPassword />} />
               <Route path="terms" element={<Terms />} />
               <Route path="privacy" element={<Privacy />} />
+              <Route path="copyright" element={<Copyright />} />
               <Route path="publication-ethics" element={<PublicationEthics />} />
               <Route path="tools" element={<ToolsPage />} />
               <Route path="img" element={<ImageTools />} />

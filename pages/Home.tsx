@@ -23,6 +23,20 @@ const Home: React.FC = () => {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [visitorCount, setVisitorCount] = useState<number>(0);
   const [mandiBhav, setMandiBhav] = useState<any[]>([]);
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+
+  const heroImages = [
+      "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&q=80&w=2000",
+      "https://images.unsplash.com/photo-1523348837708-15d4a09cfac2?auto=format&fit=crop&q=80&w=2000",
+      "https://images.unsplash.com/photo-1589923188900-85dae523342b?auto=format&fit=crop&q=80&w=2000"
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+        setCurrentHeroIndex((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const unsubSettings = mockBackend.subscribeToSettings(setSettings);
@@ -138,11 +152,17 @@ const Home: React.FC = () => {
       {/* 1. HERO SECTION */}
       <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b-8 border-agri-primary">
         <div className="absolute inset-0 z-0">
-         <img 
-              src={magazines[0]?.coverUrl || magazines[0]?.coverImage || "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&q=80&w=2000"}
-              alt="Journal Cover"
-              className="w-full h-full object-cover"
-           />
+         {heroImages.map((src, index) => (
+             <motion.img 
+                key={index}
+                src={src}
+                alt="Agriculture background"
+                className="absolute inset-0 w-full h-full object-cover"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: index === currentHeroIndex ? 1 : 0 }}
+                transition={{ duration: 1 }}
+             />
+         ))}
            <div className="absolute inset-0 bg-gradient-to-br from-agri-primary/80 to-agri-primary/40 z-10"></div>
         </div>
 
