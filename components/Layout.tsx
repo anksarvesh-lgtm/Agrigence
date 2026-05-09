@@ -5,7 +5,7 @@ import { useAuth } from '../src/authContext';
 import { mockBackend } from '../services/mockBackend';
 import { 
   Menu, X, Search, User as UserIcon, LogOut, Cpu,
-  Home, BookOpen, Newspaper, FileText, ShoppingBag, Wrench, BarChart2, Info, Users, Settings, ChevronRight, ArrowLeft, Shield, Mail
+  Home, BookOpen, Newspaper, FileText, ShoppingBag, Wrench, BarChart2, Info, Users, Settings, ChevronRight, ArrowLeft, Shield, Mail, Sprout
 } from 'lucide-react';
 import Logo from './Logo';
 import { SiteSettings } from '../types';
@@ -311,6 +311,7 @@ const AppLayout: React.FC = () => {
 
               {/* Desktop Navigation */}
               <nav className="hidden lg:flex items-center gap-8 text-[10px] font-black uppercase tracking-[0.15em] text-stone-500 dark:text-stone-400">
+                <Link to="/kisan" className="hover:text-emerald-500 dark:hover:text-emerald-400 transition-all hover:translate-y-[-1px] text-emerald-600 dark:text-emerald-500 flex items-center gap-1"><Sprout size={12}/> Kisan Hub</Link>
                 <Link to="/journals" className="hover:text-agri-primary dark:hover:text-white transition-all hover:translate-y-[-1px]">Archive</Link>
                 <Link to="/editorial-board" className="hover:text-agri-primary dark:hover:text-white transition-all hover:translate-y-[-1px]">Editorial Board</Link>
                 <Link to="/submission" className="bg-agri-secondary/10 text-agri-secondary px-3 py-1 rounded-full hover:bg-agri-secondary hover:text-white transition-all">Submit Manuscript</Link>

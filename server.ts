@@ -237,6 +237,8 @@ async function startServer() {
   });
 
   app.get('/robots.txt', (req, res) => {
+    const host = req.get('host') || 'www.agrigence.in';
+    const protocol = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
     res.header('Content-Type', 'text/plain');
     res.send(`User-agent: *
 Allow: /
@@ -248,7 +250,7 @@ Allow: /crop/
 User-agent: GPTBot
 Allow: /
 
-Sitemap: https://www.agrigence.in/sitemap.xml`);
+Sitemap: ${protocol}://${host}/sitemap.xml`);
   });
 
   // === WhatsApp Engine API ===
@@ -575,27 +577,28 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
 
   app.get('/sitemap.xml', async (req, res) => {
     try {
-      const baseUrl = 'https://www.agrigence.in';
+      const host = req.get('host') || 'www.agrigence.in';
+      const protocol = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+      const baseUrl = `${protocol}://${host}`;
+      const today = new Date().toISOString().split('T')[0];
       
       const staticRoutes = [
         '',
-        '/about-contact',
-        '/tools',
-        '/blogs',
+        '/about-journal',
+        '/aim-scope',
+        '/editorial-board',
+        '/publication-ethics',
+        '/author-guidelines',
         '/journals',
-        '/products',
-        '/submission',
-        '/subscription',
+        '/consultation',
+        '/about-contact',
+        '/sitemap',
         '/terms',
         '/privacy',
-        '/author-guidelines',
-        '/sitemap',
-        '/publication-ethics',
         '/img',
-        '/farmer-connect',
-        '/govt-schemes',
-        '/mobile-app',
-        '/consultation',
+        '/submission',
+        '/subscription',
+        '/tools',
         '/tools/seed-rate',
         '/tools/nutrient-req',
         '/tools/inm-planner',
@@ -631,29 +634,41 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
         '/kisan/my-listings',
         '/kisan/list-item',
         '/kisan/crop-planner',
-        '/kisan/soil-analyzer'
+        '/kisan/soil-analyzer',
+        '/kisan/farmer-connect',
+        '/kisan/mobile-app'
       ];
 
       let dynamicRoutes: string[] = [];
 
       try {
         // Add Mandi Routes (Programmatic SEO)
-        mandiPrices.forEach(p => dynamicRoutes.push(`/mandi-bhav/${p.city.toLowerCase()}`));
+        mandiPrices.forEach(p => dynamicRoutes.push(`/kisan/mandi-bhav/${p.city.toLowerCase()}`));
         // Add Scheme Routes (Programmatic SEO)
-        schemes.forEach(s => dynamicRoutes.push(`/scheme/${s.slug}`));
+        schemes.forEach(s => dynamicRoutes.push(`/kisan/scheme/${s.slug}`));
         // Add Crop Routes (Programmatic SEO)
-        cropAdvisory.forEach(c => dynamicRoutes.push(`/crop/${c.slug}`));
+        cropAdvisory.forEach(c => dynamicRoutes.push(`/kisan/crop/${c.slug}`));
 
-        // Fetch Blogs (Now in articles collection)
+        // Fetch All Articles (Blogs + Journals)
         const blogsRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/${databaseId}/documents/articles`);
         if (blogsRes.ok) {
           const blogsData = await blogsRes.json();
           if (blogsData.documents) {
             blogsData.documents.forEach((doc: any) => {
               const id = doc.name.split('/').pop();
-              // Only include if it's a blog type
-              if (doc.fields?.type?.stringValue === 'BLOG') {
-                dynamicRoutes.push(`/blog/${id}`);
+              const type = doc.fields?.type?.stringValue;
+              const status = doc.fields?.status?.stringValue;
+              
+              // Only include published content
+              if (status === 'PUBLISHED' || status === 'APPROVED') {
+                if (type === 'BLOG') {
+                  // Wait, rule: "Remove these URLs completely from sitemap: /blogs"
+                  // Let's not include blog dynamic routes either, or did they mean the `/blogs` parent? "Remove these URLs completely from sitemap: /blogs, /products"
+                  // If we need to completely remove /blogs, we'll exclude `/blog/*` and `/blogs`
+                  // dynamicRoutes.push(`/blog/${id}`);
+                } else {
+                  dynamicRoutes.push(`/view-document/${id}`);
+                }
               }
             });
           }
@@ -674,14 +689,24 @@ Sitemap: https://www.agrigence.in/sitemap.xml`);
         console.error("Failed to fetch dynamic routes for sitemap", e);
       }
 
-      const allRoutes = [...staticRoutes, ...kisanRoutes, ...dynamicRoutes];
+      // Deduplicate all routes
+      const uniqueRoutes = [...new Set([...staticRoutes, ...kisanRoutes, ...dynamicRoutes])];
+
+      const getPriority = (route: string) => {
+        if (route === '') return '1.0';
+        if (['/journals', '/kisan', '/img'].includes(route)) return '0.9';
+        if (['/terms', '/privacy', '/publication-ethics', '/about-contact', '/author-guidelines', '/editorial-board', '/aim-scope', '/about-journal'].includes(route)) return '0.5';
+        if (staticRoutes.includes(route) || kisanRoutes.includes(route)) return '0.8';
+        return '0.6';
+      };
 
       const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allRoutes.map(route => `  <url>
+${uniqueRoutes.map(route => `  <url>
     <loc>${baseUrl}${route}</loc>
-    <changefreq>${[...staticRoutes, ...kisanRoutes].includes(route) ? 'daily' : 'weekly'}</changefreq>
-    <priority>${route === '' ? '1.0' : ([...staticRoutes, ...kisanRoutes].includes(route) ? '0.8' : '0.6')}</priority>
+    <lastmod>${today}</lastmod>
+    <changefreq>${getPriority(route) === '0.5' ? 'monthly' : ([...staticRoutes, ...kisanRoutes].includes(route) ? 'daily' : 'weekly')}</changefreq>
+    <priority>${getPriority(route)}</priority>
   </url>`).join('\n')}
 </urlset>`;
 
@@ -722,17 +747,18 @@ ${allRoutes.map(route => `  <url>
       
       const blogMatch = req.path.match(/^\/blog\/(.+)$/);
       const newsMatch = req.path.match(/^\/news\/(.+)$/);
-      const mandiMatch = req.path.match(/^\/mandi-bhav\/(.+)$/);
-      const schemeMatch = req.path.match(/^\/scheme\/(.+)$/);
-      const cropMatch = req.path.match(/^\/crop\/(.+)$/);
+      const viewDocumentMatch = req.path.match(/^\/view-document\/(.+)$/);
+      const mandiMatch = req.path.match(/^\/(?:kisan\/)?mandi-bhav\/(.+)$/);
+      const schemeMatch = req.path.match(/^\/(?:kisan\/)?scheme\/(.+)$/);
+      const cropMatch = req.path.match(/^\/(?:kisan\/)?crop\/(.+)$/);
       
-      if (blogMatch || newsMatch) {
-        const collection = blogMatch ? 'articles' : 'news';
-        const id = blogMatch ? blogMatch[1] : newsMatch![1];
+      if (blogMatch || newsMatch || viewDocumentMatch) {
+        const collection = blogMatch || viewDocumentMatch ? 'articles' : 'news';
+        const id = blogMatch ? blogMatch[1] : (newsMatch ? newsMatch[1] : viewDocumentMatch![1]);
         const doc = await getDoc(collection, id);
         if (doc) {
-          const title = doc.title || 'Agrigence';
-          const description = (doc.content || doc.description || '').substring(0, 150);
+          const title = doc.seoTitle || doc.title || 'Agrigence';
+          const description = (doc.metaDescription || doc.excerpt || doc.content || '').substring(0, 160);
           const image = doc.featuredImage || doc.thumbnail || fallbackImage;
           html = injectMeta(html, { title, description, image, url: `${baseUrl}${req.path}`, host });
         }
@@ -781,7 +807,79 @@ ${allRoutes.map(route => `  <url>
           title: 'Agrigence Journal of Agriculture and Allied Science.', 
           description: 'Smart agricultural tools, academic resources, and research insights for farmers and students. Optimize your farming and studies with data-driven decisions.', 
           image: fallbackImage, 
-          url: baseUrl,
+          url: baseUrl, 
+          host
+        });
+      } else if (req.path === '/tools') {
+        html = injectMeta(html, { 
+          title: 'Agricultural Data Analysis Tools', 
+          description: 'Free scientific tools for farmers and researchers: Seed Rate Calculator, Fertilizer Requirements, Yield Estimators, and Statistical Analysis (ANOVA).', 
+          image: fallbackImage, 
+          url: `${baseUrl}/tools`,
+          host
+        });
+      } else if (req.path === '/author-guidelines') {
+        html = injectMeta(html, { 
+          title: 'Author Guidelines & Submission Process', 
+          description: 'Detailed instructions for authors on preparing and submitting manuscripts to Agrigence Journal of Agriculture and Allied Science.', 
+          image: fallbackImage, 
+          url: `${baseUrl}/author-guidelines`,
+          host
+        });
+      } else if (req.path === '/img') {
+        const imgSchema = {
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          "name": "Agrigence Image & AI Tools",
+          "url": `${baseUrl}/img`,
+          "applicationCategory": "MultimediaApplication",
+          "description": "Free AI-powered image tools for agriculture: image compressor, resizer, infographic maker, and vector graphics.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        };
+
+        html = injectMeta(html, { 
+          title: 'AI Image Tools for Agriculture | Compress, Resize & Vectors', 
+          description: 'Free AI-powered image tools for agriculture: image compressor, resizer, infographic maker, and vector graphics. Optimize photos for websites and journals easily.', 
+          keywords: 'image compressor, image resizer, agriculture graphics, AI image tools, infographic maker, crop infographics, vector graphics, image tools, free image tools',
+          image: fallbackImage, 
+          url: `${baseUrl}/img`,
+          host,
+          schema: imgSchema
+        });
+      } else if (req.path === '/editorial-board') {
+        html = injectMeta(html, { 
+          title: 'Editorial Board & Leadership', 
+          description: 'Meet the expert editorial board members and academic leadership behind Agrigence Journal.', 
+          image: fallbackImage, 
+          url: `${baseUrl}/editorial-board`,
+          host
+        });
+      } else if (req.path === '/aim-scope') {
+        html = injectMeta(html, { 
+          title: 'Aim & Scope of the Journal', 
+          description: 'Explore the research areas and scholarly objectives of Agrigence Journal of Agriculture and Allied Science.', 
+          image: fallbackImage, 
+          url: `${baseUrl}/aim-scope`,
+          host
+        });
+      } else if (req.path === '/publication-ethics') {
+        html = injectMeta(html, { 
+          title: 'Publication Ethics & Malpractice Statement', 
+          description: 'Our commitment to ethical standards in research publishing, peer review, and academic integrity.', 
+          image: fallbackImage, 
+          url: `${baseUrl}/publication-ethics`,
+          host
+        });
+      } else if (req.path === '/journals') {
+        html = injectMeta(html, { 
+          title: 'Journal Archive & Current Issues', 
+          description: 'Access the latest and archived issues of Agrigence Journal. Explore diverse research papers in agriculture and allied sciences.', 
+          image: fallbackImage, 
+          url: `${baseUrl}/journals`,
           host
         });
       } else if (req.path === '/about-contact') {

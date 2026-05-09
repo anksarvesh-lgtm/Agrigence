@@ -48,11 +48,12 @@ const ImageTools: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [targetSizeKB, setTargetSizeKB] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isTargetModeRef = useRef(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const processImage = useCallback(async (currentImage: ImageFile) => {
-    if (!currentImage.originalFile) return;
+    if (!currentImage.originalFile || isTargetModeRef.current) return;
     setIsProcessing(true);
 
     try {
@@ -88,23 +89,31 @@ const ImageTools: React.FC = () => {
       const targetKB = parseFloat(targetSizeKB);
       if (isNaN(targetKB) || targetKB <= 0) return;
       
+      isTargetModeRef.current = true;
       setIsProcessing(true);
       
       try {
-          const options = {
+          let currentWidth = image.targetWidth;
+          let currentHeight = image.targetHeight;
+          let options = {
               maxSizeMB: targetKB / 1024,
-              maxWidthOrHeight: Math.max(image.targetWidth, image.targetHeight),
+              maxWidthOrHeight: Math.max(currentWidth, currentHeight),
               useWebWorker: true,
-              fileType: image.format
+              fileType: image.format,
+              initialQuality: 0.8
           };
           
-          const compressedFile = await imageCompression(image.originalFile, options);
+          let compressedFile = await imageCompression(image.originalFile, options);
           
-          const achievedKB = (compressedFile.size / 1024).toFixed(2);
-          if (compressedFile.size > targetKB * 1024 * 1.05) {
-              alert(`Could not reach target size. Best achieved: ${achievedKB} KB`);
-          } else {
-              alert(`Successfully compressed to ${achievedKB} KB`);
+          let attempts = 0;
+          // While size is greater than target (allow a tiny 2% margin)
+          while (compressedFile.size > targetKB * 1024 * 1.02 && attempts < 6) {
+              attempts++;
+              currentWidth = Math.floor(currentWidth * 0.7);
+              currentHeight = Math.floor(currentHeight * 0.7);
+              options.maxWidthOrHeight = Math.max(currentWidth, currentHeight);
+              options.initialQuality = Math.max(0.6 - (attempts * 0.1), 0.1);
+              compressedFile = await imageCompression(image.originalFile, options);
           }
           
           setImage(prev => {
@@ -114,7 +123,9 @@ const ImageTools: React.FC = () => {
                   ...prev,
                   processedBlob: compressedFile,
                   processedUrl: URL.createObjectURL(compressedFile),
-                  processedSize: compressedFile.size
+                  processedSize: compressedFile.size,
+                  targetWidth: currentWidth,
+                  targetHeight: currentHeight
               };
           });
       } catch (e) {
@@ -188,6 +199,7 @@ const ImageTools: React.FC = () => {
   };
 
   const handlePresetChange = (preset: typeof PRESETS[0]) => {
+    isTargetModeRef.current = false;
     if (!image) return;
     if (preset.width === 0) {
       setImage({ ...image, targetWidth: image.originalWidth, targetHeight: image.originalHeight });
@@ -208,6 +220,7 @@ const ImageTools: React.FC = () => {
   };
 
   const handleWidthChange = (val: string) => {
+      isTargetModeRef.current = false;
       if (!image) return;
       const newWidth = parseInt(val) || 0;
       let newHeight = image.targetHeight;
@@ -218,6 +231,7 @@ const ImageTools: React.FC = () => {
   };
 
   const handleHeightChange = (val: string) => {
+      isTargetModeRef.current = false;
       if (!image) return;
       const newHeight = parseInt(val) || 0;
       let newWidth = image.targetWidth;
@@ -247,9 +261,32 @@ const ImageTools: React.FC = () => {
   return (
     <div className="min-h-screen bg-stone-50 pb-20">
       <SEO 
-        title="Best Online Image Compressor & Resizer | Agrigence"
-        description="Compress, optimize, and resize images instantly with Agrigence's free online tool. Perfect for agricultural research reports, web use, and compliant document uploads."
-        keywords="free image compressor, photo resizer, online image optimizer, compress images for website, image resizer for academic journals, agrigence tools"
+        title="AI Image Compressor & Resizer Online Free | Agrigence"
+        description="Compress, optimize, and resize images instantly with Agrigence's free online AI image tools. Perfect for agricultural research reports, web use, and documents. Supports WebP, PNG, JPEG."
+        keywords="free image compressor, photo resizer, online image optimizer, compress images for website, image resizer for academic journals, WebP converter, agricultural infographics, AVIF support, Agrigence image tools"
+        url="https://www.agrigence.in/img"
+        type="website"
+        schema={[
+          {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "Agrigence Smart Image Optimizer",
+            "url": "https://www.agrigence.in/img",
+            "applicationCategory": "MultimediaApplication",
+            "operatingSystem": "All",
+            "description": "Compress, resize, and convert images instantly in your browser. 100% secure, offline-capable image optimization for academic and agricultural use.",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+            },
+            "featureList": [
+                "Browser-based image compression",
+                "Custom resize and crop",
+                "Format conversion (JPEG, PNG, WebP)"
+            ]
+          }
+        ]}
       />
 
       <div className="bg-white border-b border-stone-200">
@@ -370,7 +407,10 @@ const ImageTools: React.FC = () => {
                                     return (
                                         <button 
                                             key={fmt}
-                                            onClick={() => setImage({ ...image, format: fmt as Extension })}
+                                            onClick={() => {
+                                                isTargetModeRef.current = false;
+                                                setImage({ ...image, format: fmt as Extension });
+                                            }}
                                             className={`py-2 rounded-xl text-xs font-bold transition-all border ${image.format === fmt ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300'}`}
                                         >
                                             {shortFmt}
@@ -389,7 +429,10 @@ const ImageTools: React.FC = () => {
                                 type="range" 
                                 min="0.1" max="1" step="0.05"
                                 value={image.quality}
-                                onChange={(e) => setImage({...image, quality: parseFloat(e.target.value)})}
+                                onChange={(e) => {
+                                    isTargetModeRef.current = false;
+                                    setImage({...image, quality: parseFloat(e.target.value)});
+                                }}
                                 className="w-full accent-emerald-500 cursor-pointer h-2 bg-stone-200 rounded-lg appearance-none"
                             />
                         </div>
@@ -399,7 +442,10 @@ const ImageTools: React.FC = () => {
                             {COMPRESSION_PRESETS.map((preset, i) => (
                                 <button 
                                     key={i}
-                                    onClick={() => setImage({...image, quality: preset.value})}
+                                    onClick={() => {
+                                        isTargetModeRef.current = false;
+                                        setImage({...image, quality: preset.value});
+                                    }}
                                     className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${image.quality === preset.value ? 'bg-emerald-500 text-white shadow-md' : 'bg-stone-50 text-stone-600 hover:bg-stone-100'}`}
                                 >
                                     {preset.name}
@@ -409,10 +455,21 @@ const ImageTools: React.FC = () => {
 
                         <div className="pt-4 border-t border-stone-100 space-y-3">
                              <label className="text-xs font-bold uppercase tracking-widest text-stone-500 block">Compress to Target Size (KB)</label>
+                             <div className="grid grid-cols-4 gap-2 mb-2">
+                                {[10, 20, 50, 100].map(kb => (
+                                    <button
+                                        key={kb}
+                                        onClick={() => setTargetSizeKB(kb.toString())}
+                                        className={`py-1.5 rounded-lg text-xs font-bold transition-all border ${targetSizeKB === kb.toString() ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-white border-stone-200 text-stone-500 hover:border-stone-300'}`}
+                                    >
+                                        {kb}KB
+                                    </button>
+                                ))}
+                             </div>
                              <div className="flex gap-2">
                                 <input 
                                     type="number"
-                                    placeholder="Enter target e.g. 50"
+                                    placeholder="Custom KB (e.g. 15)"
                                     value={targetSizeKB}
                                     onChange={(e) => setTargetSizeKB(e.target.value)}
                                     className="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-4 py-2 font-mono text-sm text-stone-900 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition-all"
@@ -425,6 +482,7 @@ const ImageTools: React.FC = () => {
                                     Apply
                                 </button>
                              </div>
+                             {isProcessing && <p className="text-[10px] text-emerald-600 font-medium">Attempting to hit target size, this may take a moment...</p>}
                         </div>
                     </div>
                 )}
@@ -501,7 +559,11 @@ const ImageTools: React.FC = () => {
                     {image.processedUrl ? (
                          <img 
                             src={image.processedUrl} 
-                            alt="Optimized Preview" 
+                            alt="Optimized agricultural image preview in WebP/JPEG format"
+                            loading="lazy"
+                            width={image.targetWidth || '100%'}
+                            height={image.targetHeight || 'auto'}
+                            title="Agrigence optimized image preview"
                             className="max-w-full max-h-[600px] object-contain drop-shadow-2xl transition-all"
                         />
                     ) : (

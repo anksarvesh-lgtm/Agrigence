@@ -137,8 +137,7 @@ export const KisanProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ c
   
   if (isLoading) return <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center font-serif text-[#92745B]">Validating Farm Credentials...</div>;
   if (!user) {
-    window.location.href = `https://kisan.agrigence.in/login?from=${encodeURIComponent(location.pathname)}`;
-    return <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center font-serif text-[#92745B]">Redirecting to Kisan Login...</div>;
+    return <Navigate to={`/kisan/login?from=${encodeURIComponent(location.pathname)}`} replace />;
   }
 
   return <>{children}</>;

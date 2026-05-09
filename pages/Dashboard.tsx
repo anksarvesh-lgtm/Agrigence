@@ -426,8 +426,7 @@ const Dashboard: React.FC = () => {
                   </div>
                   <ChevronRight size={14} className="opacity-40 group-hover:opacity-100" />
                 </Link>
-                <a 
-                  href="https://kisan.agrigence.in/tools" 
+                <Link to="/tools" 
                   className="w-full p-4 bg-stone-50 hover:bg-agri-primary hover:text-white rounded-2xl transition-all group flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
@@ -440,7 +439,7 @@ const Dashboard: React.FC = () => {
                     </div>
                   </div>
                   <ChevronRight size={14} className="opacity-40 group-hover:opacity-100" />
-                </a>
+                </Link>
               </div>
             </div>
         </div>
@@ -605,12 +604,11 @@ const Dashboard: React.FC = () => {
                   </div>
                   <h3 className="font-serif font-bold text-lg text-agri-primary">Analytical Tools</h3>
                 </div>
-                  <a 
-                    href="https://kisan.agrigence.in/tools"
+                  <Link to="/tools"
                     className="w-full py-3 bg-white text-agri-primary border border-stone-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 hover:bg-agri-secondary hover:text-white hover:border-agri-secondary"
                   >
                     View All Tools
-                  </a>
+                  </Link>
               </div>
               <div className="p-8 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Advanced Research Suite Card */}
@@ -648,12 +646,11 @@ const Dashboard: React.FC = () => {
                   <p className="text-stone-500 text-sm mb-6 leading-relaxed">
                     Run CRD/RBD ANOVA, Correlation, and Regression analysis with agricultural standard outputs and PDF reporting.
                   </p>
-                  <a 
-                    href="https://kisan.agrigence.in/tools/statistical-analysis"
+                  <Link to="/tools"
                     className="w-full py-3 bg-white text-agri-primary border border-stone-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 hover:bg-emerald-600 hover:text-white hover:border-emerald-600"
                   >
                     Launch Analysis Engine <ChevronRight size={14} />
-                  </a>
+                  </Link>
                 </div>
 
                 <div className="bg-stone-50 rounded-3xl p-6 border border-stone-100 group hover:border-agri-secondary/30 transition-all">
@@ -669,12 +666,11 @@ const Dashboard: React.FC = () => {
                   <p className="text-stone-500 text-sm mb-6 leading-relaxed">
                     Transform your research data into publication-quality visualizations and charts instantly.
                   </p>
-                  <a 
-                    href="https://kisan.agrigence.in/tools/auto-graph"
+                  <Link to="/tools"
                     className="w-full py-3 bg-white text-agri-primary border border-stone-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 hover:bg-agri-secondary hover:text-white hover:border-agri-secondary"
                   >
                     Open Visualizer <ChevronRight size={14} />
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>

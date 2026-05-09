@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../src/authContext';
 import { motion } from 'framer-motion';
-import { User, Smartphone, Globe, Mail, ShieldCheck, CheckCircle, AlertTriangle, FileText, MapPin, Store, Tractor, CreditCard, ChevronRight, Settings2 } from 'lucide-react';
+import { User, Smartphone, Globe, Mail, ShieldCheck, CheckCircle, AlertTriangle, FileText, MapPin, Store, Tractor, CreditCard, ChevronRight, Settings2, Sparkles } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { mockBackend } from '../../services/mockBackend';
 
@@ -131,7 +131,7 @@ export const KisanDashboard: React.FC = () => {
                             <Settings2 size={20} className="text-stone-400" /> Farm Management
                         </h3>
                         <div className="space-y-3">
-                            <a href="https://kisan.agrigence.in/my-listings" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
+                            <a href="/kisan/my-listings" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-emerald-600 group-hover:text-[#2d5a27] shadow-sm">
                                         <Store size={22} />
@@ -144,7 +144,7 @@ export const KisanDashboard: React.FC = () => {
                                 <ChevronRight size={20} className="text-stone-300 group-hover:text-white" />
                             </a>
 
-                            <a href="https://kisan.agrigence.in/equipment" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
+                            <a href="/kisan/equipment" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-amber-600 group-hover:text-[#2d5a27] shadow-sm">
                                         <Tractor size={22} />
@@ -157,7 +157,7 @@ export const KisanDashboard: React.FC = () => {
                                 <ChevronRight size={20} className="text-stone-300 group-hover:text-white" />
                             </a>
 
-                            <a href="https://kisan.agrigence.in/schemes" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
+                            <a href="/kisan/schemes" className="w-full p-5 bg-stone-50 hover:bg-[#2d5a27] hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-blue-600 group-hover:text-[#2d5a27] shadow-sm">
                                         <FileText size={22} />
@@ -165,6 +165,19 @@ export const KisanDashboard: React.FC = () => {
                                     <div className="text-left">
                                         <h4 className="font-bold text-stone-800 group-hover:text-white">Govt. Schemes</h4>
                                         <p className="text-xs text-stone-500 font-medium group-hover:text-emerald-100">Check eligible subsidies and benefits</p>
+                                    </div>
+                                </div>
+                                <ChevronRight size={20} className="text-stone-300 group-hover:text-white" />
+                            </a>
+
+                            <a href="/img" className="w-full p-5 bg-stone-50 hover:bg-emerald-600 hover:text-white group rounded-2xl transition-all flex items-center justify-between border border-stone-100">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-emerald-600 group-hover:text-emerald-600 shadow-sm">
+                                        <Sparkles size={22} />
+                                    </div>
+                                    <div className="text-left">
+                                        <h4 className="font-bold text-stone-800 group-hover:text-white">AI Image Optimizer</h4>
+                                        <p className="text-xs text-stone-500 font-medium group-hover:text-emerald-100">Compress & edit images instantly</p>
                                     </div>
                                 </div>
                                 <ChevronRight size={20} className="text-stone-300 group-hover:text-white" />

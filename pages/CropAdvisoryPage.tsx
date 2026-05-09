@@ -42,7 +42,7 @@ const CropAdvisoryPage: React.FC = () => {
         <nav className="flex text-sm text-stone-500 mb-6 font-medium">
           <Link to="/" className="hover:text-emerald-700">Home</Link>
           <span className="mx-2">/</span>
-          <a href="https://kisan.agrigence.in" className="hover:text-emerald-700">Advisory</a>
+          <Link to="/kisan" className="hover:text-emerald-700">Advisory</Link>
           <span className="mx-2">/</span>
           <span className="text-stone-800">{crop.name}</span>
         </nav>
@@ -130,9 +130,9 @@ const CropAdvisoryPage: React.FC = () => {
             <div className="bg-stone-50 p-6 rounded-xl border border-stone-100">
                 <h4 className="text-sm uppercase font-bold text-stone-500 mb-3 tracking-widest">Recommended Tools</h4>
                 <div className="space-y-4">
-                    <a href="https://kisan.agrigence.in/tools/fertilizer" className="block text-emerald-800 font-bold hover:underline">• Fertilizer Calculator</a>
-                    <a href="https://kisan.agrigence.in/tools/yield" className="block text-emerald-800 font-bold hover:underline">• Yield Estimator</a>
-                    <a href="https://kisan.agrigence.in/tools/seed" className="block text-emerald-800 font-bold hover:underline">• Seed Rate Planner</a>
+                    <Link to="/dashboard/tools" className="block text-emerald-800 font-bold hover:underline">• Fertilizer Calculator</Link>
+                    <Link to="/dashboard/tools" className="block text-emerald-800 font-bold hover:underline">• Yield Estimator</Link>
+                    <Link to="/dashboard/tools" className="block text-emerald-800 font-bold hover:underline">• Seed Rate Planner</Link>
                 </div>
             </div>
           </div>

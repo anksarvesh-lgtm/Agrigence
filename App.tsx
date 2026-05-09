@@ -152,13 +152,7 @@ const App: React.FC = () => {
   );
 };
 
-const ExternalRedirect: React.FC = () => {
-   const location = useLocation();
-   useEffect(() => {
-      window.location.replace(`https://kisan.agrigence.in${location.pathname}${location.search}`);
-   }, [location]);
-   return <div className="min-h-screen flex items-center justify-center text-agri-primary font-serif">Redirecting...</div>;
-};
+
 
 const FaviconUpdater: React.FC = () => {
   useEffect(() => {
@@ -249,19 +243,35 @@ const AppContent: React.FC = () => {
               <Route path="terms" element={<Terms />} />
               <Route path="privacy" element={<Privacy />} />
               <Route path="publication-ethics" element={<PublicationEthics />} />
+              <Route path="tools" element={<ToolsPage />} />
               <Route path="img" element={<ImageTools />} />
               <Route path="image-tools" element={<Navigate to="/img" replace />} />
               <Route path="tools/image-resizer-compressor" element={<Navigate to="/img" replace />} />
-              <Route path="tools/*" element={<ExternalRedirect />} />
+              <Route path="tools/seed-rate" element={<SeedRatePage />} />
+              <Route path="tools/nutrient-req" element={<NutrientPage />} />
+              <Route path="tools/inm-planner" element={<INMPage />} />
+              <Route path="tools/water-req" element={<WaterPage />} />
+              <Route path="tools/economics" element={<EconomicsPage />} />
+              <Route path="tools/land-converter" element={<LandPage />} />
+              <Route path="tools/spray-calculator" element={<SprayPage />} />
+              <Route path="tools/yield-estimator" element={<YieldPage />} />
+              <Route path="tools/kpi-dashboard" element={<KPIPage />} />
+              <Route path="tools/experiment-builder" element={<ExperimentPage />} />
+              <Route path="tools/plot-dose" element={<PlotDosePage />} />
+              <Route path="tools/factorial-generator" element={<FactorialPage />} />
+              <Route path="tools/climate-analyzer" element={<ClimatePage />} />
+              <Route path="tools/anova" element={<ANOVAPage />} />
+              <Route path="tools/statistical-analysis" element={<StatisticalAnalysisPage />} />
+              <Route path="tools/auto-graph" element={<GraphPage />} />
               
-              <Route path="farmer-connect" element={<ExternalRedirect />} />
-              <Route path="govt-schemes" element={<ExternalRedirect />} />
-              <Route path="mobile-app" element={<ExternalRedirect />} />
+              <Route path="farmer-connect" element={<Navigate to="/kisan/farmer-connect" replace />} />
+              <Route path="govt-schemes" element={<Navigate to="/kisan/schemes" replace />} />
+              <Route path="mobile-app" element={<Navigate to="/kisan/mobile-app" replace />} />
               
               {/* Programmatic SEO Pages */}
-              <Route path="mandi-bhav/:city" element={<ExternalRedirect />} />
-              <Route path="scheme/:slug" element={<ExternalRedirect />} />
-              <Route path="crop/:slug" element={<ExternalRedirect />} />
+              <Route path="mandi-bhav/:city" element={<Navigate to="/kisan/mandi-bhav/:city" replace />} />
+              <Route path="scheme/:slug" element={<Navigate to="/kisan/scheme/:slug" replace />} />
+              <Route path="crop/:slug" element={<Navigate to="/kisan/crop/:slug" replace />} />
 
               {/* USER DASHBOARD */}
               <Route path="dashboard" element={<ProtectedRoute allowedRoles={['USER', 'EDITOR', 'SUPER_ADMIN']}><Dashboard /></ProtectedRoute>} />
@@ -289,7 +299,31 @@ const AppContent: React.FC = () => {
                <Route path="history" element={<ReviewerDashboard />} /> 
             </Route>
 
-            <Route path="/kisan/*" element={<ExternalRedirect />} />
+            {/* KISAN HUB ROUTES */}
+            <Route path="/kisan" element={<KisanLayout />}>
+              <Route index element={<HubDashboard />} />
+              <Route path="login" element={<KisanLogin />} />
+              <Route path="dashboard" element={<KisanProtectedRoute><KisanDashboard /></KisanProtectedRoute>} />
+              <Route path="mandi" element={<MandiBhav />} />
+              <Route path="mandi-bhav/:city" element={<MandiCityPage />} />
+              <Route path="ledger" element={<Khatabook />} />
+              <Route path="sop" element={<SOPChecklist />} />
+              <Route path="weather" element={<KisanWeather />} />
+              <Route path="equipment" element={<EquipmentRental />} />
+              <Route path="marketplace" element={<FarmerMarketplace />} />
+              <Route path="marketplace/post" element={<KisanProtectedRoute><PostRequirement /></KisanProtectedRoute>} />
+              <Route path="marketplace/requirements" element={<KisanProtectedRoute><MyRequirements /></KisanProtectedRoute>} />
+              <Route path="marketplace/listings" element={<KisanProtectedRoute><MyListings /></KisanProtectedRoute>} />
+              <Route path="marketplace/list" element={<KisanProtectedRoute><ListYourItem /></KisanProtectedRoute>} />
+              <Route path="land" element={<LandListing />} />
+              <Route path="schemes" element={<GovSchemes />} />
+              <Route path="scheme/:slug" element={<SchemeDetailPage />} />
+              <Route path="crop-planner" element={<CropPlanner />} />
+              <Route path="crop/:slug" element={<CropAdvisoryPage />} />
+              <Route path="soil-analyzer" element={<SoilAnalyzer />} />
+              <Route path="farmer-connect" element={<FarmerConnect />} />
+              <Route path="mobile-app" element={<MobileAppView />} />
+            </Route>
 
             <Route path="/analytics" element={<DashboardHome />} />
             <Route path="/analytics/pipeline" element={<PipelineBuilder />} />

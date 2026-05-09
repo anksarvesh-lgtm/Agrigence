@@ -74,7 +74,7 @@ const Footer: React.FC = () => {
           <div>
             <h3 className="font-bold text-white mb-4 uppercase text-xs tracking-widest">Resources</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="https://kisan.agrigence.in/tools" className="hover:text-agri-secondary transition-colors">Agri Intelligence Tools</a></li>
+              <li><Link to="/tools" className="hover:text-agri-secondary transition-colors">Agri Intelligence Tools</Link></li>
               <li><a href="https://icar.org.in/" target="_blank" rel="noopener noreferrer" className="hover:text-agri-secondary transition-colors">ICAR</a></li>
               <li><a href="https://agricoop.nic.in/" target="_blank" rel="noopener noreferrer" className="hover:text-agri-secondary transition-colors">Agriculture Dept. India</a></li>
             </ul>

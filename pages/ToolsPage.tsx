@@ -118,6 +118,20 @@ const ToolsPage: React.FC = () => {
               </p>
             </motion.div>
           ))}
+          <motion.div
+              whileHover={{ y: -5 }}
+              className="bg-white p-8 rounded-[2rem] border border-stone-100 shadow-sm hover:shadow-xl transition-all group flex flex-col items-center text-center"
+          >
+              <Link to="/img" className="w-full h-full flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 bg-[#10b981]/10 rounded-2xl flex items-center justify-center text-[#10b981] mb-6 group-hover:bg-[#10b981] group-hover:text-white transition-colors">
+                    <Sparkles className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-bold text-stone-800 mb-2">AI Image Tools</h3>
+                  <p className="text-stone-500 text-sm">
+                    Image compressor, resizer, vector graphics, and infographics for web and journals.
+                  </p>
+              </Link>
+          </motion.div>
         </div>
       ) : (
         renderCategoryView()

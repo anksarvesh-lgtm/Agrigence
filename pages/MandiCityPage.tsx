@@ -43,7 +43,7 @@ const MandiCityPage: React.FC = () => {
         <nav className="flex text-sm text-stone-500 mb-6 font-medium">
           <Link to="/" className="hover:text-emerald-700">Home</Link>
           <span className="mx-2">/</span>
-          <a href="https://kisan.agrigence.in/mandi" className="hover:text-emerald-700">Mandi Bhav</a>
+          <Link to="/kisan/mandi" className="hover:text-emerald-700">Mandi Bhav</Link>
           <span className="mx-2">/</span>
           <span className="text-stone-800">{cityName}</span>
         </nav>
@@ -143,13 +143,13 @@ const MandiCityPage: React.FC = () => {
           <h3 className="text-xl font-bold mb-4">Explore Related Markets</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {['Indore', 'Mandsaur', 'Ratlam', 'Ujjain'].map(m => (
-              <a 
+              <Link 
                 key={m} 
-                href={`https://kisan.agrigence.in/mandi-bhav/${m.toLowerCase()}`}
+                to={`/kisan/mandi-bhav/${m.toLowerCase()}`}
                 className="flex items-center text-stone-300 hover:text-white hover:translate-x-1 transition-all"
               >
                 <MapPin size={16} className="mr-2 text-emerald-400" /> {m} Mandi
-              </a>
+              </Link>
             ))}
           </div>
         </section>

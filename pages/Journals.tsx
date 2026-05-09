@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { mockBackend } from '../services/mockBackend';
-import { BookOpen, ArrowRight } from 'lucide-react';
+import { BookOpen, ArrowRight, Sparkles } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import PDFAction from '../components/PDFAction';
 import { motion } from 'framer-motion';
@@ -63,9 +63,12 @@ const Journals: React.FC = () => {
             <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-[1.1] text-white">
               Journal Archive
             </h1>
-            <p className="text-lg text-white/80 font-light leading-relaxed max-w-xl">
+            <p className="text-lg text-white/80 font-light leading-relaxed max-w-xl mb-6">
               Access our complete repository of peer-reviewed agricultural research and monthly magazines.
             </p>
+            <Link to="/img" className="inline-flex items-center gap-2 px-6 py-3 border border-[#10b981] bg-[#10b981]/10 text-white font-bold text-sm tracking-widest uppercase rounded-lg hover:bg-[#10b981] transition-all">
+                <Sparkles size={16} /> Image Tools for Researchers
+            </Link>
          </div>
       </section>
 
