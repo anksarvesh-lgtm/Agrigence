@@ -32,7 +32,7 @@ const Footer: React.FC = () => {
               <a href="https://twitter.com/agrigence" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-sky-500 hover:text-white transition-all shadow-sm">
                 <Twitter size={16} />
               </a>
-              <a href="https://instagram.com/agrigence" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-pink-600 hover:text-white transition-all shadow-sm">
+              <a href="https://instagram.com/agrigence.in" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-pink-600 hover:text-white transition-all shadow-sm">
                 <Instagram size={16} />
               </a>
               <a href="https://linkedin.com/company/agrigence" target="_blank" rel="noopener noreferrer" className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-stone-400 hover:bg-blue-700 hover:text-white transition-all shadow-sm">
