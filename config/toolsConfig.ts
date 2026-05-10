@@ -7,8 +7,6 @@ export const TOOL_CATEGORIES = [
   { id: "pub-tools", label: "Publication Tools", section: "research" },
   { id: "soil-health", label: "Soil Health", section: "soil" },
   { id: "fertility", label: "Fertility", section: "soil" },
-  { id: "analytics-dashboard", label: "Analytics Dashboard", section: "analytics" },
-  { id: "pipeline-builder", label: "Pipeline Builder", section: "analytics" },
   { id: "anova-engine", label: "ANOVA Engine", section: "analytics" },
   { id: "finance-planning", label: "Financial Planning", section: "finance" },
   { id: "finance-analysis", label: "Financial Analysis", section: "finance" },

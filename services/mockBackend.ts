@@ -1444,8 +1444,6 @@ class FirebaseBackendService {
         { id: 'fertility', name: 'Fertility', sectionId: 'soil' }
       ],
       'analytics': [
-        { id: 'analytics-dashboard', name: 'Analytics Dashboard', sectionId: 'analytics' },
-        { id: 'pipeline-builder', name: 'Pipeline Builder', sectionId: 'analytics' },
         { id: 'anova-engine', name: 'ANOVA Engine', sectionId: 'analytics' }
       ],
       'finance': [
@@ -1516,9 +1514,7 @@ class FirebaseBackendService {
         { id: 'inm-planner', name: 'INM Planner', description: 'Cost-minimized nutrient planning with organic constraints.', categoryId: 'fertility', route: '/tools/inm-planner' }
       ],
       'analytics-dashboard': [
-        { id: 'analytics-dashboard', name: 'Analytics Dashboard', description: 'Comprehensive descriptive, correlation, and regression analysis.', categoryId: 'analytics-dashboard', route: '/analytics' },
-        { id: 'pipeline-builder', name: 'Pipeline Builder', description: 'Pipeline builder.', categoryId: 'pipeline-builder', route: '/analytics/pipeline' },
-        { id: 'anova-engine', name: 'ANOVA Engine', description: 'ANOVA Engine.', categoryId: 'anova-engine', route: '/analytics/anova' }
+        { id: 'anova-engine', name: 'ANOVA Engine', description: 'ANOVA Engine.', categoryId: 'anova-engine', route: '/anova' }
       ],
       'finance-planning': [
       ],

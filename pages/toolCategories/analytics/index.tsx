@@ -15,7 +15,9 @@ const AnalyticsTools: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const fetchedCategories = await mockBackend.getToolCategories('analytics');
+        const fetchedCategories = (await mockBackend.getToolCategories('analytics')).filter(
+          c => !['analytics-dashboard', 'pipeline-builder'].includes(c.id)
+        );
         setCategories(fetchedCategories);
 
         const toolMap: Record<string, Tool[]> = {};

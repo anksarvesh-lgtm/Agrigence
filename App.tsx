@@ -108,8 +108,6 @@ import FarmerConnectManagement from './pages/admin/FarmerConnectManagement';
 import CookieConsentManager from './components/CookieConsentManager';
 import AddDobModal from './components/AddDobModal';
 
-import DashboardHome from './pages/DashboardHome';
-import PipelineBuilder from './pages/PipelineBuilder';
 import AnovaEngine from './pages/AnovaEngine';
 
 import KisanLayout from './pages/KisanHub/KisanLayout';
@@ -327,9 +325,7 @@ const AppContent: React.FC = () => {
               <Route path="mobile-app" element={<MobileAppView />} />
             </Route>
 
-            <Route path="/analytics" element={<DashboardHome />} />
-            <Route path="/analytics/pipeline" element={<PipelineBuilder />} />
-            <Route path="/analytics/anova" element={<AnovaEngine />} />
+            <Route path="/anova" element={<AnovaEngine />} />
 
             <Route 
               path="/admin" 

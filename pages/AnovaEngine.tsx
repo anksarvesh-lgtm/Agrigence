@@ -1,574 +1,405 @@
-import React, { useState } from 'react';
-import { useAuth } from '../src/authContext';
-import { Calculator, Plus, Minus } from 'lucide-react';
-import { computeANOVA, ANOVAInput, ANOVAOutput } from '../lib/anovaCalculations';
-import { db } from '../src/firebase';
-import { collection, addDoc } from 'firebase/firestore';
-import ToolsNavigation from '../components/ToolsNavigation';
+import React, { useState } from "react";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { motion } from "framer-motion";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from "recharts";
 
-const AnovaEngine: React.FC = () => {
-  const { user, planDetails } = useAuth();
-  const [design, setDesign] = useState<'CRD' | 'RBD' | 'LSD' | 'Factorial RBD'>('CRD');
-  const [postHoc, setPostHoc] = useState<'None' | 'LSD' | 'Tukey' | 'DMRT'>('LSD');
-  
-  const [rawData, setRawData] = useState<string>('');
-  const [parsedData, setParsedData] = useState<any[]>([]);
-  const [columns, setColumns] = useState<string[]>([]);
-  
-  const [responseCol, setResponseCol] = useState<string>('');
-  const [treatmentCol, setTreatmentCol] = useState<string>('');
-  const [blockCol, setBlockCol] = useState<string>('');
-  const [rowCol, setRowCol] = useState<string>('');
-  const [colCol, setColCol] = useState<string>('');
-  const [factorACol, setFactorACol] = useState<string>('');
-  const [factorBCol, setFactorBCol] = useState<string>('');
+interface ResultData {
+  Design: string;
+  Treatments: number;
+  Replications: number;
+  "C.D. (5%)": string;
+  "SE(m)": string;
+  "SE(d)": string;
+  "C.V. (%)": string;
+  "Error Mean Square": string;
+  "Error DF": number;
+}
 
-  const [results, setResults] = useState<ANOVAOutput | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+interface ChartDataPoint {
+  source: string;
+  fValue: number;
+}
 
-  const handleParseData = () => {
-    if (!rawData.trim()) {
-      setError("Please paste some data first.");
+export default function AgriStatisticsCalculator() {
+  const [step, setStep] = useState<number>(1);
+
+  const [design, setDesign] = useState<string>("RBD");
+  const [treatments, setTreatments] = useState<string>("");
+  const [replications, setReplications] = useState<string>("");
+  const [data, setData] = useState<string>("");
+
+  const [results, setResults] = useState<ResultData | null>(null);
+  const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
+  const [error, setError] = useState<string>("");
+
+  const parseData = () => {
+    const rows = data
+      .trim()
+      .split("\n")
+      .map((row) => row.trim().split(/\s+/).map(Number));
+
+    return rows;
+  };
+
+  const validateData = (rows: number[][], t: number, r: number) => {
+    if (rows.length !== t) {
+      return `Expected ${t} treatment rows but found ${rows.length}`;
+    }
+
+    for (let i = 0; i < rows.length; i++) {
+      if (rows[i].length !== r) {
+        return `Row ${i + 1} must contain ${r} replication values`;
+      }
+
+      for (let j = 0; j < rows[i].length; j++) {
+        if (isNaN(rows[i][j])) {
+          return `Invalid numeric value detected in row ${i + 1}`;
+        }
+      }
+    }
+
+    return null;
+  };
+
+  const calculate = () => {
+    setError("");
+
+    const t = parseInt(treatments);
+    const r = parseInt(replications);
+
+    if (!t || !r) {
+      setError("Please enter treatments and replications.");
       return;
     }
-    
-    // Auto-detect delimiter (tab or comma)
-    const delimiter = rawData.indexOf('\t') !== -1 ? '\t' : ',';
-    
-    import('papaparse').then((Papa) => {
-      Papa.default.parse(rawData, {
-        header: true,
-        skipEmptyLines: true,
-        delimiter: delimiter,
-        complete: (results) => {
-          if (results.data && results.data.length > 0) {
-            setParsedData(results.data);
-            const cols = Object.keys(results.data[0] as object);
-            setColumns(cols);
-            
-            // Auto-select columns if possible
-            if (cols.length > 0) setResponseCol(cols[cols.length - 1]);
-            if (cols.length > 1) setTreatmentCol(cols[0]);
-            if (cols.length > 2) setBlockCol(cols[1]);
-            
-            setError(null);
-          } else {
-            setError("Could not parse data. Ensure it has headers.");
-          }
-        },
-        error: (err: any) => {
-          setError(err.message);
-        }
+
+    const rows = parseData();
+
+    const validationError = validateData(rows, t, r);
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    let grandTotal = 0;
+
+    rows.forEach((row) => {
+      row.forEach((value) => {
+        grandTotal += value;
       });
     });
-  };
 
-  const runAnova = () => {
-    setError(null);
-    if (parsedData.length === 0) {
-      setError("Please parse data first.");
-      return;
-    }
-    if (!responseCol) {
-      setError("Please select a response variable.");
-      return;
+    const totalObservations = t * r;
+
+    const correctionFactor =
+      (grandTotal * grandTotal) / totalObservations;
+
+    let totalSS = 0;
+
+    rows.forEach((row) => {
+      row.forEach((value) => {
+        totalSS += value * value;
+      });
+    });
+
+    totalSS -= correctionFactor;
+
+    let treatmentSS = 0;
+
+    rows.forEach((row) => {
+      const rowSum = row.reduce((a, b) => a + b, 0);
+      treatmentSS += (rowSum * rowSum) / r;
+    });
+
+    treatmentSS -= correctionFactor;
+
+    let replicationSS = 0;
+
+    for (let j = 0; j < r; j++) {
+      let colSum = 0;
+
+      for (let i = 0; i < t; i++) {
+        colSum += rows[i][j];
+      }
+
+      replicationSS += (colSum * colSum) / t;
     }
 
-    try {
-      const input: ANOVAInput = {
-        design,
-        data: parsedData,
-        responseCol,
-        treatmentCol,
-        blockCol,
-        rowCol,
-        colCol,
-        factorACol,
-        factorBCol,
-        postHoc
-      };
-      const output = computeANOVA(input);
-      setResults(output);
-    } catch (err: any) {
-      setError(err.message || "An error occurred during calculation.");
-    }
-  };
+    replicationSS -= correctionFactor;
 
-  const handleSave = async () => {
-    if (!user) {
-      setSaveMessage({ type: 'error', text: 'Please log in to save analyses.' });
-      return;
-    }
+    const errorSS = totalSS - treatmentSS - replicationSS;
+
+    const errorDF = (t - 1) * (r - 1);
+
+    const mse = errorSS / errorDF;
+
+    const tMS = treatmentSS / (t - 1);
+    const rMS = replicationSS / (r - 1);
     
-    const isPaid = planDetails && planDetails.price > 0;
-    if (!isPaid) {
-      setSaveMessage({ type: 'error', text: 'Saving data is a Premium feature. Please upgrade your subscription.' });
-      return;
-    }
+    // F-Calculated values
+    const fCalTreatment = tMS / mse;
+    const fCalReplication = rMS / mse;
+    
+    setChartData([
+      { source: "Treatments", fValue: Number(fCalTreatment.toFixed(2)) },
+      { source: "Replications", fValue: Number(fCalReplication.toFixed(2)) },
+      { source: "Error", fValue: 1.0 }, // Base reference for Error M.S.
+    ]);
 
+    const sem = Math.sqrt(mse / r);
+
+    const sed = Math.sqrt((2 * mse) / r);
+
+    const tValue = 2.179;
+
+    const cd = sed * tValue;
+
+    const mean = grandTotal / totalObservations;
+
+    const cv = (Math.sqrt(mse) / mean) * 100;
+
+    const finalResults: ResultData = {
+      Design: design,
+      Treatments: t,
+      Replications: r,
+      "C.D. (5%)": cd.toFixed(2),
+      "SE(m)": sem.toFixed(2),
+      "SE(d)": sed.toFixed(2),
+      "C.V. (%)": cv.toFixed(2),
+      "Error Mean Square": mse.toFixed(4),
+      "Error DF": errorDF,
+    };
+
+    setResults(finalResults);
+    setStep(2);
+  };
+
+  const downloadExcel = () => {
     if (!results) return;
 
-    setIsSaving(true);
-    setSaveMessage(null);
-    try {
-      await addDoc(collection(db, 'saved_analyses'), {
-        userId: user.id,
-        type: 'ANOVA',
-        createdAt: new Date().toISOString(),
-        design,
-        postHoc,
-        results
-      });
-      setSaveMessage({ type: 'success', text: 'Analysis saved successfully!' });
-    } catch (err) {
-      console.error("Error saving analysis:", err);
-      setSaveMessage({ type: 'error', text: 'Failed to save analysis.' });
-    } finally {
-      setIsSaving(false);
-    }
+    const worksheet = XLSX.utils.json_to_sheet([results]);
+
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      "Statistics Result"
+    );
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const fileData = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+
+    saveAs(fileData, "Agricultural_Statistics_Result.xlsx");
   };
 
   return (
-    <div className="flex bg-stone-50 min-h-screen">
-      <ToolsNavigation />
-      <div className="flex-1 p-8 space-y-8">
-        <div className="max-w-5xl mx-auto space-y-8">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-stone-800 font-serif">Agrigence ANOVA Engine</h1>
-            {planDetails && planDetails.price > 0 ? (
-              <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full uppercase tracking-wider">Premium Active</span>
-            ) : (
-              <span className="px-3 py-1 bg-stone-200 text-stone-600 text-xs font-bold rounded-full uppercase tracking-wider">Free Tier</span>
-            )}
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-emerald-50 flex items-center justify-center p-6">
+      <div className="w-full max-w-6xl bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/50">
+        <h1 className="text-4xl font-black text-center mb-10 text-slate-800 tracking-tight">
+          Agricultural Statistics Calculator
+        </h1>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 space-y-6">
-              
-              {/* Step 1: Design Selection */}
-              <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 space-y-4">
-                <h3 className="font-bold text-stone-800 flex items-center gap-2">
-                  <span className="bg-agri-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
+        {step === 1 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="grid grid-cols-1 lg:grid-cols-5 gap-10"
+          >
+            {/* Visual Column */}
+            <div className="lg:col-span-2 flex flex-col justify-center items-center bg-gradient-to-tr from-green-100 to-emerald-50 rounded-3xl p-8 border border-green-200 shadow-inner perspective-1000 hidden md:flex">
+               <motion.div 
+                 animate={{ rotateY: [0, 10, -10, 0], rotateX: [0, -5, 5, 0] }}
+                 transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
+                 className="relative w-full aspect-square flex items-center justify-center"
+               >
+                 {/* 3D-like Box Graphic */}
+                 <div className="absolute w-48 h-48 bg-emerald-500/20 rounded-xl transform rotate-45 scale-y-50 -scale-x-100 blur-xl"></div>
+                 <svg viewBox="0 0 200 200" className="w-64 h-64 drop-shadow-2xl">
+                   <g transform="translate(100, 100) rotate(-30) skewX(30)">
+                     <rect x="-50" y="-50" width="100" height="100" fill="#10B981" opacity="0.9" rx="10"/>
+                     <rect x="-40" y="-40" width="40" height="40" fill="#34D399" opacity="0.9" rx="5"/>
+                     <rect x="0" y="-40" width="40" height="40" fill="#059669" opacity="0.9" rx="5"/>
+                     <rect x="-40" y="0" width="40" height="40" fill="#059669" opacity="0.9" rx="5"/>
+                     <rect x="0" y="0" width="40" height="40" fill="#065F46" opacity="0.9" rx="5"/>
+                     
+                     <g transform="translate(0, -60)">
+                        <rect x="-30" y="-30" width="60" height="60" fill="#6EE7B7" opacity="0.7" rx="5"/>
+                     </g>
+                     
+                     <g transform="translate(0, -120)">
+                        <rect x="-20" y="-20" width="40" height="40" fill="#A7F3D0" opacity="0.6" rx="5"/>
+                     </g>
+                   </g>
+                 </svg>
+                 <div className="absolute bottom-4 left-0 right-0 text-center">
+                    <p className="text-emerald-800 font-bold uppercase tracking-widest text-sm opacity-60">ANOVA Engine</p>
+                 </div>
+               </motion.div>
+            </div>
+
+            {/* Input Column */}
+            <div className="lg:col-span-3 space-y-6">
+              <motion.div whileHover={{ scale: 1.01 }} className="group">
+                <label className="block font-semibold mb-2 text-slate-700 group-hover:text-emerald-700 transition-colors">
                   Experimental Design
-                </h3>
-                <div className="grid grid-cols-1 gap-4">
-                  <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={design} onChange={(e) => {
-                    setDesign(e.target.value as any);
-                    setResults(null);
-                  }}>
-                    <option value="CRD">CRD (Completely Randomized Design)</option>
-                    <option value="RBD">RBD (Randomized Block Design)</option>
-                    <option value="LSD">LSD (Latin Square Design)</option>
-                    <option value="Factorial RBD">Factorial RBD (2 Factors)</option>
-                  </select>
-                  <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={postHoc} onChange={(e) => setPostHoc(e.target.value as any)}>
-                    <option value="None">No Post-Hoc Test</option>
-                    <option value="LSD">LSD (Least Significant Difference)</option>
-                    <option value="Tukey">Tukey's HSD</option>
-                    <option value="DMRT">Duncan's Multiple Range Test (DMRT)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Step 2: Data Input */}
-              <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 space-y-4">
-                <h3 className="font-bold text-stone-800 flex items-center gap-2">
-                  <span className="bg-agri-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span>
-                  Paste Data (Excel/CSV)
-                </h3>
-                <p className="text-xs text-stone-500">Paste your data with headers. Columns can be separated by tabs or commas.</p>
-                <textarea 
-                  className="w-full h-48 p-3 border border-stone-200 rounded-lg text-sm font-mono whitespace-pre"
-                  placeholder="Trt&#9;Rep&#9;Yield&#10;T1&#9;R1&#9;12.5&#10;T1&#9;R2&#9;13.1&#10;..."
-                  value={rawData}
-                  onChange={(e) => setRawData(e.target.value)}
-                />
-                <button 
-                  onClick={handleParseData}
-                  className="w-full bg-stone-100 hover:bg-stone-200 text-stone-800 py-2 rounded-lg text-sm font-medium transition-colors"
+                </label>
+                <select
+                  value={design}
+                  onChange={(e) => setDesign(e.target.value)}
+                  className="w-full border-2 border-slate-200 rounded-2xl p-4 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none appearance-none"
                 >
-                  Parse Data
-                </button>
+                  <option value="RBD">Randomized Block Design (RBD)</option>
+                  <option value="CRD">Completely Randomized Design (CRD)</option>
+                  <option value="Factorial RBD">Factorial RBD</option>
+                  <option value="Split Plot">Split Plot Design</option>
+                </select>
+              </motion.div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <motion.div whileHover={{ scale: 1.01 }} className="group">
+                  <label className="block font-semibold mb-2 text-slate-700 group-hover:text-emerald-700 transition-colors">
+                    Number of Treatments
+                  </label>
+                  <input
+                    type="number"
+                    value={treatments}
+                    onChange={(e) => setTreatments(e.target.value)}
+                    className="w-full border-2 border-slate-200 rounded-2xl p-4 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none"
+                    placeholder="E.g., 5"
+                  />
+                </motion.div>
+
+                <motion.div whileHover={{ scale: 1.01 }} className="group">
+                  <label className="block font-semibold mb-2 text-slate-700 group-hover:text-emerald-700 transition-colors">
+                    Number of Replications
+                  </label>
+                  <input
+                    type="number"
+                    value={replications}
+                    onChange={(e) => setReplications(e.target.value)}
+                    className="w-full border-2 border-slate-200 rounded-2xl p-4 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none"
+                    placeholder="E.g., 3"
+                  />
+                </motion.div>
               </div>
 
-              {/* Step 3: Column Mapping */}
-              {columns.length > 0 && (
-                <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 space-y-4">
-                  <h3 className="font-bold text-stone-800 flex items-center gap-2">
-                    <span className="bg-agri-primary text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">3</span>
-                    Map Columns
-                  </h3>
-                  
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-stone-600 mb-1">Response Variable (Y)</label>
-                      <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={responseCol} onChange={e => setResponseCol(e.target.value)}>
-                        <option value="">Select Column...</option>
-                        {columns.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
+              <motion.div whileHover={{ scale: 1.01 }} className="group">
+                <label className="block font-semibold mb-2 text-slate-700 group-hover:text-emerald-700 transition-colors">
+                  Paste Experimental Data
+                </label>
+                <textarea
+                  rows={8}
+                  value={data}
+                  onChange={(e) => setData(e.target.value)}
+                  className="w-full border-2 border-slate-200 rounded-2xl p-4 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all outline-none font-mono text-sm resize-none"
+                  placeholder={"10.90 11.04 10.90\n9.32 10.64 10.70\n10.46 9.80 10.24"}
+                />
+              </motion.div>
 
-                    {design === 'CRD' && (
-                      <div>
-                        <label className="block text-xs font-medium text-stone-600 mb-1">Treatment Column</label>
-                        <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={treatmentCol} onChange={e => setTreatmentCol(e.target.value)}>
-                          <option value="">Select Column...</option>
-                          {columns.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                      </div>
-                    )}
-
-                    {design === 'RBD' && (
-                      <>
-                        <div>
-                          <label className="block text-xs font-medium text-stone-600 mb-1">Treatment Column</label>
-                          <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={treatmentCol} onChange={e => setTreatmentCol(e.target.value)}>
-                            <option value="">Select Column...</option>
-                            {columns.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-stone-600 mb-1">Block / Replication Column</label>
-                          <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={blockCol} onChange={e => setBlockCol(e.target.value)}>
-                            <option value="">Select Column...</option>
-                            {columns.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                      </>
-                    )}
-
-                    {design === 'LSD' && (
-                      <>
-                        <div>
-                          <label className="block text-xs font-medium text-stone-600 mb-1">Treatment Column</label>
-                          <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={treatmentCol} onChange={e => setTreatmentCol(e.target.value)}>
-                            <option value="">Select Column...</option>
-                            {columns.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-stone-600 mb-1">Row Column</label>
-                          <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={rowCol} onChange={e => setRowCol(e.target.value)}>
-                            <option value="">Select Column...</option>
-                            {columns.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-stone-600 mb-1">Column Column</label>
-                          <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={colCol} onChange={e => setColCol(e.target.value)}>
-                            <option value="">Select Column...</option>
-                            {columns.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                      </>
-                    )}
-
-                    {design === 'Factorial RBD' && (
-                      <>
-                        <div>
-                          <label className="block text-xs font-medium text-stone-600 mb-1">Factor A Column</label>
-                          <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={factorACol} onChange={e => setFactorACol(e.target.value)}>
-                            <option value="">Select Column...</option>
-                            {columns.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-stone-600 mb-1">Factor B Column</label>
-                          <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={factorBCol} onChange={e => setFactorBCol(e.target.value)}>
-                            <option value="">Select Column...</option>
-                            {columns.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-stone-600 mb-1">Block / Replication Column</label>
-                          <select className="w-full p-2 border border-stone-200 rounded-lg text-sm bg-white" value={blockCol} onChange={e => setBlockCol(e.target.value)}>
-                            <option value="">Select Column...</option>
-                            {columns.map(c => <option key={c} value={c}>{c}</option>)}
-                          </select>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
-
-                  <button 
-                    onClick={runAnova}
-                    className="w-full bg-agri-primary hover:bg-agri-primary/90 text-white py-3 rounded-lg font-medium transition-colors mt-4"
-                  >
-                    Run Analysis
-                  </button>
-                </div>
+              {error && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-r-2xl shadow-sm font-medium">
+                  {error}
+                </motion.div>
               )}
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={calculate}
+                className="w-full bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold py-5 rounded-2xl shadow-lg shadow-emerald-200 transition-all relative overflow-hidden group"
+              >
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform"></div>
+                Calculate Statistics
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+
+        {step === 2 && results && (
+          <motion.div 
+            initial={{ opacity: 0, rotateX: -15, y: 50 }}
+            animate={{ opacity: 1, rotateX: 0, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="perspective-1000"
+          >
+            <h2 className="text-3xl font-bold text-center mb-8 text-slate-800">
+              Statistical Analysis
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Object.entries(results).map(([key, value], i) => (
+                <motion.div
+                  key={key}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.1, duration: 0.4 }}
+                  className="bg-white p-6 rounded-2xl shadow-lg border border-slate-100 hover:shadow-2xl transition-all hover:rotate-2 hover:scale-105"
+                >
+                  <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                    {key}
+                  </p>
+                  <p className="text-2xl font-bold text-green-700">
+                    {value}
+                  </p>
+                </motion.div>
+              ))}
             </div>
 
-            <div className="lg:col-span-2">
-              {results ? (
-                <div className="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden flex flex-col gap-6 p-6">
-                  <div className="flex justify-between items-center border-b border-stone-100 pb-4">
-                    <h3 className="text-2xl font-serif font-bold text-stone-800">ANOVA Results ({design})</h3>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left border border-stone-200">
-                      <thead className="bg-stone-50 border-b">
-                        <tr>
-                          <th className="px-4 py-2 border-r">Source</th>
-                          <th className="px-4 py-2 text-right border-r">df</th>
-                          <th className="px-4 py-2 text-right border-r">SS</th>
-                          <th className="px-4 py-2 text-right border-r">MS</th>
-                          <th className="px-4 py-2 text-right border-r">F-cal</th>
-                          <th className="px-4 py-2 text-right border-r">F-tab (5%)</th>
-                          <th className="px-4 py-2 text-right">F-tab (1%)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {design === 'RBD' && results.SSB !== undefined && (
-                          <tr className="border-b">
-                            <td className="px-4 py-2 border-r">Replications/Blocks</td>
-                            <td className="px-4 py-2 text-right border-r">{results.dfB}</td>
-                            <td className="px-4 py-2 text-right border-r">{results.SSB.toFixed(4)}</td>
-                            <td className="px-4 py-2 text-right border-r">{results.MSB?.toFixed(4)}</td>
-                            <td className="px-4 py-2 text-right border-r">-</td>
-                            <td className="px-4 py-2 text-right border-r">-</td>
-                            <td className="px-4 py-2 text-right">-</td>
-                          </tr>
-                        )}
-                        {design === 'LSD' && results.SSR !== undefined && results.SSC !== undefined && (
-                          <>
-                            <tr className="border-b">
-                              <td className="px-4 py-2 border-r">Rows</td>
-                              <td className="px-4 py-2 text-right border-r">{results.dfR}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.SSR.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.MSR?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r">-</td>
-                              <td className="px-4 py-2 text-right border-r">-</td>
-                              <td className="px-4 py-2 text-right">-</td>
-                            </tr>
-                            <tr className="border-b">
-                              <td className="px-4 py-2 border-r">Columns</td>
-                              <td className="px-4 py-2 text-right border-r">{results.dfC}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.SSC.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.MSC?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r">-</td>
-                              <td className="px-4 py-2 text-right border-r">-</td>
-                              <td className="px-4 py-2 text-right">-</td>
-                            </tr>
-                          </>
-                        )}
-                        
-                        {design === 'Factorial RBD' ? (
-                          <>
-                            <tr className="border-b">
-                              <td className="px-4 py-2 border-r">Blocks</td>
-                              <td className="px-4 py-2 text-right border-r">{results.dfB}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.SSB?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.MSB?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r">-</td>
-                              <td className="px-4 py-2 text-right border-r">-</td>
-                              <td className="px-4 py-2 text-right">-</td>
-                            </tr>
-                            <tr className="border-b">
-                              <td className="px-4 py-2 border-r font-bold">Factor A</td>
-                              <td className="px-4 py-2 text-right border-r">{results.dfA}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.SSA?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.MSA?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r font-bold">
-                                {results.FA?.toFixed(4)}
-                                {(results.FA || 0) > (results.FtabA01 || 0) ? '**' : (results.FA || 0) > (results.FtabA05 || 0) ? '*' : ' ns'}
-                              </td>
-                              <td className="px-4 py-2 text-right border-r">{results.FtabA05?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right">{results.FtabA01?.toFixed(4)}</td>
-                            </tr>
-                            <tr className="border-b">
-                              <td className="px-4 py-2 border-r font-bold">Factor B</td>
-                              <td className="px-4 py-2 text-right border-r">{results.dfFactorB}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.SSFactorB?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.MSFactorB?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r font-bold">
-                                {results.FFactorB?.toFixed(4)}
-                                {(results.FFactorB || 0) > (results.FtabB01 || 0) ? '**' : (results.FFactorB || 0) > (results.FtabB05 || 0) ? '*' : ' ns'}
-                              </td>
-                              <td className="px-4 py-2 text-right border-r">{results.FtabB05?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right">{results.FtabB01?.toFixed(4)}</td>
-                            </tr>
-                            <tr className="border-b bg-stone-50">
-                              <td className="px-4 py-2 border-r font-bold">Interaction (A x B)</td>
-                              <td className="px-4 py-2 text-right border-r">{results.dfAB}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.SSAB?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r">{results.MSAB?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right border-r font-bold">
-                                {results.FAB?.toFixed(4)}
-                                {(results.FAB || 0) > (results.FtabAB01 || 0) ? '**' : (results.FAB || 0) > (results.FtabAB05 || 0) ? '*' : ' ns'}
-                              </td>
-                              <td className="px-4 py-2 text-right border-r">{results.FtabAB05?.toFixed(4)}</td>
-                              <td className="px-4 py-2 text-right">{results.FtabAB01?.toFixed(4)}</td>
-                            </tr>
-                          </>
-                        ) : (
-                          <tr className="border-b bg-stone-50">
-                            <td className="px-4 py-2 border-r font-bold">Treatments</td>
-                            <td className="px-4 py-2 text-right border-r">{results.dfT}</td>
-                            <td className="px-4 py-2 text-right border-r">{results.SSTR?.toFixed(4)}</td>
-                            <td className="px-4 py-2 text-right border-r">{results.MST?.toFixed(4)}</td>
-                            <td className="px-4 py-2 text-right border-r font-bold">
-                              {results.F?.toFixed(4)}
-                              {(results.F || 0) > (results.Ftab01 || 0) ? '**' : (results.F || 0) > (results.Ftab05 || 0) ? '*' : ' ns'}
-                            </td>
-                            <td className="px-4 py-2 text-right border-r">{results.Ftab05?.toFixed(4)}</td>
-                            <td className="px-4 py-2 text-right">{results.Ftab01?.toFixed(4)}</td>
-                          </tr>
-                        )}
-
-                        <tr className="border-b">
-                          <td className="px-4 py-2 border-r">Error</td>
-                          <td className="px-4 py-2 text-right border-r">{results.dfE}</td>
-                          <td className="px-4 py-2 text-right border-r">{results.SSE.toFixed(4)}</td>
-                          <td className="px-4 py-2 text-right border-r">{results.MSE.toFixed(4)}</td>
-                          <td className="px-4 py-2 text-right border-r">-</td>
-                          <td className="px-4 py-2 text-right border-r">-</td>
-                          <td className="px-4 py-2 text-right">-</td>
-                        </tr>
-                        <tr className="bg-stone-50 font-bold">
-                          <td className="px-4 py-2 border-r">Total</td>
-                          <td className="px-4 py-2 text-right border-r">
-                            {(results.dfT || 0) + (results.dfB || 0) + (results.dfR || 0) + (results.dfC || 0) + (results.dfA || 0) + (results.dfFactorB || 0) + (results.dfAB || 0) + results.dfE}
-                          </td>
-                          <td className="px-4 py-2 text-right border-r">{results.SST.toFixed(4)}</td>
-                          <td className="px-4 py-2 text-right border-r">-</td>
-                          <td className="px-4 py-2 text-right border-r">-</td>
-                          <td className="px-4 py-2 text-right border-r">-</td>
-                          <td className="px-4 py-2 text-right">-</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      {design === 'Factorial RBD' ? (
-                        <>
-                          <p className="text-sm"><strong>SE(m) A:</strong> {results.semA?.toFixed(4)}</p>
-                          <p className="text-sm"><strong>SE(d) A:</strong> {results.sedA?.toFixed(4)}</p>
-                          <p className="text-sm"><strong>SE(m) B:</strong> {results.semB?.toFixed(4)}</p>
-                          <p className="text-sm"><strong>SE(d) B:</strong> {results.sedB?.toFixed(4)}</p>
-                          <p className="text-sm"><strong>SE(m) AxB:</strong> {results.semAB?.toFixed(4)}</p>
-                          <p className="text-sm"><strong>SE(d) AxB:</strong> {results.sedAB?.toFixed(4)}</p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-sm"><strong>F-calculated:</strong> {results.F?.toFixed(4)}</p>
-                          <p className="text-sm"><strong>F-tabulated (5%):</strong> {results.Ftab05?.toFixed(4)}</p>
-                          <p className="text-sm"><strong>Result:</strong> {(results.F || 0) > (results.Ftab05 || 0) ? 'Significant' : 'Not Significant'}</p>
-                          <p className="text-sm"><strong>SE(m):</strong> {results.sem?.toFixed(4)}</p>
-                          <p className="text-sm"><strong>SE(d):</strong> {results.sed?.toFixed(4)}</p>
-                        </>
-                      )}
-                    </div>
-                    
-                    {results.postHocMethod !== 'None' && results.criticalValues.length > 0 && (
-                      <div className="space-y-2">
-                        <p className="text-sm font-bold">Critical Values ({results.postHocMethod} at 5%)</p>
-                        {results.criticalValues.length === 1 ? (
-                          <p className="text-sm">CV = {results.criticalValues[0].toFixed(4)}</p>
-                        ) : (
-                          <div className="text-xs text-stone-600 max-h-24 overflow-y-auto">
-                            {results.criticalValues.map((cv, idx) => (
-                              <div key={idx}>R{idx + 2} = {cv.toFixed(4)}</div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {results.treatmentMeans.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="font-bold text-stone-800 mb-2">
-                        {design === 'Factorial RBD' ? 'Interaction Means (A x B) & Grouping' : 'Treatment Means & Grouping'}
-                      </h4>
-                      <table className="w-full text-sm text-left border border-stone-200">
-                        <thead className="bg-stone-50 border-b">
-                          <tr>
-                            <th className="px-4 py-2 border-r">Treatment</th>
-                            <th className="px-4 py-2 border-r text-right">Mean</th>
-                            <th className="px-4 py-2 border-r text-right">n</th>
-                            {results.postHocMethod !== 'None' && <th className="px-4 py-2">Significance Group</th>}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {results.treatmentMeans.map((tm, idx) => (
-                            <tr key={idx} className="border-b">
-                              <td className="px-4 py-2 border-r">{tm.id}</td>
-                              <td className="px-4 py-2 border-r text-right">{tm.mean.toFixed(4)}</td>
-                              <td className="px-4 py-2 border-r text-right">{tm.n}</td>
-                              {results.postHocMethod !== 'None' && <td className="px-4 py-2 font-bold text-blue-600">{tm.grouping}</td>}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      {results.postHocMethod !== 'None' && (
-                        <p className="text-xs text-stone-500 mt-2 italic">
-                          * Means sharing the same letter are not significantly different according to {results.postHocMethod} (p &lt; 0.05).
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="bg-stone-50 p-4 rounded-lg border border-stone-200">
-                    <h4 className="font-bold text-stone-800 mb-2">Interpretation</h4>
-                    <div className="text-sm text-stone-700 leading-relaxed space-y-2">
-                      {design === 'Factorial RBD' ? (
-                        <>
-                          <p>
-                            <strong>Factor A:</strong> The F-calculated value ({results.FA?.toFixed(2)}) is 
-                            {(results.FA || 0) > (results.FtabA05 || 0) ? ' greater ' : ' less '} 
-                            than the F-tabulated value at 5% significance ({results.FtabA05?.toFixed(2)}). 
-                            Therefore, the differences among Factor A means are 
-                            <strong>{(results.FA || 0) > (results.FtabA05 || 0) ? ' statistically significant.' : ' not statistically significant.'}</strong>
-                          </p>
-                          <p>
-                            <strong>Factor B:</strong> The F-calculated value ({results.FFactorB?.toFixed(2)}) is 
-                            {(results.FFactorB || 0) > (results.FtabB05 || 0) ? ' greater ' : ' less '} 
-                            than the F-tabulated value at 5% significance ({results.FtabB05?.toFixed(2)}). 
-                            Therefore, the differences among Factor B means are 
-                            <strong>{(results.FFactorB || 0) > (results.FtabB05 || 0) ? ' statistically significant.' : ' not statistically significant.'}</strong>
-                          </p>
-                          <p>
-                            <strong>Interaction (A x B):</strong> The F-calculated value ({results.FAB?.toFixed(2)}) is 
-                            {(results.FAB || 0) > (results.FtabAB05 || 0) ? ' greater ' : ' less '} 
-                            than the F-tabulated value at 5% significance ({results.FtabAB05?.toFixed(2)}). 
-                            Therefore, the interaction effect is 
-                            <strong>{(results.FAB || 0) > (results.FtabAB05 || 0) ? ' statistically significant.' : ' not statistically significant.'}</strong>
-                          </p>
-                        </>
-                      ) : (
-                        <p>
-                          The F-calculated value ({results.F?.toFixed(2)}) is 
-                          {(results.F || 0) > (results.Ftab05 || 0) ? ' greater ' : ' less '} 
-                          than the F-tabulated value at 5% significance ({results.Ftab05?.toFixed(2)}). 
-                          Therefore, the null hypothesis is {(results.F || 0) > (results.Ftab05 || 0) ? 'rejected' : 'accepted'}, indicating that there are 
-                          <strong>{(results.F || 0) > (results.Ftab05 || 0) ? ' statistically significant ' : ' no statistically significant '}</strong> 
-                          differences among the treatment means.
-                        </p>
-                      )}
-                    </div>
-                  </div>
+            {chartData.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+                className="mt-10 bg-white p-6 rounded-2xl shadow-lg border border-slate-100"
+              >
+                <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">F-Calculated Values</h3>
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" opacity={0.5} />
+                      <XAxis dataKey="source" />
+                      <YAxis />
+                      <RechartsTooltip 
+                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        cursor={{ fill: 'rgba(16, 185, 129, 0.1)' }}
+                      />
+                      <Legend />
+                      <Bar dataKey="fValue" name="F-Calculated Value" fill="#10B981" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-              ) : (
-                <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed rounded-2xl text-stone-400">
-                  <Calculator size={48} className="mb-4 text-stone-300" />
-                  <p>No Analysis Results</p>
-                </div>
-              )}
+              </motion.div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-4 mt-12 justify-center">
+              <button
+                onClick={() => setStep(1)}
+                className="bg-slate-700 hover:bg-slate-800 text-white font-semibold px-8 py-4 rounded-2xl transition-all"
+              >
+                Back to Input
+              </button>
+
+              <button
+                onClick={downloadExcel}
+                className="bg-green-700 hover:bg-green-800 text-white font-semibold px-8 py-4 rounded-2xl shadow-lg shadow-green-200 transition-all hover:scale-105"
+              >
+                Download Excel Result
+              </button>
             </div>
-          </div>
-        </div>
+          </motion.div>
+        )}
+
+        
       </div>
     </div>
   );
-};
-
-export default AnovaEngine;
+}
