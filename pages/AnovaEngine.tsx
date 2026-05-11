@@ -354,6 +354,31 @@ export default function AgriStatisticsCalculator() {
               ))}
             </div>
 
+            {/* Table for easy copy-paste */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.4 }}
+              className="mt-10 overflow-x-auto bg-white rounded-2xl shadow-lg border border-slate-200"
+            >
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs text-slate-700 uppercase bg-emerald-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3">Parameter</th>
+                    <th scope="col" className="px-6 py-3">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(results).map(([key, value], i) => (
+                    <tr key={key} className={i % 2 === 0 ? "bg-white" : "bg-slate-50 border-b border-slate-100"}>
+                      <td className="px-6 py-4 font-semibold text-slate-900">{key}</td>
+                      <td className="px-6 py-4 font-mono">{String(value)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </motion.div>
+
             {chartData.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

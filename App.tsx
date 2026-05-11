@@ -70,7 +70,7 @@ const ExperimentPage = React.lazy(() => import('./tools/Tool10Experiment/Experim
 const PlotDosePage = React.lazy(() => import('./tools/Tool11PlotDose/PlotDosePage'));
 const FactorialPage = React.lazy(() => import('./tools/Tool12Factorial/FactorialPage'));
 const ClimatePage = React.lazy(() => import('./tools/Tool13Climate/ClimatePage'));
-const ANOVAPage = React.lazy(() => import('./tools/Tool14ANOVA/ANOVAPage'));
+
 const StatisticalAnalysisPage = React.lazy(() => import('./tools/Tool18Statistics/StatisticalAnalysisPage'));
 const GraphPage = React.lazy(() => import('./tools/Tool15Graphs/GraphPage'));
 
@@ -260,7 +260,7 @@ const AppContent: React.FC = () => {
               <Route path="tools/plot-dose" element={<PlotDosePage />} />
               <Route path="tools/factorial-generator" element={<FactorialPage />} />
               <Route path="tools/climate-analyzer" element={<ClimatePage />} />
-              <Route path="tools/anova" element={<ANOVAPage />} />
+              <Route path="tools/anova" element={<Navigate to="/anova" replace />} />
               <Route path="tools/statistical-analysis" element={<StatisticalAnalysisPage />} />
               <Route path="tools/auto-graph" element={<GraphPage />} />
               
