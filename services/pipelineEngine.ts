@@ -1,3 +1,5 @@
+import { evaluate } from 'mathjs';
+
 export type NodeType = "filter" | "select" | "transform" | "aggregate" | "join" | "input";
 
 export const executePipeline = (nodes: any[], edges: any[], initialData: any[]) => {
@@ -106,12 +108,11 @@ const applyTransform = (data: any[], config: any) => {
 
   return data.map((row) => {
     try {
-      // Note: eval is used here for prototyping as per guide. 
-      // In production, use a safe math parser like mathjs.
+      // Use a safe math parser like mathjs instead of eval
       const safeOp = operation.replace(/x/g, String(row[column]));
       return {
         ...row,
-        [column]: eval(safeOp)
+        [column]: evaluate(safeOp)
       };
     } catch (e) {
       console.error("Transform error:", e);
