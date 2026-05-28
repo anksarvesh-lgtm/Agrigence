@@ -55,7 +55,7 @@ export const MandiHeroWidget: React.FC = () => {
         const fetchFromGov = async (dist: string) => {
             try {
                 // Using the exact API structure requested
-                const API_KEY = '579b464db66ec23bdd0000018d84e2cc0f0840705eafe3a506473454';
+                const API_KEY = import.meta.env.VITE_GOV_DATA_API_KEY || '';
                 const url = `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${API_KEY}&format=json&filters[district]=${encodeURIComponent(dist)}&limit=3`;
                 
                 const response = await fetch(url);
