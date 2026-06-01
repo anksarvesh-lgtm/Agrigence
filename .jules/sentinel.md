@@ -1,0 +1,4 @@
+## 2026-06-01 - [Hardcoded Firebase API Key]
+**Vulnerability:** A hardcoded Firebase API key (`AIzaSyAtJrLiAnhN5A4umArJKtqhnWmoXXf27K8`) was found in multiple locations, including `src/firebase.ts`, `firebase-applet-config.json`, and several public extension HTML files (`public/extensions/leadership/admin-leadership.html`, `public/extensions/leadership/admin.html`, `public/extensions/founders/admin.html`).
+**Learning:** Hardcoding secrets, especially in client-side code and public HTML templates, exposes them to anyone who inspects the application bundle or public static files. This can lead to unauthorized access to the Firebase project and associated resources.
+**Prevention:** Always use environment variables for sensitive configuration data. In Vite projects, use `import.meta.env` with the `VITE_` prefix for client-side variables, and ensure these variables are documented in `.env.example`. Do not commit actual secrets to version control.

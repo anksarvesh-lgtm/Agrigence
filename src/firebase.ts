@@ -4,7 +4,7 @@ import { getFirestore, doc, getDocFromServer, initializeFirestore, persistentLoc
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAtJrLiAnhN5A4umArJKtqhnWmoXXf27K8",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "gen-lang-client-0276037966.firebaseapp.com",
   projectId: "gen-lang-client-0276037966",
   storageBucket: "gen-lang-client-0276037966.firebasestorage.app",
