@@ -517,6 +517,18 @@ Sitemap: ${protocol}://${host}/sitemap.xml`);
     res.status(201).json({ id: '1', ...req.body });
   });
 
+  app.get('/api/config/firebase', (req, res) => {
+    res.json({
+      apiKey: process.env.VITE_FIREBASE_API_KEY || "YOUR_FIREBASE_API_KEY",
+      authDomain: "gen-lang-client-0276037966.firebaseapp.com",
+      projectId: "gen-lang-client-0276037966",
+      storageBucket: "gen-lang-client-0276037966.firebasestorage.app",
+      messagingSenderId: "455779719985",
+      appId: "1:455779719985:web:07fc0a4b6a3234cfdeae10",
+      measurementId: "G-ZRQEY0LBJC"
+    });
+  });
+
   // Secure PDF Proxy Route
   // Completely hides Google Drive URL and avoids CORS issues on the frontend
   app.get('/api/pdf/:fileId', async (req, res) => {
