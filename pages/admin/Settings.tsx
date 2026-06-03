@@ -5,7 +5,7 @@ import { mockBackend } from '../../services/mockBackend';
 import { SiteSettings } from '../../types';
 import { 
   Save, Twitter, Instagram, Facebook, Linkedin, Youtube, 
-  Smartphone, Mail, Globe, Hash, Upload, ShieldAlert, Palette, Type, Layout, Share2, Loader2, CreditCard, Eye, EyeOff, QrCode
+  Smartphone, Mail, Globe, Hash, Upload, ShieldAlert, Palette, Type, Layout, Share2, Loader2, CreditCard, Eye, EyeOff
 } from 'lucide-react';
 
 const Settings: React.FC = () => {
@@ -42,108 +42,12 @@ const Settings: React.FC = () => {
   const handleFileUpload = (field: keyof SiteSettings) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && settings) {
-      // Validate file size on client side (5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File is too large. Max size is 5MB.');
-        return;
-      }
-
-      // Validate format for images
-      if (['logoUrl', 'faviconUrl', 'upiQrUrl'].includes(field)) {
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/svg+xml', 'image/webp', 'image/x-icon'];
-        if (!allowedTypes.includes(file.type) && !file.name.endsWith('.ico')) {
-          alert('Invalid file format. Allowed formats are PNG, JPG, JPEG, SVG, WEBP.');
-          return;
-        }
-      }
-
       setUploadingField(field);
       try {
-        let uploadFile = file;
-        
-        // Compress image before upload (for logos and favicons)
-        if (['logoUrl', 'faviconUrl', 'upiQrUrl'].includes(field) && file.type !== 'image/svg+xml' && file.type !== 'image/x-icon') {
-            const compressImage = async (originalFile: File): Promise<File> => {
-               return new Promise((resolve) => {
-                   const img = new Image();
-                   const url = URL.createObjectURL(originalFile);
-                   img.onload = () => {
-                       URL.revokeObjectURL(url);
-                       const canvas = document.createElement('canvas');
-                       let width = img.width;
-                       let height = img.height;
-                       const MAX_SIZE = 1000;
-                       
-                       if (width > height && width > MAX_SIZE) {
-                           height *= MAX_SIZE / width;
-                           width = MAX_SIZE;
-                       } else if (height > MAX_SIZE) {
-                           width *= MAX_SIZE / height;
-                           height = MAX_SIZE;
-                       }
-                       
-                       canvas.width = width;
-                       canvas.height = height;
-                       const ctx = canvas.getContext('2d');
-                       if (ctx) {
-                           ctx.drawImage(img, 0, 0, width, height);
-                           canvas.toBlob((blob) => {
-                               if (blob) {
-                                   resolve(new File([blob], originalFile.name, { type: 'image/webp', lastModified: Date.now() }));
-                               } else {
-                                   resolve(originalFile);
-                               }
-                           }, 'image/webp', 0.85);
-                       } else {
-                           resolve(originalFile);
-                       }
-                   };
-                   img.onerror = () => resolve(originalFile);
-                   img.src = url;
-               });
-            };
-            uploadFile = await compressImage(file);
-        }
-
-        let folderPath = 'branding/assets';
-        if (field === 'logoUrl') folderPath = 'branding/logos';
-        else if (field === 'faviconUrl') folderPath = 'branding/favicons';
-        else if (field === 'apkUrl') folderPath = 'apps/apk';
-        else if (field === 'upiQrUrl') folderPath = 'billing/qr';
-
-        const url = await mockBackend.uploadToBlob(uploadFile, folderPath);
-        
-        // Delete old blob if it was a Vercel blob URL
-        const oldUrl = settings[field] as string;
-        if (oldUrl && oldUrl.includes('public.blob.vercel-storage.com')) {
-          await mockBackend.deleteFromBlob(oldUrl).catch(e => console.warn('Old blob delete failed', e));
-        }
-
-        const updatedSettings = { ...settings, [field]: url };
-        setSettings(updatedSettings);
-        
-        // Auto-save strictly for branding/logo to provide immediate feedback
-        if (field === 'logoUrl' || field === 'upiQrUrl' || field === 'faviconUrl') {
-          await mockBackend.updateSettings(updatedSettings);
-          console.log(`Branding asset ${field} auto-saved successfully.`);
-        }
-      } catch (err: any) {
-        console.error('Frontend upload failure:', err);
-        // Extract server-side error if available
-        let detailedMsg = 'Failed to upload image. Please check your connection.';
-        if (err.message && err.message.includes('{')) {
-          try {
-            const parsed = JSON.parse(err.message);
-            detailedMsg = parsed.error || detailedMsg;
-          } catch (pErr) {}
-        } else if (err.message) {
-          detailedMsg = err.message;
-        }
-        alert(detailedMsg);
+        const url = await mockBackend.uploadToBlob(file, 'settings');
+        setSettings({ ...settings, [field]: url });
       } finally {
         setUploadingField(null);
-        // Clear the input value so the same file can be selected again if needed
-        e.target.value = '';
       }
     }
   };
@@ -187,35 +91,10 @@ const Settings: React.FC = () => {
                         )}
                     </div>
                     <div className="flex-1">
-                      <input type="file" id="logo-up" accept="image/png, image/jpeg, image/webp, image/svg+xml" className="hidden" onChange={handleFileUpload('logoUrl')} disabled={!!uploadingField} />
+                      <input type="file" id="logo-up" className="hidden" onChange={handleFileUpload('logoUrl')} disabled={!!uploadingField} />
                       <label htmlFor="logo-up" className={`w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-4 text-[10px] font-black cursor-pointer transition-all flex items-center justify-center gap-2 text-gray-600 ${!!uploadingField ? 'opacity-50 pointer-events-none' : ''}`}>
                          {uploadingField === 'logoUrl' ? <Loader2 size={14} className="animate-spin"/> : <Upload size={14} />} 
                          {uploadingField === 'logoUrl' ? 'UPLOADING...' : 'REPLACE LOGO'}
-                      </label>
-                    </div>
-                  </div>
-              </div>
-
-              <div>
-                  <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Site Favicon</label>
-                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center border border-gray-200 p-2 overflow-hidden shrink-0 relative">
-                        {uploadingField === 'faviconUrl' && (
-                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
-                                <Loader2 className="text-agri-secondary animate-spin" />
-                            </div>
-                        )}
-                        {settings.faviconUrl ? (
-                            <img src={settings.faviconUrl} className="max-h-full object-contain" alt="Favicon" />
-                        ) : (
-                            <div className="text-[9px] text-gray-400 font-black uppercase text-center leading-tight">No<br/>Icon</div>
-                        )}
-                    </div>
-                    <div className="flex-1">
-                      <input type="file" id="favicon-up" accept="image/png, image/jpeg, image/webp, image/svg+xml, image/x-icon" className="hidden" onChange={handleFileUpload('faviconUrl')} disabled={!!uploadingField} />
-                      <label htmlFor="favicon-up" className={`w-full bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl p-4 text-[10px] font-black cursor-pointer transition-all flex items-center justify-center gap-2 text-gray-600 ${!!uploadingField ? 'opacity-50 pointer-events-none' : ''}`}>
-                         {uploadingField === 'faviconUrl' ? <Loader2 size={14} className="animate-spin"/> : <Upload size={14} />} 
-                         {uploadingField === 'faviconUrl' ? 'UPLOADING...' : 'REPLACE FAVICON'}
                       </label>
                     </div>
                   </div>
@@ -282,14 +161,6 @@ const Settings: React.FC = () => {
                   />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                 <div className="col-span-2">
-                    <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Site Tagline</label>
-                    <input 
-                      className="w-full bg-white border border-gray-300 rounded-xl p-4 text-gray-900 outline-none focus:border-agri-secondary text-xs" 
-                      value={settings.tagline} 
-                      onChange={e => setSettings({...settings, tagline: e.target.value})} 
-                    />
-                 </div>
                  <div>
                     <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block tracking-widest">Home Featured Limit</label>
                     <input type="number" className="w-full bg-white border border-gray-300 rounded-xl p-4 text-gray-900 outline-none focus:border-agri-secondary" value={settings.homeFeaturedLimit} onChange={e => setSettings({...settings, homeFeaturedLimit: parseInt(e.target.value)})} />
@@ -314,24 +185,7 @@ const Settings: React.FC = () => {
               <div className="grid gap-6">
                  <div>
                     <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block">Merchant UPI ID</label>
-                    <input className="w-full bg-white border border-gray-300 rounded-xl p-4 text-gray-900 outline-none focus:border-agri-secondary font-mono text-sm" value={settings.upiId} onChange={e => setSettings({...settings, upiId: e.target.value})} />
-                 </div>
-
-                 <div>
-                    <label className="text-[10px] uppercase font-bold text-gray-500 mb-2 block">UPI QR Code Image</label>
-                    <div className="flex items-center gap-4">
-                        <div className="w-20 h-20 bg-stone-50 border border-dashed border-stone-300 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
-                            {settings.upiQrUrl ? (
-                                <img src={settings.upiQrUrl} className="w-full h-full object-contain" alt="QR" />
-                            ) : <QrCode size={20} className="text-stone-300" />}
-                        </div>
-                        <div className="flex-1">
-                            <input type="file" id="upi-qr-up" className="hidden" accept="image/*" onChange={handleFileUpload('upiQrUrl')} />
-                            <label htmlFor="upi-qr-up" className="w-full bg-white border border-stone-200 hover:bg-stone-50 rounded-xl p-3 text-[10px] font-bold flex items-center justify-center gap-2 cursor-pointer transition-all">
-                                <Upload size={14} /> {uploadingField === 'upiQrUrl' ? 'UPLOADING...' : 'CHANGE QR CODE'}
-                            </label>
-                        </div>
-                    </div>
+                    <input className="w-full bg-white border border-gray-300 rounded-xl p-4 text-gray-900 outline-none focus:border-agri-secondary font-mono" value={settings.upiId} onChange={e => setSettings({...settings, upiId: e.target.value})} />
                  </div>
                  
                  <div>

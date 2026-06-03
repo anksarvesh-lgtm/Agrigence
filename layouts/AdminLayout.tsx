@@ -5,7 +5,7 @@ import { useAuth } from '../src/authContext';
 import { 
   LayoutDashboard, Users, BookOpen, FileText, ShoppingBag, 
   Settings, LogOut, Menu, X, Image, CreditCard,
-  Rss, Award, Newspaper, Tag, ShieldCheck, Megaphone,
+  Rss, Award, Newspaper, Tag, ShieldCheck, Megaphone, Star, Calendar,
   Navigation, Layout as LayoutIcon, Globe, Mail, MessageSquare, Files, Sliders, Trash2,
   Activity, FolderOpen, Crown, Layers, PenTool, Home, BrainCircuit, Bot, Landmark, Tractor,
 } from 'lucide-react';
@@ -44,60 +44,37 @@ const AdminLayout: React.FC = () => {
 
   if (isEditorial) {
     menuItems = [
-      { label: 'My Reviews', path: '/admin/reviews', icon: PenTool },
       { label: 'Profile Settings', path: '/dashboard', icon: Settings, isExternal: false },
     ];
   } else if (isSuperAdmin) {
     // SuperAdmin sees EVERYTHING
     menuItems = [
       { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-      { label: 'Web Intelligence', path: '/admin/web-intelligence', icon: Activity },
-      { label: 'AI Content', path: '/admin/ai-content', icon: Bot },
-      { label: 'All Submissions', path: '/admin/submissions', icon: FolderOpen },
-      { label: 'Status Tracker', path: '/admin/tracker', icon: Activity },
+      { label: 'Test Builder', path: '/admin/tests', icon: FileText },
+      { label: 'Question Bank', path: '/admin/questions', icon: FolderOpen },
+      { label: 'Approvals', path: '/admin/approvals', icon: ShieldCheck },
+      { label: 'Featured Layout', path: '/admin/featured', icon: Star },
+      { label: 'Scheduled Content', path: '/admin/scheduled', icon: Calendar },
+      { label: 'Subjects & Topics', path: '/admin/subjects', icon: Layers },
+      { label: 'Bulk Upload', path: '/admin/bulk-upload', icon: Files },
       { label: 'Users', path: '/admin/users', icon: Users },
       { label: 'Subscriptions', path: '/admin/plans', icon: CreditCard },
       { label: 'Payments', path: '/admin/payments', icon: ShieldCheck },
-      { label: 'Articles', path: '/admin/articles', icon: FileText },
-      { label: 'Blogs', path: '/admin/blogs', icon: Rss },
-      { label: 'Magazines', path: '/admin/magazines', icon: BookOpen },
-      { label: 'News', path: '/admin/news', icon: Newspaper },
-      { label: 'Govt Schemes', path: '/admin/schemes', icon: Landmark },
-      { label: 'Farmer Connect', path: '/admin/farmer-connect', icon: Tractor },
-      { label: 'Inquiries', path: '/admin/inquiries', icon: MessageSquare },
       { label: 'Notifications', path: '/admin/broadcast', icon: Megaphone },
-      { label: 'WhatsApp', path: '/admin/whatsapp', icon: MessageSquare },
       { label: 'Coupons', path: '/admin/coupons', icon: Tag },
-      { label: 'Store Products', path: '/admin/products', icon: ShoppingBag },
-      { label: 'Editorial Board', path: '/admin/board', icon: Award },
-      { label: 'Leadership', path: '/admin/leadership', icon: Crown },
-      { label: 'Pages', path: '/admin/pages', icon: Files },
-      { label: 'Templates', path: '/admin/templates', icon: Mail },
-      { label: 'Navigation', path: '/admin/navigation', icon: Navigation },
-      { label: 'Layout', path: '/admin/layout', icon: LayoutIcon },
-      { label: 'Popup Manager', path: '/admin/popup', icon: Layers },
-      { label: 'SEO Settings', path: '/admin/seo', icon: Globe },
-      { label: 'Cookie Manager', path: '/admin/cookies', icon: ShieldCheck },
-      { label: 'Media Library', path: '/admin/media', icon: Image },
-      { label: 'Trash', path: '/admin/trash', icon: Trash2 },
       { label: 'Settings', path: '/admin/settings', icon: Sliders },
     ];
   } else if (isAdmin) {
     // Admin: Operational Role Only
     menuItems = [
       { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-      { label: 'Web Intelligence', path: '/admin/web-intelligence', icon: Activity },
-      { label: 'AI Content', path: '/admin/ai-content', icon: Bot },
-      { label: 'Submissions', path: '/admin/submissions', icon: FolderOpen }, // Verify & Assign
-      { label: 'Payments', path: '/admin/payments', icon: ShieldCheck }, // Approve Payments
-      { label: 'Inquiries', path: '/admin/inquiries', icon: MessageSquare }, // Reply to messages
-      { label: 'News', path: '/admin/news', icon: Newspaper }, // Publish News
-      { label: 'Blogs', path: '/admin/blogs', icon: Rss }, // Publish Blogs
-      { label: 'Govt Schemes', path: '/admin/schemes', icon: Landmark },
-      { label: 'Farmer Connect', path: '/admin/farmer-connect', icon: Tractor },
-      { label: 'Leadership', path: '/admin/leadership', icon: Crown }, // Manage Leadership
-      { label: 'Notifications', path: '/admin/broadcast', icon: Megaphone }, // Send alerts
-      { label: 'WhatsApp', path: '/admin/whatsapp', icon: MessageSquare }, // WhatsApp Notifications
+      { label: 'Test Builder', path: '/admin/tests', icon: FileText },
+      { label: 'Question Bank', path: '/admin/questions', icon: FolderOpen },
+      { label: 'Approvals', path: '/admin/approvals', icon: ShieldCheck },
+      { label: 'Featured Layout', path: '/admin/featured', icon: Star },
+      { label: 'Scheduled Content', path: '/admin/scheduled', icon: Calendar },
+      { label: 'Payments', path: '/admin/payments', icon: ShieldCheck },
+      { label: 'Notifications', path: '/admin/broadcast', icon: Megaphone },
     ];
   }
 
@@ -196,12 +173,6 @@ const AdminLayout: React.FC = () => {
       <main className="flex-1 h-screen overflow-y-auto overflow-x-hidden bg-admin-bg relative w-full text-admin-text">
         <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-admin-border px-6 lg:px-8 py-4 flex justify-between items-center h-20 shadow-sm">
           <div className="flex items-center gap-4">
-             <button 
-               className="text-admin-secondary p-2 hover:bg-admin-hover rounded-lg transition-colors" 
-               onClick={toggleSidebar}
-             >
-               {isSidebarOpen && !isMobile ? <X size={20} /> : <Menu size={20} />}
-             </button>
              <Link to="/" className="text-admin-secondary p-2 hover:bg-admin-hover rounded-lg transition-colors" title="Go to Home">
                 <Home size={20} />
              </Link>

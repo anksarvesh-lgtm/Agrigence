@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth, db } from '../src/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { Mail, Calendar, ArrowRight, Loader2 } from 'lucide-react';
 
 const ForgotPassword: React.FC = () => {
+  useEffect(() => {
+    document.title = "Reset Password | Agrigence";
+  }, []);
+
   const [email, setEmail] = useState('');
   const [dob, setDob] = useState('');
   const [step, setStep] = useState<'EMAIL' | 'DETAILS'>('EMAIL');

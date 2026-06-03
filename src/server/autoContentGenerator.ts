@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION } from './../lib/agrigenceAssistant';
+import { KHETAI_SYSTEM_INSTRUCTION } from './../lib/khetai.ts';
 import { db } from '../firebase.ts'; 
 import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
 
@@ -361,7 +361,7 @@ async function generateHtmlContent(prompt: string): Promise<string> {
       model: 'gemini-1.5-flash',
       contents: prompt,
       config: {
-        systemInstruction: AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION
+        systemInstruction: KHETAI_SYSTEM_INSTRUCTION
       }
     });
     let html = response.text || '';
@@ -381,7 +381,7 @@ async function generateJsonContent(prompt: string): Promise<any> {
         model: 'gemini-1.5-flash',
         contents: prompt,
         config: {
-          systemInstruction: AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION
+          systemInstruction: KHETAI_SYSTEM_INSTRUCTION
         }
       });
       let text = response.text || '';

@@ -1,480 +1,331 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import React, { useState, useEffect } from 'react';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../src/authContext';
-import { mockBackend } from '../services/mockBackend';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Menu, X, Search, User as UserIcon, LogOut, Cpu,
-  Home, BookOpen, Newspaper, FileText, ShoppingBag, Wrench, BarChart2, Info, Users, Settings, ChevronRight, ArrowLeft, Shield, Mail
+  Bot, Settings, BarChart2, BookOpen, Crown, FileText, LayoutDashboard, 
+  Search, Bell, User, Sun, Moon, Sparkles, Menu, X, ChevronRight, 
+  Map, GraduationCap, Trophy, History, Presentation, BrainCircuit,
+  LogOut, Shield, DollarSign, Bookmark, RefreshCw, CheckCircle, Clock, Activity, Flame
 } from 'lucide-react';
-import Logo from './Logo';
-import { SiteSettings } from '../types';
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { useConfirm } from './ContextualConfirm';
-import OptimizedImage from './OptimizedImage';
-import ThemeToggle from './ThemeToggle';
-import Footer from './Footer';
 
-const DockItem = ({ children, mouseY, isCollapsed, onClick, isActive }: any) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isClicked, setIsClicked] = useState(false);
-  
-  const distance = useTransform(mouseY, (val: number) => {
-    const bounds = ref.current?.getBoundingClientRect() ?? { y: 0, height: 0 };
-    return val - (bounds.y + bounds.height / 2);
-  });
+const ExamLayout: React.FC = () => {
+  const { user, logout } = useAuth();
+  const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [darkTheme, setDarkTheme] = useState(true);
+  const [showAiMentor, setShowAiMentor] = useState(false);
 
-  const scale = useTransform(distance, [-150, -75, 0, 75, 150], [1, 1.1, 1.4, 1.1, 1]);
-  const scaleSpring = useSpring(scale, { stiffness: 200, damping: 25 });
-  
-  const y = useTransform(distance, [-150, 0, 150], [0, -5, 0]);
-  const ySpring = useSpring(y, { stiffness: 200, damping: 25 });
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  const finalScale = isCollapsed ? scaleSpring : 1;
-  const finalY = isCollapsed ? ySpring : 0;
-
-  const handleClick = (e: React.MouseEvent) => {
-    setIsClicked(true);
-    setTimeout(() => setIsClicked(false), 600);
-    onClick?.(e);
-  };
+  useEffect(() => {
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+  }, [location]);
 
   return (
-    <motion.div
-      ref={ref}
-      style={{ 
-        scale: finalScale,
-        y: finalY
-      }}
-      whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
-      animate={isClicked ? { scale: [1, 0.95, 1.1, 1] } : {}}
-      onClick={handleClick}
-      className="relative group cursor-pointer rounded-xl transition-colors duration-200"
-    >
-      {children}
+    <div className={`min-h-screen flex ${darkTheme ? 'bg-[#0B1120] text-slate-200' : 'bg-slate-50 text-slate-800'}`}>
       
-      {/* Glow Pulse */}
+      {/* MOBILE OVERLAY */}
       <AnimatePresence>
-        {isClicked && (
-          <motion.div
-            initial={{ scale: 0.5, opacity: 1, border: '2px solid rgba(194,146,99,1)', boxShadow: '0 0 0px rgba(194,146,99,0)' }}
-            animate={{ 
-              scale: 2.5, 
-              opacity: 0, 
-              border: '2px solid rgba(194,146,99,0)',
-              boxShadow: '0 0 20px rgba(194,146,99,0.5)'
-            }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="absolute inset-0 rounded-xl pointer-events-none z-10"
+        {sidebarOpen && window.innerWidth < 1024 && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm lg:hidden"
           />
         )}
       </AnimatePresence>
 
-      {isActive && (
-        <motion.div 
-          layoutId="active-pill"
-          className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-agri-primary rounded-r-full shadow-[0_0_10px_rgba(61,43,31,0.5)]"
-        />
-      )}
-    </motion.div>
-  );
-};
-
-const AppLayout: React.FC = () => {
-  const { user, logout } = useAuth();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isAboutOpen, setIsAboutOpen] = useState(false);
-  const [isToolsOpen, setIsToolsOpen] = useState(false);
-  const [toolSections, setToolSections] = useState<any[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
-  const [timeLeft, setTimeLeft] = useState({ d: 0, h: 0, m: 0, s: 0 });
-  const [clickPos, setClickPos] = useState({ x: 0, y: 0 });
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { confirm } = useConfirm();
-  
-  const mouseY = useMotionValue(Infinity);
-  const sidebarRef = useRef<HTMLElement>(null);
-
-  // Process navigation items and SEO data in a single memo to ensure initialization order
-  const { filteredMenuItems, pageTitle, canonicalUrl } = React.useMemo(() => {
-    const menuItems = settings?.navigation 
-      ? settings.navigation.filter(item => item.isEnabled).sort((a,b) => a.order - b.order) 
-      : [];
-
-    const defaultItems = [
-      { label: 'Home', path: '/', icon: Home },
-      { label: 'Archive', path: '/journals', icon: BookOpen },
-      { label: 'Author Guidelines', path: '/author-guidelines', icon: FileText },
-      { label: 'Editorial Board', path: '/editorial-board', icon: Users },
-      { label: 'Publication Ethics', path: '/publication-ethics', icon: Shield },
-      { label: 'Aim & Scope', path: '/aim-scope', icon: Info },
-      { label: 'About Journal', path: '/about-journal', icon: Info },
-      { label: 'Contact Us', path: '/about-contact', icon: Mail },
-    ];
-
-    const raw = menuItems.length > 0 
-      ? menuItems.map(m => ({...m, icon: defaultItems.find(d => d.path === m.path)?.icon || FileText})) 
-      : defaultItems.map(i => ({ ...i, id: i.path, isExternal: false, order: 0, isEnabled: true }));
-    
-    // Filter by featureVisibility
-    const visibility = settings?.featureVisibility || {
-      mandi: true, schemes: true, crops: true, journals: true, store: true
-    };
-
-    let filteredByVisibility = raw.filter(item => {
-      const path = item.path.toLowerCase();
-      if (path === '/journals' && !visibility.journals) return false;
-      if (path === '/products' && !visibility.store) return false;
-      return true;
-    });
-
-    // Ensure essential items are present
-    const essentialItems = [
-      { label: 'Aim & Scope', path: '/aim-scope', icon: Info },
-      { label: 'About Journal', path: '/about-journal', icon: Info },
-      { label: 'Contact Us', path: '/about-contact', icon: Mail },
-    ];
-
-    essentialItems.forEach(item => {
-      if (!filteredByVisibility.some(i => (i as any).path === item.path || (i as any).label === item.label)) {
-        filteredByVisibility.push({ ...item, id: item.path, isExternal: false, order: 99, isEnabled: true } as any);
-      }
-    });
-
-    const hasHome = filteredByVisibility.some(i => (i as any).path === '/' || (i as any).label === 'Home');
-    const active = hasHome 
-        ? filteredByVisibility 
-        : [{ label: 'Home', path: '/', id: 'home-auto', isExternal: false, order: -999, isEnabled: true, icon: Home }, ...filteredByVisibility];
-
-    const filtered = (active as any[]).filter(item => {
-      const label = item.label?.trim().toLowerCase() || '';
-      return !['analytics', 'pipeline builder', 'anova engine'].includes(label);
-    });
-
-    // Sub-function for title mapping
-    const getTitle = (pathname: string) => {
-      const segments = pathname.split('/').filter(Boolean);
-      if (segments.length === 0) return 'Home';
-      
-      const menuItem = filtered.find(i => i.path === pathname);
-      if (menuItem) return menuItem.label;
-
-      if (segments[0] === 'scheme' && segments[1]) return `Scheme | ${segments[1]}`;
-      if (segments[0] === 'mandi-bhav' && segments[1]) return `Mandi Bhav | ${segments[1]}`;
-      if (segments[0] === 'crop' && segments[1]) return `Crop advisory | ${segments[1]}`;
-      
-      return segments.map(s => s.charAt(0).toUpperCase() + s.slice(1).replace(/-/g, ' ')).join(' > ');
-    };
-
-    return {
-      filteredMenuItems: filtered,
-      pageTitle: getTitle(location.pathname),
-      canonicalUrl: `https://www.agrigence.in${location.pathname === '/' ? '' : location.pathname}`
-    };
-  }, [settings?.navigation, location.pathname]);
-
-  useEffect(() => {
-    // Close sidebar on route change on mobile
-    setIsSidebarOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
-    const unsubSettings = mockBackend.subscribeToSettings((data) => {
-        setSettings(data);
-    });
-    return () => unsubSettings();
-  }, []);
-
-  useEffect(() => {
-    const loadTools = async () => {
-      const sections = await mockBackend.getToolSections();
-      setToolSections(sections);
-    };
-    loadTools();
-  }, []);
-
-  const getNextDeadline = () => {
-    const now = new Date();
-    let target = new Date(now.getFullYear(), now.getMonth(), 25, 23, 59, 59);
-    if (now.getTime() > target.getTime()) {
-      target = new Date(now.getFullYear(), now.getMonth() + 1, 25, 23, 59, 59);
-    }
-    return target.getTime();
-  };
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
-      const target = getNextDeadline();
-      const diff = target - now;
-      if (diff > 0) {
-        setTimeLeft({
-          d: Math.floor(diff / (1000 * 60 * 60 * 24)),
-          h: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-          m: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-          s: Math.floor((diff % (1000 * 60)) / 1000)
-        });
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value;
-    setSearchTerm(term);
-    if (term.length > 2) {
-      const lowerTerm = term.toLowerCase();
-      const results = await mockBackend.getArticles(term);
-      const allUsers = await mockBackend.getPublicAdmins();
-      const adminIds = new Set(allUsers.map(u => u.id));
-      const publicResults = results.filter(a => {
-         if (a.status !== 'PUBLISHED' && a.status !== 'APPROVED') return false;
-         if (a.type === 'BLOG') return false;
-         if (!a.authorId) return true; 
-         return adminIds.has(a.authorId);
-      }).map(a => ({ ...a, resultType: 'Article' }));
-
-      let productResults: any[] = [];
-      try {
-        const products = await mockBackend.getProducts();
-        productResults = products.filter(p => 
-          p.name.toLowerCase().includes(lowerTerm) || 
-          p.description.toLowerCase().includes(lowerTerm)
-        ).map(p => ({ ...p, resultType: 'Product' }));
-      } catch (err) {
-        console.error("Error fetching products", err);
-      }
-
-      setSearchResults([...publicResults, ...productResults]);
-    } else {
-      setSearchResults([]);
-    }
-  };
-
-  const handleLogout = async (e: React.MouseEvent) => {
-    const isConfirmed = await confirm({ 
-        message: "Are you sure you want to sign out?", 
-        type: 'danger',
-        trigger: e.currentTarget
-    });
-    if (isConfirmed) {
-      logout();
-      navigate('/login');
-    }
-  };
-
-  return (
-    <div className="flex h-screen w-full overflow-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 font-sans">
-      <Helmet>
-        <title>{`${pageTitle} | Agrigence Journal of Agriculture and Allied Science.`}</title>
-        <meta name="description" content={`Explore ${pageTitle} on Agrigence - The futuristic agricultural intelligence platform.`} />
-        <link rel="canonical" href={canonicalUrl} />
-        
-        {/* Open Graph Tags for sharing */}
-        <meta property="og:title" content={`${pageTitle} | Agrigence Journal of Agriculture and Allied Science.`} />
-        <meta property="og:description" content={`Explore ${pageTitle} on Agrigence - The futuristic agricultural intelligence platform.`} />
-        <meta property="og:url" content={canonicalUrl} />
-      </Helmet>
-      
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* Futurized App Bar */}
-        <header className="z-40 shrink-0 border-b border-stone-200/50 dark:border-white/5 bg-white/70 dark:bg-stone-950/70 backdrop-blur-xl">
-          <div className="h-20 max-w-screen-2xl mx-auto flex items-center justify-between px-4 sm:px-8">
-            <div className="flex items-center gap-10">
-              <button 
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-                className="lg:hidden p-2.5 -ml-2 text-stone-900 dark:text-stone-100 bg-stone-100 dark:bg-white/5 rounded-xl transition-all active:scale-95"
-              >
-                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-              </button>
-              
-              <Link to="/" className="flex items-center gap-4 group">
-                <div className="p-2 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-white/10 rounded-2xl group-hover:scale-105 transition-transform duration-500">
-                  <Logo className="h-8 w-8" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-serif font-bold text-agri-primary dark:text-stone-100 text-xl leading-none tracking-tight">
-                    Agrigence
-                  </span>
-                  <span className="font-serif italic text-agri-secondary dark:text-agri-secondary/80 text-[8px] leading-tight mt-1 animate-pulse font-medium">
-                    {settings?.tagline || 'Where Agri-Intelligence Meets Agricultural Generations'}
-                  </span>
-                </div>
-              </Link>
-
-              {/* Desktop Navigation */}
-              <nav className="hidden lg:flex items-center gap-8 text-[10px] font-black uppercase tracking-[0.15em] text-stone-500 dark:text-stone-400">
-                <Link to="/journals" className="hover:text-agri-primary dark:hover:text-white transition-all hover:translate-y-[-1px]">Archive</Link>
-                <Link to="/editorial-board" className="hover:text-agri-primary dark:hover:text-white transition-all hover:translate-y-[-1px]">Editorial Board</Link>
-                <Link to="/submission" className="bg-agri-secondary/10 text-agri-secondary px-3 py-1 rounded-full hover:bg-agri-secondary hover:text-white transition-all">Submit Manuscript</Link>
-                <Link to="/about-journal" className="hover:text-agri-primary dark:hover:text-white transition-all hover:translate-y-[-1px]">About</Link>
-                <Link to="/about-contact" className="hover:text-agri-primary dark:hover:text-white transition-all hover:translate-y-[-1px]">Contact</Link>
-              </nav>
-            </div>
-
-            <div className="flex items-center gap-3 sm:gap-5">
-              {/* Search Trigger */}
-              <div className="hidden sm:flex items-center px-4 py-2 bg-stone-100 dark:bg-white/5 border border-stone-200 dark:border-white/10 rounded-2xl gap-3 w-40 xl:w-64 focus-within:w-48 xl:focus-within:w-80 transition-all duration-300">
-                <Search size={16} className="text-stone-400" />
-                <input 
-                  type="text"
-                  placeholder="Find research..."
-                  value={searchTerm}
-                  onChange={handleSearch}
-                  className="bg-transparent border-none outline-none text-[10px] uppercase font-black tracking-widest w-full text-stone-600 dark:text-stone-300 placeholder:text-stone-400"
-                />
+      {/* LEFT SIDEBAR */}
+      <motion.aside 
+        initial={false}
+        animate={{ width: sidebarOpen ? 280 : 80 }}
+        className={`fixed lg:relative z-50 h-[100dvh] flex flex-col transition-all duration-300 border-r
+          ${darkTheme ? 'bg-[#0F172A] border-slate-800' : 'bg-white border-slate-200'}
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
+        <div className="flex items-center justify-between h-20 px-6 border-b border-slate-800/50 shrink-0">
+          {sidebarOpen && (
+            <Link to="/" className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+                <GraduationCap className="text-white w-5 h-5" />
               </div>
+              <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-green-500">
+                Agrigence
+              </span>
+              <span className="hidden xl:block text-[8px] font-black uppercase tracking-widest text-slate-500 leading-none mt-1 ml-1 max-w-[120px]">
+                Where Agri-Intelligence Meets Agricultural Generations
+              </span>
+            </Link>
+          )}
+          {!sidebarOpen && (
+            <Link to="/" className="mx-auto w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+              <GraduationCap className="text-white w-6 h-6" />
+            </Link>
+          )}
+        </div>
 
-              <div className="flex items-center gap-2">
-                <ThemeToggle />
+        <div className="flex-1 overflow-y-auto python-scrollbar py-6 flex flex-col gap-6 px-4">
+          
+          {/* MAIN */}
+          <div className="flex flex-col gap-1.5">
+            {sidebarOpen && <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-3 py-1">Main</p>}
+            <SidebarItem icon={LayoutDashboard} label="Dashboard" to="/dashboard" open={sidebarOpen} active={location.pathname === '/dashboard'} />
+            <SidebarItem icon={FileText} label="Test Series" to="/test-series" open={sidebarOpen} active={location.pathname === '/test-series'} />
+            <SidebarItem icon={Presentation} label="Mock Tests" to="/mock-tests" open={sidebarOpen} active={location.pathname === '/mock-tests'} />
+            <SidebarItem icon={RefreshCw} label="Live Tests" to="/live-tests" open={sidebarOpen} active={location.pathname === '/live-tests'} badge="LIVE" />
+            <SidebarItem icon={BookOpen} label="Current Affairs" to="/current-affairs" open={sidebarOpen} active={location.pathname === '/current-affairs'} />
+            <SidebarItem icon={History} label="PYQs" to="/pyq" open={sidebarOpen} active={location.pathname === '/pyq'} />
+            <SidebarItem icon={Sparkles} label="Practice" to="/practice" open={sidebarOpen} active={location.pathname === '/practice'} />
+          </div>
+
+          {/* ANALYTICS */}
+          <div className="flex flex-col gap-1.5">
+            {sidebarOpen && <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-3 py-1">Analytics</p>}
+            <SidebarItem icon={BarChart2} label="Performance" to="/analytics/performance" open={sidebarOpen} active={location.pathname === '/analytics/performance'} />
+            <SidebarItem icon={Trophy} label="Rank & Percentile" to="/analytics/rank" open={sidebarOpen} active={location.pathname === '/analytics/rank'} />
+            <SidebarItem icon={CheckCircle} label="Accuracy" to="/analytics/accuracy" open={sidebarOpen} active={location.pathname === '/analytics/accuracy'} />
+            <SidebarItem icon={Clock} label="Speed Analysis" to="/analytics/speed" open={sidebarOpen} active={location.pathname === '/analytics/speed'} />
+            <SidebarItem icon={Activity} label="Weak Topics" to="/analytics/weak-topics" open={sidebarOpen} active={location.pathname === '/analytics/weak-topics'} />
+          </div>
+
+          {/* REVISION */}
+          <div className="flex flex-col gap-1.5">
+            {sidebarOpen && <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-3 py-1">Revision</p>}
+            <SidebarItem icon={RefreshCw} label="Revision Center" to="/revision" open={sidebarOpen} active={location.pathname === '/revision'} />
+            <SidebarItem icon={Bookmark} label="Bookmarks" to="/bookmarks" open={sidebarOpen} active={location.pathname === '/bookmarks'} />
+            <SidebarItem icon={X} label="Wrong Questions" to="/revision/wrong" open={sidebarOpen} active={location.pathname === '/revision/wrong'} />
+            <SidebarItem icon={RefreshCw} label="Retry Queue" to="/revision/retry" open={sidebarOpen} active={location.pathname === '/revision/retry'} />
+          </div>
+
+          {/* AI EXPERIENCES */}
+          <div className="flex flex-col gap-1.5">
+            {sidebarOpen && <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 px-3 py-1">AI Intelligence</p>}
+            <SidebarItem icon={Bot} label="AI Mentor" to="/ai-mentor" open={sidebarOpen} active={location.pathname === '/ai-mentor'} />
+            <SidebarItem icon={Sparkles} label="AI Recommendations" to="/ai-recommendations" open={sidebarOpen} active={location.pathname === '/ai-recommendations'} />
+            <SidebarItem icon={Map} label="Smart Study Plan" to="/study-plan" open={sidebarOpen} active={location.pathname === '/study-plan'} />
+          </div>
+
+        </div>
+
+        <div className="p-4 border-t border-slate-800/50 flex flex-col gap-1.5 shrink-0">
+          {user && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') && (
+            <SidebarItem icon={Shield} label="Admin Panel" to="/admin" open={sidebarOpen} />
+          )}
+          <SidebarItem icon={Crown} label="My Pass" to="/subscription" open={sidebarOpen} active={location.pathname === '/subscription'} />
+          <SidebarItem icon={Bell} label="Notifications" to="/notifications" open={sidebarOpen} active={location.pathname === '/notifications'} />
+          <SidebarItem icon={User} label="Profile" to="/profile" open={sidebarOpen} active={location.pathname === '/profile'} />
+          <SidebarItem icon={Settings} label="Settings" to="/settings" open={sidebarOpen} active={location.pathname === '/settings'} />
+          {user ? (
+            <button onClick={logout} className={`flex items-center gap-4 px-3 py-2.5 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors ${!sidebarOpen && 'justify-center'}`}>
+              <LogOut size={20} />
+              {sidebarOpen && <span className="font-semibold text-sm">Logout</span>}
+            </button>
+          ) : (
+            <SidebarItem icon={User} label="Login" to="/login" open={sidebarOpen} />
+          )}
+        </div>
+      </motion.aside>
+
+      {/* RIGHT CONTENT AREA */}
+      <div className="flex-1 flex flex-col h-[100dvh] overflow-hidden relative">
+        
+        {/* TOP NAVBAR */}
+        <header className={`h-20 flex-shrink-0 flex items-center justify-between px-4 lg:px-8 z-30
+          ${darkTheme ? 'bg-[#0F172A]/80 border-slate-800' : 'bg-white/80 border-slate-200'}
+          backdrop-blur-xl border-b`}
+        >
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-xl text-slate-400 hover:bg-slate-800/10 transition-colors flex items-center justify-center border border-slate-850"
+              aria-label="Toggle Navigation Sidebar"
+            >
+              <Menu size={20} />
+            </button>
+
+            <div className={`hidden lg:flex items-center gap-3 px-4 py-2.5 rounded-2xl border
+              ${darkTheme ? 'bg-[#1E293B] border-slate-700 focus-within:border-emerald-500' : 'bg-slate-100 border-slate-300 focus-within:border-emerald-500'}
+              transition-colors w-96 relative group`}
+            >
+              <Search size={18} className="text-slate-400" />
+              <input 
+                type="text" 
+                placeholder="Search for mock tests, PYQs, topics..." 
+                className="bg-transparent border-none outline-none text-sm w-full font-medium"
+              />
+              <div className="absolute right-2 px-2 py-1 rounded bg-slate-800 text-[10px] font-bold text-emerald-400 border border-emerald-500/20">
+                AI SEARCH
               </div>
             </div>
           </div>
 
-          <AnimatePresence>
-            {isMobileMenuOpen && (
-               <motion.nav 
-                  initial={{ opacity: 0, y: -20, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: 'auto' }}
-                  exit={{ opacity: 0, y: -20, height: 0 }}
-                  className="absolute top-full left-0 right-0 bg-white/95 dark:bg-stone-950/95 backdrop-blur-2xl border-b border-stone-200 dark:border-white/10 p-6 flex flex-col gap-2 text-xs font-black text-stone-600 dark:text-stone-300 uppercase tracking-[0.2em] lg:hidden shadow-2xl z-20 overflow-hidden"
-               >
-                  <Link to="/journals" onClick={() => setIsMobileMenuOpen(false)} className="hover:bg-stone-50 dark:hover:bg-white/5 p-4 rounded-2xl transition-all flex items-center justify-between">
-                    Archive <ChevronRight size={14} className="opacity-40" />
-                  </Link>
-                  <Link to="/editorial-board" onClick={() => setIsMobileMenuOpen(false)} className="hover:bg-stone-50 dark:hover:bg-white/5 p-4 rounded-2xl transition-all flex items-center justify-between">
-                    Editorial Board <ChevronRight size={14} className="opacity-40" />
-                  </Link>
-                  <Link to="/submission" onClick={() => setIsMobileMenuOpen(false)} className="hover:bg-agri-secondary/10 text-agri-secondary p-4 rounded-2xl transition-all flex items-center justify-between font-black">
-                    Manuscript Submission <ChevronRight size={14} />
-                  </Link>
-                  <Link to="/about-journal" onClick={() => setIsMobileMenuOpen(false)} className="hover:bg-stone-50 dark:hover:bg-white/5 p-4 rounded-2xl transition-all flex items-center justify-between">
-                    About Journal <ChevronRight size={14} className="opacity-40" />
-                  </Link>
-                  <Link to="/about-contact" onClick={() => setIsMobileMenuOpen(false)} className="hover:bg-stone-50 dark:hover:bg-white/5 p-4 rounded-2xl transition-all flex items-center justify-between">
-                    Contact Us <ChevronRight size={14} className="opacity-40" />
-                  </Link>
-                  
-                  <div className="mt-4 sm:hidden p-4 bg-stone-100 dark:bg-white/5 rounded-2xl flex items-center gap-3">
-                    <Search size={16} className="text-stone-400" />
-                    <input 
-                      type="text"
-                      placeholder="Search..."
-                      value={searchTerm}
-                      onChange={handleSearch}
-                      className="bg-transparent border-none outline-none text-[10px] font-black tracking-widest w-full"
-                    />
-                  </div>
-               </motion.nav>
-            )}
-          </AnimatePresence>
+          <div className="flex items-center gap-4 lg:gap-5">
+            
+            {/* Daily Streak */}
+            <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl border ${darkTheme ? 'bg-orange-500/10 border-orange-500/20 text-orange-400' : 'bg-orange-50 border-orange-200 text-orange-600'}`}>
+              <Flame size={16} className={darkTheme ? 'text-orange-400' : 'text-orange-500'} />
+              <span className="font-bold text-xs">12 Day Streak</span>
+            </div>
 
-          {/* Search Dropdown Results */}
+            {/* Pass Status */}
+            <Link to="/subscription" className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl font-bold text-xs uppercase tracking-wider text-white shadow-lg shadow-emerald-500/20 hover:scale-105 transition-transform">
+              <Crown size={14} className="text-emerald-100" /> Pro Pass Active
+            </Link>
+
+            <button onClick={() => setDarkTheme(!darkTheme)} className="p-2 rounded-xl text-slate-400 hover:bg-slate-800 transition-colors">
+              {darkTheme ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <button className="relative p-2 rounded-xl text-slate-400 hover:bg-slate-800 transition-colors">
+              <Bell size={20} />
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#0F172A]"></span>
+            </button>
+            {user ? (
+              <Link to="/profile" className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center font-bold text-white shadow-lg cursor-pointer">
+                {user.email?.charAt(0).toUpperCase()}
+              </Link>
+            ) : (
+              <Link to="/login" className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-500 transition-colors">
+                Sign In
+              </Link>
+            )}
+          </div>
+        </header>
+
+        {/* PAGE CONTENT */}
+        <main className={`flex-1 overflow-y-auto relative pb-16 md:pb-0 ${darkTheme ? 'bg-[#0B1120]' : 'bg-slate-50'}`}>
+          <div className="h-full">
+            <Outlet context={{ darkTheme }} />
+          </div>
+        </main>
+
+        {/* MOBILE BOTTOM NAVIGATION */}
+        <nav className={`fixed bottom-0 left-0 right-0 h-16 border-t md:hidden z-40 flex items-center justify-around px-2
+          ${darkTheme ? 'bg-[#0F172A] border-slate-800 text-slate-400' : 'bg-white border-slate-200 text-slate-600'}
+        `}>
+          <div className="flex items-center justify-around w-full max-w-md mx-auto">
+            <BottomNavItem icon={LayoutDashboard} label="Home" to="/" active={location.pathname === '/'} darkTheme={darkTheme} />
+            <BottomNavItem icon={FileText} label="Tests" to="/test-series" active={location.pathname.startsWith('/test')} darkTheme={darkTheme} />
+            <BottomNavItem icon={Bot} label="AI Mentor" to="/ai-mentor" active={location.pathname === '/ai-mentor'} darkTheme={darkTheme} />
+            <BottomNavItem icon={Trophy} label="Leaderboard" to="/leaderboard" active={location.pathname === '/leaderboard'} darkTheme={darkTheme} />
+            <BottomNavItem icon={DollarSign} label="Get Pass" to="/subscription" active={location.pathname === '/subscription'} darkTheme={darkTheme} />
+          </div>
+        </nav>
+
+        {/* FLOATING AI ASSISTANT */}
+        <div className="fixed bottom-6 right-6 z-50">
           <AnimatePresence>
-            {searchTerm.length > 2 && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="absolute top-full left-1/2 -translate-x-1/2 w-full max-w-3xl mt-4 bg-white/95 dark:bg-stone-900/95 backdrop-blur-2xl border border-stone-200 dark:border-white/10 rounded-3xl shadow-2xl z-50 overflow-hidden"
+            {showAiMentor && (
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                className={`absolute bottom-20 right-0 w-80 md:w-96 rounded-2xl shadow-2xl border flex flex-col overflow-hidden
+                  ${darkTheme ? 'bg-[#1E293B] border-slate-700 shadow-emerald-500/10' : 'bg-white border-slate-200'}`}
               >
-                <div className="p-4 border-b border-stone-100 dark:border-white/5 flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Search Results ({searchResults.length})</span>
-                  <button onClick={() => setSearchTerm('')} className="p-1 hover:bg-stone-100 dark:hover:bg-white/5 rounded-lg"><X size={14}/></button>
-                </div>
-                <div className="max-h-[60vh] overflow-y-auto p-2">
-                  {searchResults.length > 0 ? (
-                    searchResults.map((res, i) => (
-                      <Link 
-                        key={i}
-                        to={res.resultType === 'Product' ? `/products` : `/journals`}
-                        onClick={() => setSearchTerm('')}
-                        className="flex items-center gap-4 p-4 hover:bg-stone-50 dark:hover:bg-white/5 rounded-2xl transition-all group"
-                      >
-                        <div className="w-10 h-10 bg-stone-100 dark:bg-stone-800 rounded-xl flex items-center justify-center shrink-0">
-                          {res.resultType === 'Product' ? <ShoppingBag size={16}/> : <FileText size={16}/>}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-sm truncate group-hover:text-agri-primary transition-colors">{res.name || res.title}</h4>
-                          <p className="text-[10px] text-stone-500 uppercase tracking-widest mt-0.5">{res.resultType}</p>
-                        </div>
-                        <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0" />
-                      </Link>
-                    ))
-                  ) : (
-                    <div className="p-12 text-center">
-                      <p className="text-stone-400 text-sm italic">No matching records found for "{searchTerm}"</p>
+                <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 flex items-center justify-between text-white">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                      <Bot size={20} />
                     </div>
-                  )}
+                    <div>
+                      <h3 className="font-bold text-sm">AI Mentor</h3>
+                      <p className="text-[10px] text-emerald-100 uppercase font-black tracking-widest">Always Online</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setShowAiMentor(false)} className="hover:bg-white/20 p-2 rounded-lg transition-colors">
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className={`h-64 p-4 overflow-y-auto ${darkTheme ? 'bg-[#0F172A]' : 'bg-slate-50'}`}>
+                  <div className="flex flex-col gap-4">
+                    <div className="self-start bg-slate-800 text-sm p-3 rounded-2xl rounded-tl-sm text-slate-200 max-w-[80%] border border-slate-700">
+                      Hi! I noticed you struggle with <strong className="text-emerald-400">Pathology</strong>. Want to take a quick 5-min revision quiz?
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3 border-t border-slate-700 bg-[#1E293B] flex gap-2">
+                  <input type="text" placeholder="Ask a doubt..." className="flex-1 bg-slate-800 border-none rounded-xl px-4 py-2 text-sm outline-none text-slate-200" />
+                  <button className="bg-emerald-600 text-white w-10 border-none rounded-xl flex items-center justify-center hover:bg-emerald-500 transition-colors">
+                    <ChevronRight size={18} />
+                  </button>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-        </header>
 
-        {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-stone-50 dark:bg-stone-950 relative">
-          {/* Background darkening overlay during transition */}
-          <AnimatePresence>
-            {location.pathname && (
-              <motion.div
-                key="transition-overlay"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="absolute inset-0 bg-black pointer-events-none z-0"
-              />
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ 
-                scale: 0.2, 
-                opacity: 0, 
-                x: clickPos.x - window.innerWidth / 2, 
-                y: clickPos.y - window.innerHeight / 2,
-                filter: 'blur(20px)'
-              }}
-              animate={{ 
-                scale: 1, 
-                opacity: 1, 
-                x: 0, 
-                y: 0,
-                filter: 'blur(0px)'
-              }}
-              exit={{ 
-                scale: 1.1, 
-                opacity: 0,
-                filter: 'blur(10px)',
-                transition: { duration: 0.3 }
-              }}
-              transition={{ 
-                duration: 0.5,
-                ease: [0.22, 1, 0.36, 1]
-              }}
-              className="h-full w-full relative z-10 flex flex-col"
-            >
-              <div className="flex-1">
-                <Outlet />
-              </div>
-              <Footer />
-            </motion.div>
-          </AnimatePresence>
-        </main>
+          <button
+            onClick={() => setShowAiMentor(!showAiMentor)}
+            className="w-14 h-14 bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-2xl shadow-emerald-600/40 hover:bg-emerald-500 hover:scale-110 transition-all duration-300 relative group"
+          >
+            <Bot size={24} />
+            <span className="absolute -top-1 -right-1 flex h-4 w-4">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-[#0F172A]"></span>
+            </span>
+          </button>
+        </div>
 
       </div>
     </div>
   );
 };
 
-export default AppLayout;
+const SidebarItem = ({ icon: Icon, label, to, open, active, badge }: any) => (
+  <Link 
+    to={to} 
+    className={`flex items-center gap-4 px-3 py-3 rounded-xl transition-all group relative
+      ${active 
+        ? 'bg-emerald-500/10 text-emerald-400 font-semibold' 
+        : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+      }
+      ${!open && 'justify-center'}
+    `}
+  >
+    {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-emerald-500 rounded-r-full" />}
+    <Icon size={20} className={active ? 'text-emerald-400' : 'group-hover:text-emerald-400 transition-colors'} />
+    {open && <span className="text-sm flex-1 truncate">{label}</span>}
+    {open && badge && (
+      <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-black tracking-widest uppercase">
+        {badge}
+      </span>
+    )}
+  </Link>
+)
+
+const BottomNavItem = ({ icon: Icon, label, to, active, darkTheme }: any) => (
+  <Link 
+    to={to} 
+    className={`flex flex-col items-center justify-center gap-1 py-1 px-2.5 rounded-lg text-center transition-all relative
+      ${active 
+        ? 'text-emerald-500 font-bold' 
+        : darkTheme ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600 hover:text-slate-900'
+      }
+    `}
+  >
+    <Icon size={18} className={active ? 'text-emerald-500 scale-110' : 'transition-transform'} />
+    <span className="text-[9px] tracking-tight truncate max-w-[50px]">{label}</span>
+    {active && (
+      <motion.div 
+        layoutId="bottomTabUnderline"
+        className="absolute -bottom-[2px] w-5 h-[2px] bg-emerald-500 rounded-full"
+      />
+    )}
+  </Link>
+);
+
+export default ExamLayout;
