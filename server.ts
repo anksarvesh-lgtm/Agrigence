@@ -143,21 +143,21 @@ async function startServer() {
   });
 
   // Helper routine to decode the Firebase Auth bearer token safely
-  function decodeFirebaseToken(authHeader?: string) {
+  function decodeFirebaseToken(authHeader?: string): { email: string | null, decoded?: any } {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return { email: 'admin@agrigence.com' };
+      return { email: null };
     }
     try {
       const token = authHeader.split(' ')[1];
       const parts = token.split('.');
       if (parts.length === 3) {
         const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
-        return { email: payload.email || 'admin@agrigence.com', decoded: payload };
+        return { email: payload.email || null, decoded: payload };
       }
     } catch (e) {
       console.error("Firebase ID Token base64 parse failed:", e);
     }
-    return { email: 'admin@agrigence.com' };
+    return { email: null };
   }
 
   // === Consolidated Academic Question Banks Ingress Route ===
@@ -169,7 +169,7 @@ async function startServer() {
       const { email: decodedEmail } = decodeFirebaseToken(authHeader);
 
       const ADMIN_EMAILS = ['agrigence@gmail.com', 'anksarvesh@gmail.com', 'admin@agrigence.com'];
-      if (!ADMIN_EMAILS.includes(decodedEmail)) {
+      if (!decodedEmail || !ADMIN_EMAILS.includes(decodedEmail)) {
         return res.status(403).json({ error: 'Admin access credentials required' });
       }
 
