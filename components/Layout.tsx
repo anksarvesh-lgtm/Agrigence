@@ -8,6 +8,8 @@ import {
   Map, GraduationCap, Trophy, History, Presentation, BrainCircuit,
   LogOut, Shield, DollarSign, Bookmark, RefreshCw, CheckCircle, Clock, Activity, Flame
 } from 'lucide-react';
+import { mockBackend } from '../services/mockBackend';
+import { SiteSettings } from '../types';
 
 const ExamLayout: React.FC = () => {
   const { user, logout } = useAuth();
@@ -15,6 +17,12 @@ const ExamLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkTheme, setDarkTheme] = useState(true);
   const [showAiMentor, setShowAiMentor] = useState(false);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    const unsub = mockBackend.subscribeToSettings((s) => setSiteSettings(s));
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -58,23 +66,39 @@ const ExamLayout: React.FC = () => {
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        <div className="flex items-center justify-between h-20 px-6 border-b border-slate-800/50 shrink-0">
+        <div className="flex flex-col md:flex-row items-center justify-between h-20 px-6 border-b border-slate-800/50 shrink-0">
           {sidebarOpen && (
             <Link to="/" className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
-                <GraduationCap className="text-white w-5 h-5" />
+              {siteSettings?.logoUrl && siteSettings.logoUrl !== '/logo.png' && siteSettings.logoUrl !== 'https://www.agrigence.in/logo.png' ? (
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
+                  <img src={siteSettings.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
+                </div>
+              ) : (
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shrink-0">
+                  <GraduationCap className="text-white w-5 h-5" />
+                </div>
+              )}
+              <div className="flex flex-col">
+                <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-green-500 truncate">
+                  Agrigence
+                </span>
+                <span className="hidden xl:block text-[8px] font-black uppercase tracking-widest text-slate-500 leading-none mt-1 max-w-[140px]">
+                  Where Agri-Intelligence Meets Agricultural Generations
+                </span>
               </div>
-              <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-green-500">
-                Agrigence
-              </span>
-              <span className="hidden xl:block text-[8px] font-black uppercase tracking-widest text-slate-500 leading-none mt-1 ml-1 max-w-[120px]">
-                Where Agri-Intelligence Meets Agricultural Generations
-              </span>
             </Link>
           )}
           {!sidebarOpen && (
-            <Link to="/" className="mx-auto w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
-              <GraduationCap className="text-white w-6 h-6" />
+            <Link to="/" className="mx-auto flex items-center justify-center">
+              {siteSettings?.logoUrl && siteSettings.logoUrl !== '/logo.png' && siteSettings.logoUrl !== 'https://www.agrigence.in/logo.png' ? (
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
+                  <img src={siteSettings.logoUrl} alt="Logo" className="max-w-full max-h-full object-contain" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+                  <GraduationCap className="text-white w-6 h-6" />
+                </div>
+              )}
             </Link>
           )}
         </div>

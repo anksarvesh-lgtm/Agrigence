@@ -102,7 +102,15 @@ async function startServer() {
   // --- Automation Cron Jobs Disabled for Exam Focus ---
 
   // === Vercel Blob Upload Proxy ===
-  app.post('/api/admin/blob/upload', upload.single('file'), async (req, res) => {
+  app.post('/api/admin/blob/upload', (req, res, next) => {
+    upload.single('file')(req, res, function (err) {
+      if (err) {
+        console.error('Multer file upload error:', err);
+        return res.status(400).json({ error: 'File upload failed: ' + err.message });
+      }
+      next();
+    });
+  }, async (req, res) => {
     try {
       console.log('Blob upload request received');
       if (!req.file) {

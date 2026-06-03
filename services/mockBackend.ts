@@ -1296,12 +1296,21 @@ class FirebaseBackendService {
       });
 
       if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
+          const text = await response.text().catch(() => '');
+          let err: any = {};
+          try { err = JSON.parse(text); } catch(e) {}
           this.notifyUpload(0, 'ERROR', file.name);
-          throw new Error(err.error || 'Failed to upload file');
+          throw new Error(err.error || `Failed to upload file (${response.status})`);
       }
 
-      const data = await response.json();
+      const text = await response.text();
+      let data;
+      try {
+          data = JSON.parse(text);
+      } catch (e) {
+          this.notifyUpload(0, 'ERROR', file.name);
+          throw new Error('Server returned HTML or invalid JSON');
+      }
       this.notifyUpload(100, 'SUCCESS', file.name);
       return data.url;
   }

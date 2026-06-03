@@ -1,8 +1,77 @@
-import React, { useState } from 'react';
-import { Files, UploadCloud, CheckCircle, AlertTriangle, FileText, Check } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Files, UploadCloud, CheckCircle, AlertTriangle, FileText, Check, Loader2 } from 'lucide-react';
+import { db } from '../../src/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 export default function BulkUpload() {
   const [dragActive, setDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    if (!file) return;
+
+    const allowedExtensions = ['csv', 'xlsx', 'docx', 'json', 'pdf'];
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    
+    if (!extension || !allowedExtensions.includes(extension)) {
+      alert(`Invalid file format. Supported formats: ${allowedExtensions.join(', ')}`);
+      return;
+    }
+
+    setUploading(true);
+    setSuccess(false);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('path', 'raw-uploads');
+
+      const res = await fetch('/api/admin/blob/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`Upload failed (${res.status}): ${text.substring(0, 100)}`);
+      }
+
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('Non-JSON response from server:', text.substring(0, 200));
+        throw new Error('Server returned an invalid response. This may occur if the file is too large for the proxy.');
+      }
+
+      await addDoc(collection(db, 'question_banks'), {
+        title: file.name,
+        subject: 'Uploaded via Bulk Ingestion',
+        questionCount: 0,
+        status: 'Pending',
+        featured: false,
+        blobUrl: data.url,
+        fileType: extension,
+        createdAt: new Date().toISOString()
+      });
+      
+      setSuccess(true);
+    } catch (err) {
+      console.error("Upload error", err);
+      alert("Failed to upload file. Please check your connection and try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFile(e.target.files[0]);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -17,23 +86,50 @@ export default function BulkUpload() {
         
         {/* Upload Zone */}
         <div className="flex flex-col gap-4">
+           <input 
+             type="file" 
+             ref={fileInputRef} 
+             onChange={onFileChange} 
+             className="hidden" 
+             accept=".csv,.xlsx,.docx,.json,.pdf"
+           />
            <div 
-             className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center text-center transition-colors
+             className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center text-center transition-colors cursor-pointer
                ${dragActive ? 'border-agri-secondary bg-agri-secondary/5' : 'border-admin-border bg-white hover:bg-stone-50'}`}
              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
              onDragLeave={() => setDragActive(false)}
-             onDrop={(e) => { e.preventDefault(); setDragActive(false); }}
+             onDrop={(e) => { 
+               e.preventDefault(); 
+               setDragActive(false);
+               if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                 handleFile(e.dataTransfer.files[0]);
+               }
+             }}
+             onClick={() => fileInputRef.current?.click()}
            >
               <div className="w-16 h-16 rounded-full bg-agri-secondary/10 flex items-center justify-center mb-4 text-agri-secondary">
-                 <UploadCloud size={32} />
+                 {uploading ? <Loader2 size={32} className="animate-spin" /> : <UploadCloud size={32} />}
               </div>
-              <h3 className="font-bold text-lg text-black mb-1">Drag and drop your file here</h3>
+              <h3 className="font-bold text-lg text-black mb-1">
+                {uploading ? 'Processing File...' : 'Drag and drop your file here'}
+              </h3>
               <p className="text-sm text-stone-500 mb-6">Supports .csv, .xlsx, .docx, .json</p>
               
-              <button className="bg-black text-white px-6 py-2.5 rounded-xl font-bold hover:bg-stone-800 transition-colors">
+              <button 
+                type="button"
+                className="bg-black text-white px-6 py-2.5 rounded-xl font-bold hover:bg-stone-800 transition-colors"
+                disabled={uploading}
+              >
                 Browse Files
               </button>
            </div>
+
+           {success && (
+             <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex gap-3 text-sm text-green-800">
+               <CheckCircle size={18} className="shrink-0 mt-0.5" />
+               <p className="font-bold">File uploaded successfully! It is now pending review in the approvals tab.</p>
+             </div>
+           )}
            
            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3 text-sm text-blue-800">
              <AlertTriangle size={18} className="shrink-0 mt-0.5" />

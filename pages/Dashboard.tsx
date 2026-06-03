@@ -156,20 +156,12 @@ export default function Dashboard() {
             </div>
           </div>
           
-          <button 
-            onClick={() => {
-              setEditName(user?.name || '');
-              setEditState(user?.state || '');
-              setEditLang(user?.preferredLanguage || 'English');
-              setEditPrep(user?.preparationLevel || 'Beginner');
-              setEditQual(user?.qualification || '12th Pass');
-              setEditExams(user?.targetExams || []);
-              setIsEditing(true);
-            }} 
+          <Link 
+            to="/profile"
             className="w-full lg:w-auto px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-2xl text-sm font-bold tracking-wide flex items-center justify-center gap-2 border border-slate-700 hover:border-slate-600 transition-all shadow-md group shrink-0"
           >
             <Edit3 size={16} className="group-hover:scale-110 transition-transform" /> Edit Profile
-          </button>
+          </Link>
         </header>
 
         {/* DASHBOARD GRID */}
@@ -487,148 +479,6 @@ export default function Dashboard() {
 
           </div>
         </div>
-
-        {/* Profile Editing Modal Overlay */}
-        {isEditing && (
-          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-6 relative max-h-[85vh] overflow-y-auto python-scrollbar"
-            >
-              <button 
-                onClick={() => setIsEditing(false)} 
-                className="absolute top-4 right-4 p-2 bg-slate-805 hover:bg-slate-800 hover:text-white rounded-lg text-slate-400 transition"
-              >
-                <X size={16} />
-              </button>
-
-              <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2 mb-4">
-                <Settings size={18} className="text-emerald-400" /> Edit Profile & Preferences
-              </h3>
-
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
-                
-                {successMsg && (
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold rounded-xl text-center">
-                    {successMsg}
-                  </div>
-                )}
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Full Name</label>
-                  <input 
-                    type="text" 
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-slate-100 text-sm font-medium transition"
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">State</label>
-                    <select 
-                      value={editState}
-                      onChange={e => setEditState(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-slate-100 text-sm font-medium transition cursor-pointer"
-                    >
-                      {indianStates.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Language</label>
-                    <select 
-                      value={editLang}
-                      onChange={e => setEditLang(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-slate-100 text-sm font-medium transition cursor-pointer"
-                    >
-                      <option value="English">English</option>
-                      <option value="Hindi">Hindi (हिंदी)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Preparation Level</label>
-                    <select 
-                      value={editPrep}
-                      onChange={e => setEditPrep(e.target.value as any)}
-                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-slate-100 text-sm font-medium transition cursor-pointer"
-                    >
-                      <option value="Beginner">Beginner</option>
-                      <option value="Intermediate">Intermediate</option>
-                      <option value="Advanced">Advanced</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Qualification</label>
-                    <select 
-                      value={editQual}
-                      onChange={e => setEditQual(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl outline-none focus:border-emerald-500 text-slate-100 text-sm font-medium transition cursor-pointer"
-                    >
-                      <option value="12th Pass">12th Pass</option>
-                      <option value="Diploma Agriculture">Diploma Agriculture</option>
-                      <option value="B.Sc Agriculture">B.Sc Agriculture</option>
-                      <option value="M.Sc Agriculture">M.Sc Agriculture</option>
-                      <option value="B.Tech Agriculture">B.Tech Agriculture</option>
-                      <option value="Veterinary Science">Veterinary Science</option>
-                      <option value="Agriculture Engineering">Agriculture Engineering</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-400 ml-1 block">Modify Target Exams</label>
-                  <div className="flex flex-wrap gap-2">
-                    {examOptions.map((exam) => {
-                      const isSelected = editExams.includes(exam);
-                      return (
-                        <button
-                          type="button"
-                          key={exam}
-                          onClick={() => handleToggleExam(exam)}
-                          className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition ${
-                            isSelected 
-                              ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400' 
-                              : 'bg-slate-950 border-slate-800 text-slate-400'
-                          }`}
-                        >
-                          {exam}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-4">
-                  <button 
-                    type="button" 
-                    onClick={() => setIsEditing(false)}
-                    className="flex-1 py-3 bg-slate-800 hover:bg-slate-705 text-slate-200 font-bold uppercase text-xs tracking-wider rounded-xl transition"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    disabled={saving}
-                    className="flex-1 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold uppercase text-xs tracking-wider rounded-xl transition flex items-center justify-center gap-1"
-                  >
-                    {saving ? 'Saving...' : 'Save Updates'}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        )}
 
       </div>
     </div>
