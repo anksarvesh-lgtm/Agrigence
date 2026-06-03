@@ -35,11 +35,6 @@ export default function Onboarding() {
   // Mobile Verification States
   const [dialCode, setDialCode] = useState('+91');
   const [mobileNumber, setMobileNumber] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState('');
-  const [timer, setTimer] = useState(60);
-  const [isVerifying, setIsVerifying] = useState(false);
   const [otpError, setOtpError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -75,41 +70,6 @@ export default function Onboarding() {
     { value: 'JRF/SRF', label: 'ICAR NET / JRF / SRF', desc: 'National-level teaching eligibility & doctoral grants' }
   ];
 
-  // Resend timer countdown
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (otpSent && timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [otpSent, timer]);
-
-  // Handler for OTP trigger
-  const handleSendOtp = () => {
-    if (!mobileNumber || mobileNumber.length < 10) {
-      setOtpError('Please enter a valid 10-digit mobile number.');
-      return;
-    }
-    setOtpError('');
-    // Generate simulated 6-digit OTP code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(code);
-    setOtpSent(true);
-    setTimer(60);
-
-    // Prompt OTP code in developer friendly style
-    console.log(`[OTP Verification Service] Generated OTP: ${code}`);
-    alert(`[SIMULATED SMS SERVICE]\nTo: ${dialCode} ${mobileNumber}\n\nYour Agrigence Agriculture Competitive Exam Platform verification OTP is: ${code}\n\nValid for 10 minutes.`);
-  };
-
-  const handleResendOtp = () => {
-    if (timer === 0) {
-      handleSendOtp();
-    }
-  };
-
   const handleToggleExam = (val: string) => {
     if (selectedExams.includes(val)) {
       setSelectedExams(selectedExams.filter(e => e !== val));
@@ -118,16 +78,15 @@ export default function Onboarding() {
     }
   };
 
-  // Submit and write to 5 Firestore tables
+  // Handler for direct completion (skipped OTP)
   const handleCompletedOnboarding = async () => {
-    if (otpCode !== generatedOtp) {
-      setOtpError('Invalid verification code. Please check and try again.');
+    if (!mobileNumber || mobileNumber.length < 10) {
+      setOtpError('Please enter a valid 10-digit mobile number.');
       return;
     }
     
     if (!user) return;
     setOtpError('');
-    setIsVerifying(true);
     setSubmitting(true);
 
     try {
@@ -162,7 +121,7 @@ export default function Onboarding() {
         userId: user.id,
         completed: true,
         completedAt: new Date().toISOString(),
-        stepsCompleted: ['personal', 'qualification', 'exams', 'prep', 'otp']
+        stepsCompleted: ['personal', 'qualification', 'exams', 'prep', 'mobile']
       }, { merge: true });
 
       // Table 4: user_preferences
@@ -195,7 +154,6 @@ export default function Onboarding() {
       console.error("Failed to commit onboarding details:", e);
       setOtpError("Database synchronization timed out. Please try again.");
     } finally {
-      setIsVerifying(false);
       setSubmitting(false);
     }
   };
@@ -236,7 +194,7 @@ export default function Onboarding() {
           Personalize Your Prep Core
         </h1>
         <p className="text-slate-400 text-xs uppercase tracking-widest font-semibold">
-          Step {step} of 5 &bull; {step === 1 ? 'Profile Setting' : step === 2 ? 'Qualification' : step === 3 ? 'Target Exams' : step === 4 ? 'Level Selection' : 'Secure Verification'}
+          Step {step} of 5 &bull; {step === 1 ? 'Profile Setting' : step === 2 ? 'Qualification' : step === 3 ? 'Target Exams' : step === 4 ? 'Level Selection' : 'Mobile Number'}
         </p>
 
         {/* Dynamic Progress indicator */}
@@ -487,10 +445,10 @@ export default function Onboarding() {
             >
               <div>
                 <h2 className="text-xl md:text-2xl font-bold text-slate-100 flex items-center gap-2">
-                  <Smartphone size={22} className="text-emerald-400" /> Mobile OTP Verification
+                  <Smartphone size={22} className="text-emerald-400" /> Mobile Number
                 </h2>
                 <p className="text-slate-400 text-xs mt-1">
-                  Verify your connection to enable immediate SMS reminders, alerts, and live rank pushes.
+                  Connect your phone number to enable instant exam alerts, notifications, and results.
                 </p>
               </div>
 
@@ -502,110 +460,53 @@ export default function Onboarding() {
                 )}
 
                 {/* Mobile number section */}
-                {!otpSent ? (
-                  <div className="space-y-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Phone Number</label>
-                      <div className="flex gap-2">
-                        <select 
-                          value={dialCode}
-                          onChange={e => setDialCode(e.target.value)}
-                          className="px-3 py-4 bg-slate-950 border border-slate-800 rounded-2xl outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 font-medium text-sm transition-all"
-                        >
-                          <option value="+91">+91 (IN)</option>
-                          <option value="+1">+1 (US/CA)</option>
-                          <option value="+44">+44 (UK)</option>
-                          <option value="+971">+971 (AE)</option>
-                        </select>
-                        <div className="relative flex-1">
-                          <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                          <input 
-                            type="tel"
-                            maxLength={10}
-                            placeholder="10-Digit Mobile Number" 
-                            value={mobileNumber}
-                            onChange={e => {
-                              const val = e.target.value.replace(/\D/g, '');
-                              setMobileNumber(val);
-                            }}
-                            className="w-full pl-12 pr-4 py-4 bg-slate-950/60 border border-slate-800 rounded-2xl outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 font-medium text-sm transition-all"
-                          />
-                        </div>
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Phone Number</label>
+                    <div className="flex gap-2">
+                      <select 
+                        value={dialCode}
+                        onChange={e => setDialCode(e.target.value)}
+                        className="px-3 py-4 bg-slate-950 border border-slate-800 rounded-2xl outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 font-medium text-sm transition-all"
+                      >
+                        <option value="+91">+91 (IN)</option>
+                        <option value="+1">+1 (US/CA)</option>
+                        <option value="+44">+44 (UK)</option>
+                        <option value="+971">+971 (AE)</option>
+                      </select>
+                      <div className="relative flex-1">
+                        <Smartphone size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <input 
+                          type="tel"
+                          maxLength={10}
+                          placeholder="10-Digit Mobile Number" 
+                          value={mobileNumber}
+                          onChange={e => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            setMobileNumber(val);
+                          }}
+                          className="w-full pl-12 pr-4 py-4 bg-slate-950/60 border border-slate-800 rounded-2xl outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 font-medium text-sm transition-all"
+                        />
                       </div>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={handleSendOtp}
-                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-slate-950 font-extrabold uppercase text-xs tracking-widest rounded-2xl transition-all"
-                    >
-                      Send Verification Code
-                    </button>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/10 text-emerald-400 text-xs rounded-xl flex items-start gap-2">
-                      <Clock size={16} className="shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-semibold text-slate-200">OTP Sent successfully!</p>
-                        <p className="mt-0.5">Please check your alert pop-up (developer channel) or console to read your simulated code.</p>
-                      </div>
-                    </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black tracking-widest text-slate-400 uppercase">Verification Code (6-Digit OTP)</label>
-                      <input 
-                        type="text" 
-                        maxLength={6}
-                        placeholder="Enter 6-digit code" 
-                        value={otpCode}
-                        onChange={e => {
-                          const val = e.target.value.replace(/\D/g, '');
-                          setOtpCode(val);
-                        }}
-                        className="w-full text-center tracking-[0.5em] py-4 bg-slate-950/60 border border-slate-800 rounded-2xl outline-none focus:ring-1 focus:ring-emerald-500 text-slate-100 font-extrabold text-lg transition-all"
-                      />
-                    </div>
-
-                    <div className="flex justify-between items-center text-xs text-slate-400">
-                      <span>Verification Timeout: <strong>10 minutes</strong></span>
-                      <button
-                        type="button"
-                        onClick={handleResendOtp}
-                        disabled={timer > 0}
-                        className={`font-semibold hover:underline flex items-center gap-1 ${timer > 0 ? 'text-slate-600 cursor-not-allowed' : 'text-emerald-400'}`}
-                      >
-                        <RefreshCw size={12} />
-                        {timer > 0 ? `Resend OTP in ${timer}s` : 'Resend OTP'}
-                      </button>
-                    </div>
-
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setOtpSent(false)}
-                        className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold uppercase text-xs tracking-wider rounded-2xl transition-all"
-                      >
-                        Change Number
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleCompletedOnboarding}
-                        disabled={submitting || otpCode.length < 6}
-                        className="flex-1 py-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-extrabold uppercase text-xs tracking-wider rounded-2xl transition-all flex items-center justify-center gap-2"
-                      >
-                        {isVerifying ? 'Verifying...' : 'Verify & Continue'}
-                      </button>
-                    </div>
-                  </div>
-                )}
+                  <button
+                    type="button"
+                    onClick={handleCompletedOnboarding}
+                    disabled={submitting || mobileNumber.length < 10}
+                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-extrabold uppercase text-xs tracking-widest rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2"
+                  >
+                    {submitting ? 'Completing...' : 'Complete Onboarding'}
+                  </button>
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Bottom row button navigation (for non-verification steps or back buttons) */}
-        {(!otpSent || step < 5) && (
+        {step < 5 && (
           <div className="flex justify-between items-center mt-8 border-t border-slate-800/80 pt-6">
             <button
               type="button"

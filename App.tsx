@@ -34,7 +34,7 @@ import Leaderboard from './pages/Leaderboard';
 import Revision from './pages/Revision';
 import AiMentor from './pages/AiMentor';
 import Bookmarks from './pages/Bookmarks';
-
+import Profile from './pages/Profile';
 import Subscription from './pages/Subscription';
 
 // Admin Pages
@@ -149,6 +149,7 @@ const AppContent: React.FC = () => {
               <Route path="revision" element={<CompetitiveProtectedRoute><Revision /></CompetitiveProtectedRoute>} />
               <Route path="ai-mentor" element={<CompetitiveProtectedRoute><AiMentor /></CompetitiveProtectedRoute>} />
               <Route path="bookmarks" element={<CompetitiveProtectedRoute><Bookmarks /></CompetitiveProtectedRoute>} />
+              <Route path="profile" element={<CompetitiveProtectedRoute><Profile /></CompetitiveProtectedRoute>} />
               <Route path="subscription" element={<Subscription />} />
             </Route>
 

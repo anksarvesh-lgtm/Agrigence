@@ -305,6 +305,32 @@ service cloud.firestore {
 
     // --- NEW APP FEATURES ---
 
+    match /appConfig/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /question_banks/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /user_profiles/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    match /onboarding_status/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    match /user_preferences/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    match /target_exams/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
     match /trash/{docId} {
       allow read: if isAdmin();
       allow create: if isAdmin();
