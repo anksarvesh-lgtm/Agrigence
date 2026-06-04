@@ -122,21 +122,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({ children, allowedRoles }) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
+  const [redirect, setRedirect] = useState(false);
 
-  if (isLoading) return <div className="min-h-screen bg-neutral-950 flex items-center justify-center font-mono text-emerald-400">Loading...</div>;
+  if (isLoading) return <div className="min-h-screen bg-agri-bg flex items-center justify-center font-serif text-agri-primary">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
-
-  return <>{children}</>;
-};
-
-export const CompetitiveProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoading } = useAuth();
-  const location = useLocation();
-
-  if (isLoading) return <div className="min-h-screen bg-neutral-950 flex items-center justify-center font-mono text-emerald-400">Verifying session...</div>;
-  if (!user) return <Navigate to="/login" replace />;
-  if (!user.onboardingCompleted) return <Navigate to="/onboarding" replace />;
 
   return <>{children}</>;
 };
@@ -146,7 +136,9 @@ export const KisanProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ c
   const location = useLocation();
   
   if (isLoading) return <div className="min-h-screen bg-[#faf9f6] flex items-center justify-center font-serif text-[#92745B]">Validating Farm Credentials...</div>;
-  if (!user) return <Navigate to="/kisan/login" state={{ from: location }} replace />;
+  if (!user) {
+    return <Navigate to={`/kisan/login?from=${encodeURIComponent(location.pathname)}`} replace />;
+  }
 
   return <>{children}</>;
 };

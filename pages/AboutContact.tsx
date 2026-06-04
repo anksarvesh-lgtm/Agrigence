@@ -3,24 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, CheckCircle, Globe, Users, BookOpen, Mic, ArrowRight, Quote } from 'lucide-react';
 import { mockBackend } from '../services/mockBackend';
 import { motion } from 'framer-motion';
-import { LeadershipMember } from '../types';
 import OptimizedImage from '../components/OptimizedImage';
 import SEO from '../components/SEO';
 
 const AboutContact: React.FC = () => {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [leadership, setLeadership] = useState<LeadershipMember[]>([]);
-
-  useEffect(() => {
-    const load = async () => {
-        // Load leadership directly from main backend (Firestore) to ensure admin updates are reflected
-        const l = await mockBackend.getLeadership();
-        // Filter enabled profiles and sort
-        const activeLeaders = l.filter(m => m.isEnabled !== false).sort((a,b) => a.order - b.order);
-        setLeadership(activeLeaders);
-    };
-    load();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +20,7 @@ const AboutContact: React.FC = () => {
     <div className="bg-agri-bg min-h-screen">
       <SEO 
         title="About Us & Contact | Agrigence"
-        description="Learn about Agrigence, our mission, leadership, and how to get in touch with our team."
+        description="Learn about Agrigence, our mission, and how to get in touch with our team."
       />
       
       {/* Hero Section */}
@@ -126,46 +113,7 @@ const AboutContact: React.FC = () => {
         </div>
       </section>
 
-      {/* Leadership Section */}
-      <section className="py-20 container mx-auto px-6">
-         <div className="text-center mb-16">
-            <h2 className="text-4xl font-serif font-bold text-agri-primary mb-4">Our Leadership</h2>
-            <p className="text-stone-500">The visionaries behind the revolution.</p>
-         </div>
 
-         <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
-            {leadership.map((lead) => (
-            <div key={lead.id} className="group relative overflow-hidden rounded-[2.5rem] shadow-xl aspect-[4/5]">
-                <img 
-                    src={lead.imageUrl || 'https://via.placeholder.com/400x500?text=No+Image'} 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                    alt={lead.name} 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#1C1510] via-[#1C1510]/40 to-transparent opacity-90"></div>
-                <div className="absolute bottom-0 left-0 p-10 text-white w-full">
-                    <div className="flex flex-col mb-4">
-                        <h3 className="text-3xl font-serif font-bold mb-1">{lead.name}</h3>
-                        <span className="text-agri-gold font-bold text-xs uppercase tracking-widest">{lead.role}</span>
-                        {lead.email && (
-                            <a href={`mailto:${lead.email}`} className="text-white/70 text-xs mt-2 hover:text-agri-gold transition-colors font-mono">
-                                {lead.email}
-                            </a>
-                        )}
-                    </div>
-                    <div className="h-px bg-white/20 w-12 mb-4"></div>
-                    <p className="text-white/80 text-sm leading-relaxed font-light">
-                        {lead.bio}
-                    </p>
-                </div>
-            </div>
-            ))}
-            {leadership.length === 0 && (
-                <div className="col-span-2 text-center py-20 text-stone-400 italic">
-                    Leadership information is being updated.
-                </div>
-            )}
-         </div>
-      </section>
 
       {/* Why Choose Us */}
       <section className="py-20 bg-stone-100">

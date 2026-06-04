@@ -49,12 +49,6 @@ export interface User {
   language?: 'en' | 'hi' | 'mr' | 'gu' | 'te'; // Supported languages
   lastLogin?: string;
   joinedDate?: string;
-  onboardingCompleted?: boolean;
-  qualification?: string;
-  state?: string;
-  preferredLanguage?: string;
-  targetExams?: string[];
-  preparationLevel?: 'Beginner' | 'Intermediate' | 'Advanced';
 }
 
 export interface NavigationItem {
@@ -311,6 +305,7 @@ export interface CookiePreferences {
 
 export interface SiteSettings {
   logoUrl: string;
+  faviconUrl?: string;
   apkUrl?: string;
   playStoreUrl?: string;
   issn?: string;
@@ -324,6 +319,7 @@ export interface SiteSettings {
   upiId: string;
   upiQrUrl: string;
   whatsappNumber: string;
+  tagline: string;
   contactEmail: string;
   homeFeaturedLimit: number;
   missionText: string;
@@ -481,6 +477,7 @@ export interface Magazine {
   downloadAccess: DownloadAccessLevel;
   seoTitle?: string;
   metaDescription?: string;
+  keywords?: string[];
 }
 
 export interface NewsItem {
@@ -567,6 +564,8 @@ export interface PaymentRecord {
   id: string;
   userId: string;
   userName: string;
+  userEmail?: string;
+  userMobile?: string;
   planId: string;
   planName: string;
   amount: number;

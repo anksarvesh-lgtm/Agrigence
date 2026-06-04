@@ -176,7 +176,7 @@ const SubscriptionPlans: React.FC = () => {
                       className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-900 focus:border-agri-secondary focus:ring-1 focus:ring-agri-secondary outline-none"
                       value={editForm.name || ''}
                       onChange={e => setEditForm({...editForm, name: e.target.value})}
-                      placeholder="e.g. Researcher Pass"
+                      placeholder="e.g. Premium Researcher"
                     />
                  </div>
                  
