@@ -668,7 +668,7 @@ const MandiBhav: React.FC = () => {
       setApiRates([]);
       
       try {
-          const API_KEY = '579b464db66ec23bdd0000018d84e2cc0f0840705eafe3a506473454';
+          const API_KEY = import.meta.env.VITE_GOV_API_KEY || ''; // 🛡️ Sentinel: Removed hardcoded API key
           const cleanState = encodeURIComponent(state);
           const cleanDistrict = encodeURIComponent(district);
           const cleanMarket = encodeURIComponent(market);
