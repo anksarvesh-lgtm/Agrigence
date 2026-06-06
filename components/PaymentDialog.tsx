@@ -63,7 +63,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ isOpen, onClose, plan, on
         currency: order.currency,
         name: "Agrigence Journal",
         description: `Unlock ${plan.name}`,
-        image: "/logo.png",
+        image: "/logo-icon.svg",
         order_id: order.id,
         handler: async (response: any) => {
           try {

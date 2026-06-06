@@ -9,7 +9,7 @@ interface LogoProps {
 
 const Logo: React.FC<LogoProps> = ({ className = "h-12 w-auto", variant = 'dark', showText = false }) => {
   const [tagline, setTagline] = useState('Where Agri-Intelligence Meets Agricultural Generations');
-  const defaultLogo = "/logo.png";
+  const defaultLogo = "/logo-icon.svg";
   const [logoPath, setLogoPath] = useState(defaultLogo);
 
   useEffect(() => {

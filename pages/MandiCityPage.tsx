@@ -26,7 +26,7 @@ const MandiCityPage: React.FC = () => {
     "publisher": {
       "@type": "Organization",
       "name": "Agrigence",
-      "logo": "https://agrigence.in/logo.png"
+      "logo": "https://agrigence.in/logo.svg"
     },
     "hasPart": cityPrices.map(p => ({
       "@type": "PropertyValue",

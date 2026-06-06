@@ -83,7 +83,7 @@ export const onAuthStateChanged = (authObj: any, cb: (user: FirebaseUser | null)
 
 // Default settings fallback
 const DEFAULT_SETTINGS: SiteSettings = {
-  logoUrl: '/logo.png', 
+  logoUrl: '/logo-icon.svg', 
   issn: 'Applied For',
   footerSocials: {
     twitter: 'https://x.com/agrigence',

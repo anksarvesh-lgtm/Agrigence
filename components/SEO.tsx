@@ -15,7 +15,7 @@ const SEO: React.FC<SEOProps> = ({
   title, 
   description, 
   url, 
-  image = 'https://agrigence.in/logo.png', 
+  image = 'https://agrigence.in/logo.svg', 
   type = 'website',
   schema,
   keywords = 'Agrigence Journal of Agriculture and Allied Science., agriculture, farming, agritech, india, mandi bhav, gov schemes, crop advisory'
@@ -27,7 +27,7 @@ const SEO: React.FC<SEOProps> = ({
     "@type": "Organization",
     "name": "Agrigence",
     "url": "https://agrigence.in",
-    "logo": "https://agrigence.in/logo.png",
+    "logo": "https://agrigence.in/logo.svg",
     "sameAs": [
       "https://facebook.com/agrigence",
       "https://twitter.com/agrigence",
