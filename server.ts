@@ -23,6 +23,25 @@ async function startServer() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   
+  // SECURITY FIX: Admin endpoints must be authenticated to prevent unauthorized access
+  const requireAdminAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const adminKey = req.headers['x-admin-key'];
+    const expectedKey = process.env.ADMIN_API_KEY;
+
+    if (!expectedKey) {
+      console.warn('SECURITY WARNING: ADMIN_API_KEY is not set. Admin endpoints are disabled.');
+      return res.status(500).json({ error: 'Server configuration error' });
+    }
+
+    if (!adminKey || adminKey !== expectedKey) {
+      return res.status(401).json({ error: 'Unauthorized: Invalid or missing admin key' });
+    }
+
+    next();
+  };
+
+  app.use('/api/admin', requireAdminAuth);
+
   // Multer setup for memory storage
   const upload = multer({ 
     storage: multer.memoryStorage(),
