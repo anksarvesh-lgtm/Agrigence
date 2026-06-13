@@ -32,7 +32,8 @@ interface MandiData {
 const mockFetchMandiData = async (): Promise<MandiData[]> => {
   // Try actual API
   try {
-     const url = `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=579b464db66ec23bdd0000018d84e2cc0f0840705eafe3a506473454&format=json&limit=100`;
+     const API_KEY = import.meta.env.VITE_DATA_GOV_API_KEY || '';
+     const url = `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${API_KEY}&format=json&limit=100`;
      const res = await fetch(url);
      const json = await res.json();
      if (json.records) {
@@ -668,7 +669,7 @@ const MandiBhav: React.FC = () => {
       setApiRates([]);
       
       try {
-          const API_KEY = '579b464db66ec23bdd0000018d84e2cc0f0840705eafe3a506473454';
+          const API_KEY = import.meta.env.VITE_DATA_GOV_API_KEY || '';
           const cleanState = encodeURIComponent(state);
           const cleanDistrict = encodeURIComponent(district);
           const cleanMarket = encodeURIComponent(market);
