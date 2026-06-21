@@ -7,32 +7,35 @@
     
     <!-- Primary Meta Tags -->
     <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE" />
-    <title>Agrigence Journal of Agriculture and Allied Science.</title>
-    <meta name="title" content="Agrigence Journal of Agriculture and Allied Science.">
-    <meta name="description" content="Where Agri-Intelligence Meets Agricultural Generations.">
-    <meta name="keywords" content="Agrigence Journal of Agriculture and Allied Science., agriculture journal, research publishing, agronomy, horticulture, soil science, agricultural engineering, peer-reviewed journal, ISSN India, ICAR research">
-    <meta name="author" content="Agrigence Teams">
+    <title>Agrigence Publication | Where Agri-Intelligence Meets Agricultural Generations</title>
+    <meta name="title" content="Agrigence Publication | AI-Powered Agriculture Competitive Exam Platform">
+    <meta name="description" content="Agrigence Publication is an AI-powered agriculture competitive exam preparation platform offering mock tests, smart analytics, AI recommendations, personalized revision systems, and real exam simulations for IBPS AFO, NABARD, ICAR, Agriculture Supervisor, and other agriculture exams.">
+    <meta name="keywords" content="agriculture, smart farming, agri-intelligence, crop planner, soil analyzer, mandi bhav, kisan hub, agricultural journals">
+    <meta name="author" content="Agrigence Team">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://agrigence.in/" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://agrigence.in/">
-    <meta property="og:title" content="Agrigence Journal of Agriculture and Allied Science.">
-    <meta property="og:description" content="Where Agri-Intelligence Meets Agricultural Generations.">
-    <meta property="og:image" content="/logo.svg">
+    <meta property="og:title" content="Agrigence Publication">
+    <meta property="og:description" content="Where Agri-Intelligence Meets Agricultural Generations">
+    <meta property="og:image" content="https://agrigence.in/logo.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://agrigence.in/">
-    <meta property="twitter:title" content="Agrigence Journal of Agriculture and Allied Science.">
-    <meta property="twitter:description" content="Where Agri-Intelligence Meets Agricultural Generations.">
-    <meta property="twitter:image" content="/logo.svg">
+    <meta property="twitter:title" content="Agrigence Publication">
+    <meta property="twitter:description" content="Where Agri-Intelligence Meets Agricultural Generations">
+    <meta property="twitter:image" content="https://agrigence.in/logo.png">
 
     <!-- AdSense Removed -->
     
     <!-- reCAPTCHA -->
-    <script src="https://www.google.com/recaptcha/enterprise.js?render=6LetmqQsAAAAACJwuao3JjBGJ9UCABZWVMkqXINX"></script>
+    <script async src="https://www.google.com/recaptcha/enterprise.js?render=6LetmqQsAAAAACJwuao3JjBGJ9UCABZWVMkqXINX"></script>
+    
+    <!-- Razorpay Checkout SDK -->
+    <script defer src="https://checkout.razorpay.com/v1/checkout.js"></script>
     
     <!-- Preconnects for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,12 +44,11 @@
     
     <!-- International SEO Signals -->
     
-    <link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="/logo-icon.svg" />
+    <link id="dynamic-favicon" rel="icon" type="image/png" href="https://agrigence.in/logo.png" />
     
     <!-- Preload Critical Hero Image -->
     <link rel="preload" as="image" href="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=2070&auto=format&fit=crop" />
     
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
       // Prevent theme flashing
       if (localStorage.getItem('theme') === 'dark' || !localStorage.getItem('theme')) {
@@ -61,29 +63,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
       :root {
-        --primary-journal: #002147; /* Navy Blue Academic */
-        --secondary-journal: #1A3C40; /* Dark Forest Green */
-        --accent-journal: #C29263; /* Professional Tan/Gold */
-        --bg-journal: #FFFFFF; /* White background */
-        --text-journal: #1F2937; /* Grey 800 */
-        --border-journal: #E5E7EB; /* Grey 200 */
-        --grid-color: rgba(0, 33, 71, 0.03);
+        --primary-earth: #3D2B1F; /* Deep Soil Brown */
+        --secondary-tan: #D4A373; /* Wheat Tan */
+        --accent-gold: #E9C46A; /* Harvest Gold */
+        --bg-silk: #FAFAFA; /* Off-white */
+        --text-charcoal: #1C1917; /* Stone 900 */
+        --border-sepia: #E7E5E4; /* Stone 200 */
+        --grid-color: #E7E5E4;
       }
       .dark {
-        --primary-journal: #94A3B8; 
-        --secondary-journal: #4ADE80; 
-        --accent-journal: #FDE047;
-        --bg-journal: #0F172A; 
-        --text-journal: #F1F5F9; 
-        --border-journal: #1E293B; 
-        --grid-color: rgba(255, 255, 255, 0.05);
+        --primary-earth: #D4A373; /* Lighter brown for dark mode */
+        --secondary-tan: #E9C46A; 
+        --accent-gold: #F4A261;
+        --bg-silk: #121212; /* Dark background */
+        --text-charcoal: #E5E5E5; /* Light text */
+        --border-sepia: #333333; /* Dark border */
+        --grid-color: #333333;
       }
       html {
         position: relative;
       }
       body {
-        background-color: var(--bg-journal);
-        color: var(--text-journal);
+        background-color: var(--bg-silk);
+        color: var(--text-charcoal);
         background-image: radial-gradient(var(--grid-color) 0.5px, transparent 0.5px);
         background-size: 30px 30px;
       }
@@ -320,13 +322,13 @@
             },
             colors: {
               agri: {
-                primary: 'var(--primary-journal)',
-                secondary: 'var(--secondary-journal)',
-                gold: 'var(--accent-journal)',
-                bg: 'var(--bg-journal)',
-                text: 'var(--text-journal)',
-                border: 'var(--border-journal)',
-                accent: '#002147',
+                primary: 'var(--primary-earth)',
+                secondary: 'var(--secondary-tan)',
+                gold: 'var(--accent-gold)',
+                bg: 'var(--bg-silk)',
+                text: 'var(--text-charcoal)',
+                border: 'var(--border-sepia)',
+                accent: '#8B5E34',
               },
               admin: {
                 bg: '#FDFCFB',       // Bright Warm White

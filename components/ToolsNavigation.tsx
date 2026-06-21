@@ -5,7 +5,9 @@ import { LayoutDashboard, GitBranch, Calculator, FileText } from 'lucide-react';
 const ToolsNavigation: React.FC = () => {
   const location = useLocation();
   const tools = [
-    { name: 'Agrigence ANOVA Engine', path: '/anova', icon: Calculator },
+    { name: 'Dashboard', path: '/analytics', icon: LayoutDashboard },
+    { name: 'Pipeline Builder', path: '/analytics/pipeline', icon: GitBranch },
+    { name: 'Agrigence ANOVA Engine', path: '/analytics/anova', icon: Calculator },
   ];
 
   return (

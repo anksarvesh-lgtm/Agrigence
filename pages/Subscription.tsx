@@ -1,118 +1,239 @@
-import React, { useState, useEffect } from 'react';
-import { Check, Loader2 } from 'lucide-react';
-import SEO from '../components/SEO';
-import PaymentDialog from '../components/PaymentDialog';
-import { useNavigate } from 'react-router-dom';
-import { mockBackend } from '../services/mockBackend';
-import { SubscriptionPlan } from '../types';
-import { useAuth } from '../src/authContext';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../src/authContext";
+import { mockBackend } from "../services/mockBackend";
+import { SubscriptionPlan } from "../types";
+import { CheckCircle, Crown, CreditCard, ShieldCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-const Subscription: React.FC = () => {
-    const navigate = useNavigate();
-    const { user } = useAuth();
-    const [selectedPlan, setSelectedPlan] = useState<any>(null);
-    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-    const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export default function Subscription() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchPlans = async () => {
-            try {
-                // Fetch dynamic plans from the mock backend
-                const fetchedPlans = await mockBackend.getPlans();
-                setPlans(fetchedPlans.filter(p => p.isActive));
-            } catch (error) {
-                console.error("Failed to fetch plans", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchPlans();
-    }, []);
+  useEffect(() => {
+    loadPlans();
+  }, []);
 
-    const handlePayNow = (plan: SubscriptionPlan) => {
-        setSelectedPlan({
-            id: plan.id,
-            name: plan.name,
-            price: plan.price
-        });
-        setIsPaymentOpen(true);
+  const loadPlans = async () => {
+    try {
+      const allPlans = await mockBackend.getPlans();
+      // Normally filter active ones, testing showing all
+      setPlans(allPlans.filter((p: SubscriptionPlan) => p.isActive !== false));
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCheckout = async (plan: SubscriptionPlan) => {
+    if (!user) {
+      alert("Please login first");
+      navigate("/login");
+      return;
+    }
+
+    if (plan.price === 0) {
+      try {
+        await mockBackend.processOnlinePayment(
+          user.id,
+          plan.id,
+          "free_activation_" + Date.now(),
+          0,
+        );
+        alert("Free Plan activated successfully!");
+        navigate("/dashboard");
+      } catch (e) {
+        console.error(e);
+        alert("Error activating plan.");
+      }
+      return;
+    }
+
+    initiateRazorpay(plan);
+  };
+
+  const initiateRazorpay = async (plan: SubscriptionPlan) => {
+    const options = {
+      key: "rzp_test_YourTestKeyHere", // mock/test key
+      amount: plan.price * 100, // paise
+      currency: "INR",
+      name: "Agrigence Exam Platform",
+      description: plan.name + " Access",
+      handler: async function (response: any) {
+        if (user) {
+          try {
+            await mockBackend.processOnlinePayment(
+              user.id,
+              plan.id,
+              response.razorpay_payment_id,
+              plan.price,
+            );
+            alert("Your Pass has been activated successfully!");
+            navigate("/dashboard");
+          } catch (e) {
+            console.error(e);
+            alert("Error processing activation. Contact support.");
+          }
+        }
+      },
+      prefill: {
+        name: user?.name || "",
+        email: user?.email || "",
+        contact: user?.mobileNumber || "",
+      },
+      theme: {
+        color: "#10b981",
+      },
     };
+    if (!(window as any).Razorpay) {
+      alert("Razorpay SDK not loaded");
+      return;
+    }
+    const rzp1 = new (window as any).Razorpay(options);
+    rzp1.on("payment.failed", function (response: any) {
+      alert("Payment Failed: " + response.error.description);
+    });
+    rzp1.open();
+  };
+
+  if (loading)
+    return (
+      <div className="min-h-screen bg-[#0B1120] flex items-center justify-center text-slate-400">
+        Loading plans...
+      </div>
+    );
+
+  const renderPlanCard = (plan: SubscriptionPlan) => (
+    <div
+      key={plan.id}
+      className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 relative hover:border-emerald-500/50 transition-colors group flex flex-col"
+    >
+      {plan.isRecommended && (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg shadow-emerald-500/25">
+          Most Popular
+        </div>
+      )}
+
+      <div className="mb-6 flex justify-between items-start">
+        <div>
+          <h3 className="text-2xl font-bold text-white mb-2">
+            {plan.name}
+          </h3>
+          <span className="text-xs text-slate-400 font-medium">
+            Valid for{" "}
+            {plan.validityLabel || `${plan.durationMonths} Months`}
+          </span>
+        </div>
+        <Crown
+          className={
+            plan.isRecommended ? "text-amber-400" : "text-emerald-500"
+          }
+          size={28}
+        />
+      </div>
+
+      <div className="mb-8">
+        <div className="flex items-end gap-1 mb-1">
+          <span className="text-4xl font-black text-white">
+            ₹{plan.price}
+          </span>
+        </div>
+        <p className="text-sm text-slate-400">{plan.description}</p>
+      </div>
+
+      <div className="flex-1 space-y-4 mb-8">
+        {plan.features?.map((feature, idx) => (
+          <div key={idx} className="flex items-start gap-3">
+            <CheckCircle
+              size={18}
+              className="text-emerald-500 shrink-0 mt-0.5"
+            />
+            <span className="text-sm text-slate-300">{feature}</span>
+          </div>
+        ))}
+        {plan.unlockType === 'specific_exams' && plan.allowedExams && (
+          <div className="flex items-start gap-3 pt-2">
+            <ShieldCheck size={18} className="text-blue-400 shrink-0 mt-0.5" />
+            <span className="text-sm text-slate-300 font-medium tracking-wide">
+              Unlocks: {plan.allowedExams.join(', ')}
+            </span>
+          </div>
+        )}
+        {plan.unlockType === 'all_exams' && (
+          <div className="flex items-start gap-3 pt-2">
+            <ShieldCheck size={18} className="text-amber-400 shrink-0 mt-0.5" />
+            <span className="text-sm text-amber-200 font-medium tracking-wide">
+              Full Access to All Agriculture Exams
+            </span>
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={() => handleCheckout(plan)}
+        className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${plan.isRecommended || plan.price > 0 ? "bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-xl shadow-emerald-900/40 hover:scale-[1.02]" : "bg-slate-800 text-white hover:bg-slate-700"}`}
+      >
+        <CreditCard size={18} />{" "}
+        {plan.price === 0 ? "Get Started" : `Buy ${plan.name}`}
+      </button>
+    </div>
+  );
+
+  const singleExamPlans = plans.filter(p => p.unlockType === 'specific_exams' && p.allowedExams?.length === 1);
+  const comboPlans = plans.filter(p => (p.unlockType === 'specific_exams' && p.allowedExams && p.allowedExams.length > 1) || (p.unlockType !== 'specific_exams' && p.unlockType !== 'all_exams'));
+  const allAccessPlans = plans.filter(p => p.unlockType === 'all_exams');
 
   return (
-    <div className="min-h-screen py-20 bg-stone-50">
-      <SEO 
-        title="Subscription & Access | Agrigence"
-        description="Flexible subscription plans for accessing high-quality agricultural research."
-      />
-      
-      <div className="container mx-auto px-6 max-w-6xl">
-        <h1 className="text-4xl md:text-5xl font-serif font-bold text-agri-primary text-center mb-16">Subscription & Article Access</h1>
-
-        {isLoading ? (
-            <div className="flex justify-center items-center py-20">
-                <Loader2 size={48} className="text-agri-primary animate-spin" />
+    <div className="min-h-screen bg-[#0B1120] text-slate-100 py-12 px-6">
+      <div className="max-w-6xl mx-auto space-y-12">
+        <div className="text-center space-y-4 pt-10">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20">
+              <ShieldCheck size={32} className="text-amber-500" />
             </div>
-        ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
-                {plans.map((plan, i) => (
-                    <div key={i} className="bg-white p-8 rounded-3xl shadow-sm border border-stone-200 flex flex-col hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                        <h3 className="text-xl font-bold text-agri-primary mb-2 line-clamp-2 min-h-[3.5rem]">{plan.name}</h3>
-                        <div className="text-4xl font-black text-agri-primary my-6">₹{plan.price}<span className="text-sm text-stone-500 font-normal">/-</span></div>
-                        <p className="text-xs font-bold text-agri-secondary uppercase tracking-widest mb-6">Validity: {plan.validityLabel}</p>
-                        
-                        <ul className="space-y-4 mb-10 flex-1">
-                            {plan.features.map((feature, j) => (
-                                <li key={j} className="flex items-start gap-3 text-sm text-stone-600">
-                                    <Check size={16} className="text-green-500 mt-1 shrink-0" />
-                                    <span>{feature}</span>
-                                </li>
-                            ))}
-                        </ul>
-
-                        <button 
-                            onClick={() => handlePayNow(plan)}
-                            className="w-full bg-agri-primary text-white py-4 rounded-xl font-bold text-sm uppercase tracking-widest hover:bg-agri-secondary transition-all active:scale-95"
-                        >
-                            Pay Now
-                        </button>
-                    </div>
-                ))}
-            </div>
-        )}
-
-        {selectedPlan && (
-            <PaymentDialog 
-                isOpen={isPaymentOpen}
-                onClose={() => setIsPaymentOpen(false)}
-                plan={selectedPlan}
-                onSuccess={() => {
-                    setTimeout(() => {
-                        if (user) {
-                            navigate('/dashboard');
-                        } else {
-                            // For guest users, just stay on the page or go to home with success
-                            navigate('/', { state: { paymentSuccess: true } });
-                        }
-                    }, 2000);
-                }}
-            />
-        )}
-
-        <div className="bg-white p-12 rounded-3xl shadow-sm border border-stone-200 mb-20">
-            <h2 className="text-2xl font-serif font-bold text-agri-primary mb-10">Payment Options</h2>
-            <p className="text-stone-600 mb-8">We accept a wide range of payment methods for your convenience:</p>
-            <div className="flex flex-wrap gap-6 items-center justify-center p-8 bg-stone-100 rounded-2xl">
-                {['UPI', 'Razorpay', 'PhonePe', 'Google Pay', 'Paytm', 'Debit/Credit Card', 'Net Banking'].map(method => (
-                    <div key={method} className="bg-white px-6 py-3 rounded-lg font-bold text-sm text-agri-primary shadow-sm border border-stone-200">
-                        {method}
-                    </div>
-                ))}
-            </div>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-white">
+            Upgrade to Agrigence{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
+              Pro Pass
+            </span>
+          </h1>
+          <p className="text-slate-400 max-w-2xl mx-auto text-sm md:text-base">
+            Get unlimited access to mock tests, AI mentor, premium current
+            affairs, and comprehensive revision tools tailored to your
+            agriculture exams.
+          </p>
         </div>
+
+        {allAccessPlans.length > 0 && (
+          <div className="mb-16">
+             <h2 className="text-3xl font-bold font-serif mb-8 text-center text-amber-500">All Access</h2>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
+                {allAccessPlans.map(renderPlanCard)}
+             </div>
+          </div>
+        )}
+
+        {singleExamPlans.length > 0 && (
+          <div className="mb-16">
+             <h2 className="text-3xl font-bold font-serif mb-8 text-center text-white">Single Exam Plans</h2>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {singleExamPlans.map(renderPlanCard)}
+             </div>
+          </div>
+        )}
+
+        {comboPlans.length > 0 && (
+          <div>
+             <h2 className="text-3xl font-bold font-serif mb-8 text-center text-emerald-400">Combo Plans & Other</h2>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {comboPlans.map(renderPlanCard)}
+             </div>
+          </div>
+        )}
       </div>
     </div>
   );
-};
-
-export default Subscription;
+}

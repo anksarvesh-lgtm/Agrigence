@@ -15,6 +15,27 @@ export interface UserPermissions {
   canDownloadBlogs: boolean;
 }
 
+export interface ExamCategory {
+  id: string;
+  examId: string;
+  examName: string;
+  shortName: string;
+  color: string;
+  icon: string;
+  active: boolean;
+}
+
+export interface UserSubscription {
+  active: boolean;
+  planId: string;
+  unlockType: 'specific_exams' | 'all_exams';
+  allowedExams: string[];
+  startDate: string;
+  endDate: string;
+  paymentId?: string;
+  status: 'active' | 'expired' | 'cancelled';
+}
+
 export interface User {
   id: string;
   name: string;
@@ -49,6 +70,13 @@ export interface User {
   language?: 'en' | 'hi' | 'mr' | 'gu' | 'te'; // Supported languages
   lastLogin?: string;
   joinedDate?: string;
+  onboardingCompleted?: boolean;
+  qualification?: string;
+  state?: string;
+  preferredLanguage?: string;
+  targetExams?: string[];
+  preparationLevel?: 'Beginner' | 'Intermediate' | 'Advanced';
+  subscription?: UserSubscription;
 }
 
 export interface NavigationItem {
@@ -305,7 +333,6 @@ export interface CookiePreferences {
 
 export interface SiteSettings {
   logoUrl: string;
-  faviconUrl?: string;
   apkUrl?: string;
   playStoreUrl?: string;
   issn?: string;
@@ -319,7 +346,6 @@ export interface SiteSettings {
   upiId: string;
   upiQrUrl: string;
   whatsappNumber: string;
-  tagline: string;
   contactEmail: string;
   homeFeaturedLimit: number;
   missionText: string;
@@ -477,7 +503,6 @@ export interface Magazine {
   downloadAccess: DownloadAccessLevel;
   seoTitle?: string;
   metaDescription?: string;
-  keywords?: string[];
 }
 
 export interface NewsItem {
@@ -546,7 +571,9 @@ export interface Product {
 export interface SubscriptionPlan {
   id: string;
   name: string;
-  type: 'ARTICLE_ACCESS' | 'BLOG_ACCESS' | 'COMBO_ACCESS' | 'TOOL_ACCESS' | 'KISAN_ACCESS';
+  type: 'ARTICLE_ACCESS' | 'BLOG_ACCESS' | 'COMBO_ACCESS' | 'TOOL_ACCESS' | 'KISAN_ACCESS' | 'SPECIFIC_EXAMS' | 'ALL_EXAMS';
+  unlockType?: 'specific_exams' | 'all_exams';
+  allowedExams?: string[];
   price: number;
   durationMonths: number;
   description: string;
@@ -564,8 +591,6 @@ export interface PaymentRecord {
   id: string;
   userId: string;
   userName: string;
-  userEmail?: string;
-  userMobile?: string;
   planId: string;
   planName: string;
   amount: number;

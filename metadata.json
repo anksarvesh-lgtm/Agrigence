@@ -1,6 +1,6 @@
 {
-  "name": "Agrigence Journal of Agriculture and Allied Science.",
-  "description": "Agrigence Journal of Agriculture and Allied Science is a peer-reviewed monthly online journal focusing on advanced agricultural research, innovation, and practices in India. Volume 1 | Issue 1 | May 2026. ISSN: Applied For. Publisher: Agrigence Teams, India.",
+  "name": "Agrigence Publication",
+  "description": "Agrigence Publication is an AI-powered agriculture competitive exam preparation platform with mock tests, smart analytics, AI recommendations, and personalized learning systems. Where Agri-Intelligence Meets Agricultural Generations.",
   "requestFramePermissions": [
     "geolocation"
   ]

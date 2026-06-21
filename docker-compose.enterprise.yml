@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  # === CORE BACKEND ===
+  api-gateway:
+    image: traefik:v2.10
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - agri-network
+
+  agri-core-api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    command: npm run start
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - POSTGRES_URL=postgresql://user:pass@postgres:5432/agri_core
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - QDRANT_URL=http://qdrant:6333
+      - AI_SERVICE_URL=http://agri-ai-service:8000
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    networks:
+      - agri-network
+      
+  # === HIGH-CONCURRENCY TEST ENGINE WORKERS ===
+  agri-test-engine-worker:
+    build: 
+      context: .
+    command: npm run start:worker
+    deploy:
+      replicas: 3
+    environment:
+      - KAFKA_BROKERS=kafka:9092
+      - POSTGRES_URL=postgresql://user:pass@postgres:5432/agri_core
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - agri-network
+
+  # === AI FASTAPI MICROSERVICES ===
+  agri-ai-service:
+    image: python:3.11-slim
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - MODEL_ENDPOINT=http://vllm-inference:8080
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - agri-network
+      
+  vllm-inference:
+    image: vllm/vllm-openai:latest
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    command: --model meta-llama/Meta-Llama-3-8B-Instruct
+    networks:
+      - agri-network
+
+  # === DATABASES & INFRASTRUCTURE ===
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: agri_core
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - agri-network
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redisdata:/data
+    networks:
+      - agri-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks:
+      - agri-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - agri-network
+      
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3-alpine
+    ports:
+      - "8123:8123"
+    volumes:
+      - chdata:/var/lib/clickhouse
+    networks:
+      - agri-network
+      
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrantdata:/qdrant/storage
+    networks:
+      - agri-network
+
+volumes:
+  pgdata:
+  redisdata:
+  chdata:
+  qdrantdata:
+
+networks:
+  agri-network:
+    driver: bridge

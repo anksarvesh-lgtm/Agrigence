@@ -15,10 +15,10 @@ const SEO: React.FC<SEOProps> = ({
   title, 
   description, 
   url, 
-  image = 'https://agrigence.in/logo.svg', 
+  image = 'https://agrigence.in/logo.png', 
   type = 'website',
   schema,
-  keywords = 'Agrigence Journal of Agriculture and Allied Science., agriculture, farming, agritech, india, mandi bhav, gov schemes, crop advisory'
+  keywords = 'agriculture, farming, agritech, india, mandi bhav, gov schemes, crop advisory'
 }) => {
   const currentUrl = (url || (typeof window !== 'undefined' ? window.location.href : 'https://agrigence.in')).replace(/\/$/, '');
   
@@ -27,7 +27,7 @@ const SEO: React.FC<SEOProps> = ({
     "@type": "Organization",
     "name": "Agrigence",
     "url": "https://agrigence.in",
-    "logo": "https://agrigence.in/logo.svg",
+    "logo": "https://agrigence.in/logo.png",
     "sameAs": [
       "https://facebook.com/agrigence",
       "https://twitter.com/agrigence",

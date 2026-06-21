@@ -8,6 +8,7 @@ import { useConfirm } from '../../components/ContextualConfirm';
 const SubscriptionPlans: React.FC = () => {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [allTools, setAllTools] = useState<Tool[]>([]);
+  const [exams, setExams] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<SubscriptionPlan>>({});
@@ -16,6 +17,7 @@ const SubscriptionPlans: React.FC = () => {
   useEffect(() => {
     loadPlans();
     loadTools();
+    loadExams();
   }, []);
 
   const loadPlans = async () => {
@@ -24,6 +26,10 @@ const SubscriptionPlans: React.FC = () => {
 
   const loadTools = async () => {
     setAllTools(await mockBackend.getAllTools());
+  };
+
+  const loadExams = async () => {
+    setExams(await mockBackend.getExamCategories());
   };
 
   const handleCreate = () => {
@@ -140,6 +146,14 @@ const SubscriptionPlans: React.FC = () => {
                  <span className="text-gray-500 text-sm">Duration</span>
                  <span className="text-gray-900 font-bold">{plan.durationMonths} Month(s)</span>
                </div>
+               {(plan.unlockType === 'specific_exams' || plan.unlockType === 'all_exams') && (
+               <div className="flex justify-between items-center mt-2 pt-2 border-t border-gray-200">
+                 <span className="text-gray-500 text-sm">Unlocks</span>
+                 <span className="text-gray-900 font-bold text-xs">
+                     {plan.unlockType === 'all_exams' ? 'All Exams' : `${plan.allowedExams?.length || 0} Exams`}
+                 </span>
+               </div>
+               )}
             </div>
 
             <p className="text-gray-600 text-sm mb-4 h-10 line-clamp-2">{plan.description}</p>
@@ -176,7 +190,7 @@ const SubscriptionPlans: React.FC = () => {
                       className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-900 focus:border-agri-secondary focus:ring-1 focus:ring-agri-secondary outline-none"
                       value={editForm.name || ''}
                       onChange={e => setEditForm({...editForm, name: e.target.value})}
-                      placeholder="e.g. Premium Researcher"
+                      placeholder="e.g. Researcher Pass"
                     />
                  </div>
                  
@@ -229,14 +243,48 @@ const SubscriptionPlans: React.FC = () => {
                     <select 
                        className="w-full bg-white border border-gray-300 rounded-lg p-3 text-gray-900 focus:border-agri-secondary outline-none"
                        value={editForm.type}
-                       onChange={e => setEditForm({...editForm, type: e.target.value as any})}
+                       onChange={e => {
+                           const type = e.target.value as any;
+                           let extra: any = {};
+                           if (type === 'ALL_EXAMS') {
+                               extra = { unlockType: 'all_exams', allowedExams: ['*'] };
+                           } else if (type === 'SPECIFIC_EXAMS') {
+                               extra = { unlockType: 'specific_exams', allowedExams: editForm.allowedExams || [] };
+                           }
+                           setEditForm({...editForm, type, ...extra});
+                       }}
                     >
                        <option value="ARTICLE_ACCESS">Article Access</option>
                        <option value="BLOG_ACCESS">Blog Access</option>
                        <option value="COMBO_ACCESS">Combo (Article + Blog)</option>
                        <option value="TOOL_ACCESS">Tool Access</option>
+                       <option value="SPECIFIC_EXAMS">Specific Exams</option>
+                       <option value="ALL_EXAMS">All Exams</option>
                     </select>
                  </div>
+
+                 {editForm.type === 'SPECIFIC_EXAMS' && (
+                     <div>
+                         <label className="text-xs text-gray-500 uppercase font-bold block mb-2">Select Exams</label>
+                         <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto custom-scrollbar border border-gray-200 rounded-lg p-3">
+                             {exams.map(exam => (
+                                 <label key={exam.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                     <input 
+                                       type="checkbox" 
+                                       className="rounded text-agri-secondary"
+                                       checked={editForm.allowedExams?.includes(exam.examId) || false}
+                                       onChange={(e) => {
+                                           const examsArr = editForm.allowedExams || [];
+                                           if (e.target.checked) setEditForm({...editForm, allowedExams: [...examsArr, exam.examId]});
+                                           else setEditForm({...editForm, allowedExams: examsArr.filter(id => id !== exam.examId)});
+                                       }}
+                                     />
+                                     <span>{exam.examName} ({exam.shortName})</span>
+                                 </label>
+                             ))}
+                         </div>
+                     </div>
+                 )}
 
                  <div className="flex items-center gap-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
                     <input 
