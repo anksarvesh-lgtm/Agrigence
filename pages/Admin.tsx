@@ -1,0 +1,258 @@
+
+import React, { useState, useEffect } from 'react';
+import { mockBackend } from '../services/mockBackend';
+import { Article, EditorialMember, NewsItem, Product } from '../types';
+import { Plus, Trash2, CheckCircle, XCircle, Edit2, RefreshCw } from 'lucide-react';
+import { db } from '../src/firebase';
+import { collection, getDocs, doc, updateDoc, query, orderBy } from 'firebase/firestore';
+
+interface PasswordResetRequest {
+  id: string;
+  email: string;
+  dob: string;
+  status: 'pending' | 'reset';
+  createdAt: any;
+}
+
+const Admin: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'articles' | 'journals' | 'members' | 'products' | 'password_resets'>('articles');
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [members, setMembers] = useState<EditorialMember[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [passwordResets, setPasswordResets] = useState<PasswordResetRequest[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setArticles(await mockBackend.getArticles());
+      setMembers(await mockBackend.getMembers());
+      setProducts(await mockBackend.getProducts());
+      
+      const q = query(collection(db, 'password_reset_requests'), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      setPasswordResets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PasswordResetRequest)));
+    };
+    fetchData();
+  }, []);
+
+  const handleResetStatus = async (id: string) => {
+    await updateDoc(doc(db, 'password_reset_requests', id), { status: 'reset' });
+    setPasswordResets(prev => prev.map(r => r.id === id ? { ...r, status: 'reset' } : r));
+  };
+
+  // Article Management
+  const handleArticleAction = async (id: string, status: 'APPROVED' | 'REJECTED') => {
+    await mockBackend.updateArticleStatus(id, status);
+    setArticles(await mockBackend.getArticles());
+  };
+
+  // Member Management (Simplified)
+  const [newMember, setNewMember] = useState({ name: '', designation: '', expertise: '', profession: '', institution: '' });
+  const [editingMember, setEditingMember] = useState<EditorialMember | null>(null);
+
+  const handleAddMember = async () => {
+     if(!newMember.name) return;
+     await mockBackend.addMember({
+        ...newMember,
+        profession: newMember.profession || 'Professor',
+        institution: newMember.institution || 'H.N.130, JUDAHARADHAN BHAG-1, Juda haradhan, P.S.-Baluwa, Tahshil-Sakaldiha, Dist.- Chandauli, Uttar Pradesh, India , 221115',
+        imageUrl: `https://picsum.photos/200/200?random=${Math.random()}`,
+        order: members.length + 1,
+        isEnabled: true
+     } as any);
+     setMembers(await mockBackend.getMembers());
+     setNewMember({ name: '', designation: '', expertise: '', profession: '', institution: '' });
+  };
+
+  const handleDeleteMember = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this member?')) {
+      await mockBackend.deleteMember(id);
+      setMembers(await mockBackend.getMembers());
+    }
+  };
+
+  const handleUpdateMember = async () => {
+    if (!editingMember || !editingMember.name) return;
+    await mockBackend.updateMember(editingMember);
+    setMembers(await mockBackend.getMembers());
+    setEditingMember(null);
+  };
+
+  // Product Management
+  const [newProduct, setNewProduct] = useState({ name: '', category: 'Book', price: '', description: '', buyLink: '' });
+  const handleAddProduct = async () => {
+    if (!newProduct.name || !newProduct.price) return;
+    await mockBackend.addProduct({
+      name: newProduct.name,
+      category: newProduct.category as 'Book' | 'Store',
+      price: newProduct.price,
+      description: newProduct.description,
+      buyLink: newProduct.buyLink || '#',
+      imageUrl: `https://picsum.photos/200/300?random=${Math.random()}`,
+      stockStatus: 'IN_STOCK'
+    });
+    setProducts(await mockBackend.getProducts());
+    setNewProduct({ name: '', category: 'Book', price: '', description: '', buyLink: '' });
+  };
+  const handleDeleteProduct = async (id: string) => {
+    await mockBackend.deleteProduct(id);
+    setProducts(await mockBackend.getProducts());
+  };
+
+  const tabs = [
+    { id: 'articles', label: 'Review Articles' },
+    { id: 'members', label: 'Editorial Board' },
+    { id: 'products', label: 'Manage Store' },
+    { id: 'password_resets', label: 'Password Reset Requests' },
+  ];
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold text-stone-800 mb-6">Admin Administration</h1>
+
+      <div className="flex gap-2 border-b border-stone-200 mb-6 overflow-x-auto">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`px-6 py-3 font-medium text-sm whitespace-nowrap ${activeTab === tab.id ? 'border-b-2 border-agri-green text-agri-green' : 'text-stone-500'}`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ARTICLES TAB */}
+      {activeTab === 'articles' && (
+        <div className="space-y-4">
+          {articles.map(article => (
+            <div key={article.id} className="bg-white p-4 rounded-lg shadow-sm border border-stone-100 flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-stone-800">{article.title}</h3>
+                <p className="text-xs text-stone-500">By {article.authorName} • {article.status}</p>
+                <div className="flex gap-2 mt-2">
+                   <a href={article.fileUrl} target="_blank" rel="noreferrer" className="text-xs text-blue-600 underline">View PDF</a>
+                </div>
+              </div>
+              {article.status === 'PENDING' && (
+                <div className="flex gap-2">
+                  <button onClick={() => handleArticleAction(article.id, 'APPROVED')} className="p-2 text-green-600 hover:bg-green-50 rounded-full"><CheckCircle /></button>
+                  <button onClick={() => handleArticleAction(article.id, 'REJECTED')} className="p-2 text-red-600 hover:bg-red-50 rounded-full"><XCircle /></button>
+                </div>
+              )}
+            </div>
+          ))}
+          {articles.length === 0 && <p className="text-stone-400 text-center">No articles found.</p>}
+        </div>
+      )}
+
+      {/* PASSWORD RESETS TAB */}
+      {activeTab === 'password_resets' && (
+        <div className="space-y-4">
+          {passwordResets.map(request => (
+            <div key={request.id} className="bg-white p-4 rounded-lg shadow-sm border border-stone-100 flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-stone-800">{request.email}</h3>
+                <p className="text-xs text-stone-500">DOB: {request.dob} • Status: {request.status}</p>
+              </div>
+              {request.status === 'pending' && (
+                <button onClick={() => handleResetStatus(request.id)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-full"><RefreshCw /></button>
+              )}
+            </div>
+          ))}
+          {passwordResets.length === 0 && <p className="text-stone-400 text-center">No password reset requests.</p>}
+        </div>
+      )}
+
+
+      {/* MEMBERS TAB */}
+      {activeTab === 'members' && (
+        <div>
+           {editingMember ? (
+             <div className="bg-blue-50 p-4 rounded-lg mb-6 border border-blue-200">
+                <h3 className="font-bold mb-3 text-blue-800">Edit Board Member</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                  <input className="p-2 rounded border" placeholder="Name" value={editingMember.name} onChange={e => setEditingMember({...editingMember, name: e.target.value})} />
+                  <input className="p-2 rounded border" placeholder="Designation" value={editingMember.designation} onChange={e => setEditingMember({...editingMember, designation: e.target.value})} />
+                  <input className="p-2 rounded border" placeholder="Expertise" value={editingMember.expertise} onChange={e => setEditingMember({...editingMember, expertise: e.target.value})} />
+                  <input className="p-2 rounded border" placeholder="Profession" value={editingMember.profession} onChange={e => setEditingMember({...editingMember, profession: e.target.value})} />
+                  <input className="p-2 rounded border md:col-span-2" placeholder="Institution" value={editingMember.institution} onChange={e => setEditingMember({...editingMember, institution: e.target.value})} />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={handleUpdateMember} className="bg-blue-600 text-white px-4 py-2 rounded text-sm">Save Changes</button>
+                  <button onClick={() => setEditingMember(null)} className="bg-stone-200 text-stone-700 px-4 py-2 rounded text-sm">Cancel</button>
+                </div>
+             </div>
+           ) : (
+             <div className="bg-stone-50 p-4 rounded-lg mb-6 border border-stone-200">
+              <h3 className="font-bold mb-3">Add Board Member</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+                <input className="p-2 rounded border" placeholder="Name" value={newMember.name} onChange={e => setNewMember({...newMember, name: e.target.value})} />
+                <input className="p-2 rounded border" placeholder="Designation" value={newMember.designation} onChange={e => setNewMember({...newMember, designation: e.target.value})} />
+                <input className="p-2 rounded border" placeholder="Expertise" value={newMember.expertise} onChange={e => setNewMember({...newMember, expertise: e.target.value})} />
+                <input className="p-2 rounded border" placeholder="Profession" value={newMember.profession} onChange={e => setNewMember({...newMember, profession: e.target.value})} />
+                <input className="p-2 rounded border md:col-span-2" placeholder="Institution" value={newMember.institution} onChange={e => setNewMember({...newMember, institution: e.target.value})} />
+              </div>
+              <button onClick={handleAddMember} className="bg-agri-green text-white px-4 py-2 rounded text-sm">Add Member</button>
+            </div>
+           )}
+          
+          <div className="grid md:grid-cols-2 gap-4">
+             {members.map(m => (
+               <div key={m.id} className="bg-white p-4 border rounded flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <img src={m.imageUrl} className="w-12 h-12 rounded-full object-cover" alt={m.name} />
+                    <div>
+                      <p className="font-bold">{m.name}</p>
+                      <p className="text-xs text-stone-500">{m.designation} • {m.profession}</p>
+                      <p className="text-[10px] text-stone-400 truncate max-w-[200px]">{m.institution}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setEditingMember(m)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-full" title="Edit"><Edit2 size={16} /></button>
+                    <button onClick={() => handleDeleteMember(m.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-full" title="Delete"><Trash2 size={16} /></button>
+                  </div>
+               </div>
+             ))}
+          </div>
+        </div>
+      )}
+
+      {/* PRODUCTS TAB */}
+      {activeTab === 'products' && (
+        <div>
+           <div className="bg-stone-50 p-4 rounded-lg mb-6 border border-stone-200">
+            <h3 className="font-bold mb-3">Add Product</h3>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <input className="p-2 rounded border" placeholder="Name" value={newProduct.name} onChange={e => setNewProduct({...newProduct, name: e.target.value})} />
+              <select className="p-2 rounded border" value={newProduct.category} onChange={e => setNewProduct({...newProduct, category: e.target.value})}>
+                <option value="Book">Book</option>
+                <option value="Store">Store Item</option>
+              </select>
+              <input className="p-2 rounded border" placeholder="Price (e.g. ₹499)" value={newProduct.price} onChange={e => setNewProduct({...newProduct, price: e.target.value})} />
+              <input className="p-2 rounded border" placeholder="Buy Link" value={newProduct.buyLink} onChange={e => setNewProduct({...newProduct, buyLink: e.target.value})} />
+            </div>
+            <textarea className="w-full mb-2 p-2 rounded border" placeholder="Description" value={newProduct.description} onChange={e => setNewProduct({...newProduct, description: e.target.value})} />
+            <button onClick={handleAddProduct} className="bg-agri-green text-white px-4 py-2 rounded text-sm"><Plus size={16} className="inline" /> Add Product</button>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+             {products.map(p => (
+               <div key={p.id} className="bg-white p-4 border rounded flex items-start gap-3">
+                  <img src={p.imageUrl} className="w-16 h-24 object-cover rounded" />
+                  <div className="flex-1">
+                    <p className="font-bold">{p.name}</p>
+                    <p className="text-xs text-agri-green font-bold">{p.category} • {p.price}</p>
+                    <p className="text-xs text-stone-500 line-clamp-2">{p.description}</p>
+                  </div>
+                  <button onClick={() => handleDeleteProduct(p.id)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
+               </div>
+             ))}
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+export default Admin;
+    

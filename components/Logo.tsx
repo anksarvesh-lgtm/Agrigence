@@ -8,25 +8,27 @@ interface LogoProps {
 }
 
 const Logo: React.FC<LogoProps> = ({ className = "h-12 w-auto", variant = 'dark', showText = false }) => {
-  const defaultLogo = "https://kpnttmkkjq9kpa0f.public.blob.vercel-storage.com/settings/1778090902639-WhatsApp_Image_2026-04-05_at_21.20.18-removebg-preview.png";
+  const [tagline, setTagline] = useState('Where Agri-Intelligence Meets Agricultural Generations');
+  const defaultLogo = "/logo.png";
   const [logoPath, setLogoPath] = useState(defaultLogo);
 
   useEffect(() => {
-    const handleUrl = (url?: string) => {
-      if (!url || url.includes('/logo.png') || url === 'null' || url === 'undefined') {
+    const handleUrl = (url?: string, tag?: string) => {
+      if (!url || url === 'null' || url === 'undefined') {
         setLogoPath(defaultLogo);
       } else {
         setLogoPath(url);
       }
+      if (tag) setTagline(tag);
     };
 
     // Initial fetch
     const settings = mockBackend.getSettings();
-    handleUrl(settings?.logoUrl);
+    handleUrl(settings?.logoUrl, settings?.tagline);
 
     // Subscribe to future updates
     const unsub = mockBackend.subscribeToSettings((data) => {
-      handleUrl(data?.logoUrl);
+      handleUrl(data?.logoUrl, data?.tagline);
     });
 
     return () => unsub();
@@ -48,9 +50,14 @@ const Logo: React.FC<LogoProps> = ({ className = "h-12 w-auto", variant = 'dark'
         key={logoPath}
       />
       {showText && (
-        <span className={`font-serif font-bold text-2xl ${variant === 'dark' ? 'text-agri-primary' : 'text-white'}`}>
-          Agrigence Publication
-        </span>
+        <div className="flex flex-col justify-center">
+          <span className={`font-serif font-bold text-2xl leading-none ${variant === 'dark' ? 'text-agri-primary' : 'text-white'}`}>
+            Agrigence Publication
+          </span>
+          <span className={`text-[9px] sm:text-[10px] font-medium tracking-wide mt-1 leading-tight ${variant === 'dark' ? 'text-stone-500' : 'text-white/80'}`}>
+            {tagline}
+          </span>
+        </div>
       )}
     </div>
   );

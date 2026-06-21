@@ -53,7 +53,7 @@ service cloud.firestore {
       return isSignedIn() && (
         (request.auth.token.email == 'anksarvesh@gmail.com' || request.auth.token.email == 'agrigence@gmail.com') ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPER_ADMIN')
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'USER') == 'SUPER_ADMIN')
       );
     }
 
@@ -62,8 +62,7 @@ service cloud.firestore {
       return isSignedIn() && (
         (request.auth.token.email == 'anksarvesh@gmail.com' || request.auth.token.email == 'agrigence@gmail.com') ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SUPER_ADMIN' || 
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN'))
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'USER') in ['SUPER_ADMIN', 'ADMIN'])
       );
     }
 
@@ -256,8 +255,7 @@ service cloud.firestore {
     // --- OPERATIONAL DATA ---
 
     match /payments/{paymentId} {
-      allow get: if isOwner(resource.data.userId) || isAdmin();
-      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow read: if isOwner(resource.data.userId) || isAdmin();
       allow create: if isOwner(request.resource.data.userId);
       allow update: if isAdmin();
       allow delete: if isSuperAdmin();
@@ -306,62 +304,6 @@ service cloud.firestore {
 
 
     // --- NEW APP FEATURES ---
-
-    match /appConfig/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /question_banks/{docId} {
-      allow read: if true;
-      allow write: if false;
-    }
-
-    match /user_profiles/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
-    }
-
-    match /onboarding_status/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
-    }
-
-    match /user_preferences/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
-    }
-
-    match /target_exams/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
-    }
-
-    match /dashboard_preferences/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
-    }
-
-    match /weak_topics/{docId} {
-      allow read, write: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid || isAdmin());
-    }
-
-    match /revision_queue/{docId} {
-      allow read, write: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid || isAdmin());
-    }
-
-    match /leaderboards/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /subscriptions/{docId} {
-      allow read: if isOwner(resource.data.userId) || isAdmin();
-      allow write: if isAdmin();
-    }
-
-    match /study_sessions/{docId} {
-      allow read, write: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid || isAdmin());
-    }
-
-    match /bookmarks/{docId} {
-      allow read, write: if isSignedIn() && (resource == null || resource.data.userId == request.auth.uid || request.resource.data.userId == request.auth.uid || isAdmin());
-    }
 
     match /trash/{docId} {
       allow read: if isAdmin();

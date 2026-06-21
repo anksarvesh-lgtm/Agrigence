@@ -3,7 +3,9 @@ import { FileText, Shield, Loader2, Lock, Download } from 'lucide-react';
 
 export interface SecurePDFViewerProps {
   /** The Google Drive file ID */
-  fileId: string;
+  fileId?: string;
+  /** Direct URL to the file */
+  fileUrl?: string;
   /** Title of the document */
   title?: string;
   /** Use the advanced PDF.js iframe which provides maximum restriction (no native download button) */
@@ -13,7 +15,8 @@ export interface SecurePDFViewerProps {
 }
 
 export const SecurePDFViewer: React.FC<SecurePDFViewerProps> = ({ 
-  fileId, 
+  fileId,
+  fileUrl,
   title = "Secure Document", 
   advancedMode = true,
   allowDownload = false
@@ -30,7 +33,7 @@ export const SecurePDFViewer: React.FC<SecurePDFViewerProps> = ({
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  const iframeSrc = `/pdf-viewer.html?file=${fileId}&download=${allowDownload}`;
+  const iframeSrc = fileUrl ? `/pdf-viewer.html?file=${encodeURIComponent(fileUrl)}&download=${allowDownload}` : `/pdf-viewer.html?file=${fileId}&download=${allowDownload}`;
 
   return (
     <div className="w-full mx-auto flex flex-col border border-stone-200 dark:border-stone-800 rounded-3xl overflow-hidden bg-white dark:bg-stone-900 shadow-2xl">

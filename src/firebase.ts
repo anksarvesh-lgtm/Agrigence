@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, doc, getDocFromServer, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, setLogLevel } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAtJrLiAnhN5A4umArJKtqhnWmoXXf27K8",
@@ -24,6 +25,7 @@ export const db = initializeFirestore(app, {
   }),
   experimentalAutoDetectLongPolling: true,
 });
+export const storage = getStorage(app);
 
 async function testConnection() {
   try {

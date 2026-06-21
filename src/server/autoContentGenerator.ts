@@ -1,12 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
-import { KHETAI_SYSTEM_INSTRUCTION } from './../lib/khetai.ts';
-import * as admin from 'firebase-admin';
-
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-const adminDb = admin.firestore(); 
-
+import { AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION } from './../lib/agrigenceAssistant';
+import { db } from '../firebase.ts'; 
+import { collection, doc, setDoc, getDocs, addDoc } from 'firebase/firestore';
 
 
 // --- Types ---
@@ -366,7 +361,7 @@ async function generateHtmlContent(prompt: string): Promise<string> {
       model: 'gemini-1.5-flash',
       contents: prompt,
       config: {
-        systemInstruction: KHETAI_SYSTEM_INSTRUCTION
+        systemInstruction: AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION
       }
     });
     let html = response.text || '';
@@ -386,7 +381,7 @@ async function generateJsonContent(prompt: string): Promise<any> {
         model: 'gemini-1.5-flash',
         contents: prompt,
         config: {
-          systemInstruction: KHETAI_SYSTEM_INSTRUCTION
+          systemInstruction: AGRIGENCE_ASSISTANT_SYSTEM_INSTRUCTION
         }
       });
       let text = response.text || '';
@@ -428,8 +423,8 @@ export async function processAndSaveDailyBlog() {
   };
 
   try {
-    const docRef = adminDb.collection('articles').doc(blogData.slug);
-    await docRef.set(blogDoc);
+    const docRef = doc(db, 'articles', blogData.slug);
+    await setDoc(docRef, blogDoc);
     console.log(`Successfully generated and published blog: ${blogData.title}`);
   } catch (error) {
     console.error("Firestore Blog Save Error:", error);
@@ -541,7 +536,7 @@ export async function processAndSaveDailyNews() {
       publishDate: new Date().toISOString()
     };
     try {
-      await adminDb.collection('news').add(newsDoc);
+      await addDoc(collection(db, 'news'), newsDoc);
       console.log(`Saved news: ${item.title}`);
     } catch (e) {
       console.error("News Save Error:", e);
@@ -563,7 +558,7 @@ export async function processAndSaveDailySchemes() {
       isActive: true
     };
     try {
-      await adminDb.collection('govt_schemes').add(schemeDoc);
+      await addDoc(collection(db, 'govt_schemes'), schemeDoc);
       console.log(`Saved scheme: ${item.title}`);
     } catch (e) {
       console.error("Scheme Save Error:", e);
@@ -594,8 +589,8 @@ export async function processAndSaveMandiPage(data: MandiDataInput) {
 
   // Save to Firestore
   try {
-    const docRef = adminDb.collection('generatedPages').doc(`mandi_${slug}`);
-    await docRef.set(pageDoc);
+    const docRef = doc(db, 'generatedPages', `mandi_${slug}`);
+    await setDoc(docRef, pageDoc);
     console.log(`Successfully generated and saved page for ${data.city}`);
   } catch (error) {
     console.error("Firestore Save Error:", error);

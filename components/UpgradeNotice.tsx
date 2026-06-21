@@ -10,8 +10,8 @@ interface UpgradeNoticeProps {
 }
 
 const UpgradeNotice: React.FC<UpgradeNoticeProps> = ({ 
-  title = "Pass Feature Locked", 
-  message = "Your current Pass plan has expired or doesn't include access to this feature. Renew your Pass to continue your research.",
+  title = "Premium Feature Locked", 
+  message = "Your current plan has expired or doesn't include access to this feature. Renew your subscription to continue your research.",
   type = 'general'
 }) => {
   return (
@@ -35,7 +35,7 @@ const UpgradeNotice: React.FC<UpgradeNoticeProps> = ({
           className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 w-full sm:w-auto justify-center"
         >
           <Zap className="w-4 h-4 fill-current" />
-          Renew Pass
+          Renew Subscription
           <ArrowRight className="w-4 h-4" />
         </Link>
         

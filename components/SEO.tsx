@@ -18,7 +18,7 @@ const SEO: React.FC<SEOProps> = ({
   image = 'https://agrigence.in/logo.png', 
   type = 'website',
   schema,
-  keywords = 'agriculture, farming, agritech, india, mandi bhav, gov schemes, crop advisory'
+  keywords = 'Agrigence Publication, agriculture, farming, agritech, india, mandi bhav, gov schemes, crop advisory'
 }) => {
   const currentUrl = (url || (typeof window !== 'undefined' ? window.location.href : 'https://agrigence.in')).replace(/\/$/, '');
   
