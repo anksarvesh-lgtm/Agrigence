@@ -1,0 +1,4 @@
+## 2024-06-28 - Missing Authentication on Admin Endpoints
+**Vulnerability:** Backend admin routes (`/api/admin/*`) in `server.ts` lack authentication, allowing any unauthenticated user to upload blobs, delete blobs, or trigger server-side jobs like generating blogs and updating mandi data.
+**Learning:** In express.js, organizing routes under an `/api/admin/` prefix does not automatically protect them. An explicit middleware that verifies an API key or session token must be created and applied. The agent memory specifically instructs that a `requireAdminAuth` middleware must be used and should validate the `x-admin-key` header against the `ADMIN_API_KEY` environment variable.
+**Prevention:** Implement a standard `requireAdminAuth` middleware and apply it universally to all endpoints prefixed with `/admin/`.
