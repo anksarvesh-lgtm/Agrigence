@@ -1,0 +1,4 @@
+## 2025-02-14 - Fix missing authentication on admin endpoints
+**Vulnerability:** Found multiple sensitive admin API endpoints (`/api/admin/blob/upload`, `/api/admin/blob/delete`, `/api/admin/generate-daily-blog`, `/api/admin/trigger-mandi-update`) that lacked any authentication checks in `server.ts`. This allowed anyone to access these routes and perform unauthorized actions like file manipulation and triggering jobs.
+**Learning:** Even if endpoints are grouped under an `/admin` prefix, they do not inherently restrict access. All sensitive endpoints must explicitly use a robust auth middleware.
+**Prevention:** Ensure all routes that perform administrative or sensitive operations have an authentication middleware (like `requireAdminAuth`) explicitly applied. Regularly review routes in `server.ts` to confirm access controls are enforced.
