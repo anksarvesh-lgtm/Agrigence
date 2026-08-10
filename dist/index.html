@@ -1,0 +1,373 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary Meta Tags -->
+    <meta name="google-site-verification" content="YOUR_VERIFICATION_CODE_HERE" />
+    <title>Agrigence Publication</title>
+    <meta name="title" content="Agrigence Publication">
+    <meta name="description" content="Where Agri-Intelligence Meets Agricultural Generations.">
+    <meta name="keywords" content="Agrigence Publication, agriculture journal, research publishing, agronomy, horticulture, soil science, agricultural engineering, peer-reviewed journal, ISSN India, ICAR research">
+    <meta name="author" content="Agrigence Teams">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://agrigence.in/" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://agrigence.in/">
+    <meta property="og:title" content="Agrigence Publication">
+    <meta property="og:description" content="Where Agri-Intelligence Meets Agricultural Generations.">
+    <meta property="og:image" content="https://agrigence.in/logo.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://agrigence.in/">
+    <meta property="twitter:title" content="Agrigence Publication">
+    <meta property="twitter:description" content="Where Agri-Intelligence Meets Agricultural Generations.">
+    <meta property="twitter:image" content="https://agrigence.in/logo.png">
+
+    <!-- AdSense Removed -->
+
+    <!-- reCAPTCHA -->
+    <script src="https://www.google.com/recaptcha/enterprise.js?render=6LetmqQsAAAAACJwuao3JjBGJ9UCABZWVMkqXINX"></script>
+
+    <!-- Preconnects for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://images.unsplash.com">
+
+    <!-- International SEO Signals -->
+
+    <link id="dynamic-favicon" rel="icon" type="image/png" href="https://agrigence.in/logo.png" />
+
+    <!-- Preload Critical Hero Image -->
+    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=2070&auto=format&fit=crop" />
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+      // Prevent theme flashing
+      if (localStorage.getItem('theme') === 'dark' || !localStorage.getItem('theme')) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    </script>
+
+    <!-- Tailwind CDN for styling configuration -->
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary-journal: #002147; /* Navy Blue Academic */
+        --secondary-journal: #1A3C40; /* Dark Forest Green */
+        --accent-journal: #C29263; /* Professional Tan/Gold */
+        --bg-journal: #FFFFFF; /* White background */
+        --text-journal: #1F2937; /* Grey 800 */
+        --border-journal: #E5E7EB; /* Grey 200 */
+        --grid-color: rgba(0, 33, 71, 0.03);
+      }
+      .dark {
+        --primary-journal: #94A3B8;
+        --secondary-journal: #4ADE80;
+        --accent-journal: #FDE047;
+        --bg-journal: #0F172A;
+        --text-journal: #F1F5F9;
+        --border-journal: #1E293B;
+        --grid-color: rgba(255, 255, 255, 0.05);
+      }
+      html {
+        position: relative;
+      }
+      body {
+        background-color: var(--bg-journal);
+        color: var(--text-journal);
+        background-image: radial-gradient(var(--grid-color) 0.5px, transparent 0.5px);
+        background-size: 30px 30px;
+      }
+      .premium-shadow {
+        box-shadow: 0 10px 40px -10px rgba(61, 43, 31, 0.1);
+      }
+      .harvest-gradient {
+        background: linear-gradient(135deg, var(--primary-earth) 0%, #2A1D15 100%);
+      }
+      @keyframes scanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
+      }
+      .animate-scanline {
+        animation: scanline 4s linear infinite;
+      }
+      .glossy {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 100%);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+      .glossy-card {
+        position: relative;
+        overflow: hidden;
+      }
+      .glossy-card::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+          45deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.03) 45%,
+          rgba(255, 255, 255, 0.07) 50%,
+          rgba(255, 255, 255, 0.03) 55%,
+          transparent 100%
+        );
+        transform: rotate(25deg);
+        pointer-events: none;
+      }
+      /* --- WEATHER ANIMATIONS --- */
+      .sun-container {
+          position: relative;
+          width: 60px;
+          height: 60px;
+          background: radial-gradient(circle, #ffce54 40%, #f6bb42 100%);
+          border-radius: 50%;
+          box-shadow: 0 0 20px #ffce54;
+          animation: pulse-sun 3s infinite ease-in-out;
+      }
+      .sun-container::after {
+          content: "";
+          position: absolute;
+          top: -20%; left: -20%; width: 140%; height: 140%;
+          border: 4px dashed #ffce54;
+          border-radius: 50%;
+          animation: rotate-rays 10s linear infinite;
+          opacity: 0.6;
+      }
+      @keyframes pulse-sun {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 20px #ffce54; }
+          50% { transform: scale(1.1); box-shadow: 0 0 30px #f6bb42; }
+      }
+      @keyframes rotate-rays {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+      }
+      .rain-container {
+          width: 60px;
+          height: 60px;
+          background: #e6e9ed;
+          border-radius: 12px;
+          position: relative;
+          overflow: hidden;
+          box-shadow: inset 0 -10px 20px rgba(0,0,0,0.1);
+      }
+      .drop {
+          position: absolute;
+          background: linear-gradient(to bottom, rgba(255,255,255,0) 0%, #4a89dc 100%);
+          width: 3px;
+          height: 20px;
+          top: -25px;
+          animation: fall linear infinite;
+      }
+      @keyframes fall {
+          to { transform: translateY(85px); }
+      }
+      .drop:nth-child(1) { left: 20%; animation-duration: 0.7s; }
+      .drop:nth-child(2) { left: 50%; animation-duration: 0.9s; animation-delay: 0.2s; }
+      .drop:nth-child(3) { left: 80%; animation-duration: 0.6s; animation-delay: 0.4s; }
+      .drop:nth-child(4) { left: 35%; animation-duration: 0.8s; animation-delay: 0.1s; }
+      .drop:nth-child(5) { left: 65%; animation-duration: 0.6s; animation-delay: 0.5s; }
+      .cloud-anim {
+          width: 60px; height: 35px;
+          background: white;
+          border-radius: 30px;
+          position: relative;
+          box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      }
+      .cloud-anim::before, .cloud-anim::after {
+          content: ''; position: absolute; background: white; border-radius: 50%;
+      }
+      .cloud-anim::before { width: 25px; height: 25px; top: -10px; left: 10px; }
+      .cloud-anim::after { width: 35px; height: 35px; top: -15px; right: 10px; }
+      .cloud-container {
+          display: flex; align-items: center; justify-content: center;
+          width: 60px; height: 60px; overflow: hidden; position: relative;
+          background: #4fc3f7; border-radius: 16px;
+      }
+      .moving-cloud {
+          animation: move-cloud 4s linear infinite;
+      }
+      @keyframes move-cloud {
+          0% { transform: translateX(-60px); }
+          100% { transform: translateX(60px); }
+      }
+      .thunder-container {
+          width: 60px; height: 60px;
+          background: #434a54; border-radius: 12px; position: relative; overflow: hidden;
+      }
+      .thunder-container .storm-cloud {
+          background: #656d78; width: 45px; height: 25px; border-radius: 20px;
+          position: absolute; top: 10px; left: 7px;
+      }
+      .thunder-container .storm-cloud::before {
+          content: ''; position: absolute; width: 20px; height: 20px; top: -10px; left: 10px; background: #656d78; border-radius: 50%;
+      }
+      .lightning {
+          position: absolute; bottom: 5px; left: 25px; width: 0; height: 0;
+          border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 15px solid #ffce54;
+          animation: flash 2s infinite;
+      }
+      @keyframes flash {
+          0%, 90%, 100% { opacity: 0; }
+          91%, 95% { opacity: 1; }
+      }
+      .fog-container {
+          width: 60px; height: 60px;
+          background: #aab2bd; border-radius: 12px; position: relative; overflow: hidden;
+          display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+      }
+      .fog-bar {
+          width: 40px; height: 4px; background: rgba(255,255,255,0.7); border-radius: 2px;
+          animation: fade-fog 3s infinite alternate;
+      }
+      .fog-bar:nth-child(2) { width: 30px; animation-delay: 0.5s; opacity: 0.4;}
+      .fog-bar:nth-child(3) { width: 45px; animation-delay: 1s; opacity: 0.5;}
+      @keyframes fade-fog {
+          0% { transform: translateX(-5px); opacity: 0.2; }
+          100% { transform: translateX(5px); opacity: 0.8; }
+      }
+
+      /* Blog Content Enhancements */
+      .prose img {
+        border-radius: 1.5rem;
+        box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1);
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border-sepia);
+      }
+      .prose h2, .prose h1, .prose h3 {
+        color: var(--primary-earth);
+        font-family: 'Playfair Display', serif;
+        margin-top: 2.5rem;
+        margin-bottom: 1.25rem;
+        font-weight: 700;
+        line-height: 1.3;
+      }
+      .prose p {
+        margin-bottom: 1.5rem;
+        line-height: 1.8;
+      }
+      .prose ul {
+        list-style-type: disc;
+        padding-left: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+      .prose ol {
+        list-style-type: decimal;
+        padding-left: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+      .prose li {
+        margin-bottom: 0.5rem;
+        padding-left: 0.25rem;
+      }
+      .prose strong {
+        color: var(--primary-earth);
+        font-weight: 700;
+      }
+      .prose table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2rem 0;
+        font-family: sans-serif;
+      }
+      .prose th {
+        background-color: var(--bg-silk);
+        color: var(--primary-earth);
+        font-weight: 700;
+        padding: 0.75rem;
+        border: 1px solid var(--border-sepia);
+        text-align: left;
+      }
+      .prose td {
+        padding: 0.75rem;
+        border: 1px solid var(--border-sepia);
+      }
+      .agri-infographic {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 2rem;
+        border-radius: 1.5rem;
+        margin: 2rem 0;
+        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+      }
+      .dark .agri-infographic {
+        background: #1e293b;
+        border-color: #334155;
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+              serif: ['"Playfair Display"', 'serif'],
+            },
+            colors: {
+              agri: {
+                primary: 'var(--primary-journal)',
+                secondary: 'var(--secondary-journal)',
+                gold: 'var(--accent-journal)',
+                bg: 'var(--bg-journal)',
+                text: 'var(--text-journal)',
+                border: 'var(--border-journal)',
+                accent: '#002147',
+              },
+              admin: {
+                bg: '#FDFCFB',       // Bright Warm White
+                card: '#FFFFFF',     // Pure White
+                text: '#000000',     // Pure Black for Text
+                secondary: '#333333',// Dark Charcoal for secondary text
+                muted: '#57534E',    // Stone 600 for muted text
+                border: '#E7E5E4',   // Stone 200 for borders
+                hover: '#F5F5F4',    // Stone 100 for hover states
+                header: '#FFFFFF',   // White Headers
+                sidebar: '#F5F5F4',  // Light Stone Sidebar
+                sidebarText: '#000000', // Black Sidebar Text
+                sidebarHover: '#E7E5E4', // Darker Stone Hover
+                input: '#FFFFFF',
+                inputBorder: '#D6D3D1', // Stone 300
+                inputFocus: '#000000'
+              }
+            },
+            boxShadow: {
+              'premium': '0 20px 50px -12px rgba(61, 43, 31, 0.12)',
+              'admin': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)'
+            },
+          }
+        }
+      }
+    </script>
+  <script type="module" crossorigin src="/assets/index-CMX_NtqG.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-iE6uqdSv.css">
+</head>
+  <body class="bg-agri-bg text-agri-text antialiased selection:bg-agri-secondary selection:text-white">
+    <div id="error-container" style="display: none; color: red; padding: 20px; font-family: monospace; white-space: pre-wrap;"></div>
+    <script>
+      window.addEventListener('error', function(e) {
+        document.getElementById('error-container').style.display = 'block';
+        document.getElementById('error-container').innerText += e.message + '\n' + (e.error && e.error.stack ? e.error.stack : '') + '\n\n';
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        document.getElementById('error-container').style.display = 'block';
+        document.getElementById('error-container').innerText += e.reason + '\n\n';
+      });
+    </script>
+    <div id="root"></div>
+  </body>
+</html>
