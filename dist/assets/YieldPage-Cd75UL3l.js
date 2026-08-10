@@ -1,0 +1,1 @@
+import{j as t}from"./index-CMX_NtqG.js";function i(){return t.jsxs("div",{className:"p-6",children:[t.jsx("h1",{className:"text-2xl font-bold",children:"Yield Estimator"}),t.jsx("p",{children:"Scientific yield estimation tool based on crop-cutting / component method."})]})}export{i as default};
