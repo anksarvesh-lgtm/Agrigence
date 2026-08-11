@@ -1,0 +1,4 @@
+## 2025-02-18 - Missing Authentication on Admin Endpoints
+**Vulnerability:** Admin API endpoints in `server.ts` (e.g., `/api/admin/blob/upload`, `/api/admin/generate-daily-blog`) lacked authentication checks, leaving them exposed to public access. Simply prefixing routes with `/admin` does not secure them.
+**Learning:** Admin endpoints must be explicitly protected. Adding the `requireAdminAuth` middleware ensures that only clients with a valid `x-admin-key` header matching the `ADMIN_API_KEY` env var can access them. Additionally, TS files imported in backend code should use the `.js` extension (e.g., `./src/middleware/auth.js`) due to ESM resolution in Node.
+**Prevention:** Always verify that routes performing sensitive operations (admin triggers, blob storage writes/deletes) are secured with an explicit authentication middleware.
