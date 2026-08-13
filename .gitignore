@@ -1,0 +1,11 @@
+
+# Dependencies
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Lockfiles (optional depending on team preference, but generally committed. Leaving this out for now to only ignore node_modules)
