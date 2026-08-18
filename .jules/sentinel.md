@@ -1,0 +1,4 @@
+## 2024-05-15 - Missing Authentication on Admin Endpoints
+**Vulnerability:** Admin routes (`/api/admin/blob/upload`, `/api/admin/blob/delete`, `/api/admin/generate-daily-blog`, `/api/admin/trigger-mandi-update`) lacked authentication, allowing any unauthenticated user to upload/delete blobs or trigger background jobs like blog generation and mandi updates. This could lead to resource exhaustion, data loss, or tampering.
+**Learning:** Grouping routes under an `/admin` prefix does not automatically secure them. Middlewares must be explicitly attached to each route or to the entire router namespace.
+**Prevention:** Always implement a dedicated authentication middleware for sensitive routes and ensure it is attached either globally to a specific path prefix router or individually to each handler.
