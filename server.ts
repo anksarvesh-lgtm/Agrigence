@@ -12,6 +12,7 @@ import { GoogleGenAI } from "@google/genai";
 import { put, del } from '@vercel/blob';
 import multer from 'multer';
 import * as dotenv from 'dotenv';
+import { requireAdminAuth } from './src/middleware/auth.js';
 
 dotenv.config();
 
@@ -130,7 +131,7 @@ async function startServer() {
   });
 
   // === Vercel Blob Upload Proxy ===
-  app.post('/api/admin/blob/upload', upload.single('file'), async (req, res) => {
+  app.post('/api/admin/blob/upload', requireAdminAuth, upload.single('file'), async (req, res) => {
     try {
       console.log('Blob upload request received');
       const token = process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL_BLOB_TOKEN || process.env.VERCEL_BLOB_READ_WRITE_TOKEN;
@@ -185,7 +186,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/admin/blob/delete', async (req, res) => {
+  app.post('/api/admin/blob/delete', requireAdminAuth, async (req, res) => {
     try {
       const { url } = req.body;
       if (!url) return res.status(400).json({ error: 'URL is required' });
@@ -207,9 +208,8 @@ async function startServer() {
   // express.json() moved to top
 
   // Manual trigger endpoint for testing
-  app.post('/api/admin/generate-daily-blog', async (req, res) => {
+  app.post('/api/admin/generate-daily-blog', requireAdminAuth, async (req, res) => {
     try {
-      // In production, add auth check here
       await processAndSaveDailyBlog();
       res.json({ message: 'Blog generation process started successfully' });
     } catch (err: any) {
@@ -217,7 +217,7 @@ async function startServer() {
     }
   });
 
-  app.post('/api/admin/trigger-mandi-update', async (req, res) => {
+  app.post('/api/admin/trigger-mandi-update', requireAdminAuth, async (req, res) => {
     try {
       // For now we just trigger one sample, but in real case it would loop through all cities
       const sampleMandiUpdate: MandiDataInput = {
