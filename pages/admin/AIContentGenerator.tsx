@@ -229,10 +229,16 @@ const AIContentGenerator: React.FC = () => {
     setMessage('Connecting to Market Data Engine...');
     
     try {
+      let adminKey = localStorage.getItem('admin_api_key');
+      if (!adminKey) {
+        adminKey = prompt('Enter Admin API Key:') || '';
+        if (adminKey) localStorage.setItem('admin_api_key', adminKey);
+      }
       const response = await fetch('/api/admin/trigger-mandi-update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-admin-key': adminKey
         }
       });
       
