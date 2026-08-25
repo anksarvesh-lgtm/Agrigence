@@ -1,0 +1,4 @@
+## 2024-05-18 - RCE via Unsafe Eval in Pipeline Transforms
+**Vulnerability:** The `pipelineEngine.ts` file used an unsafe `eval()` call in `applyTransform` to evaluate math expressions on table data rows. This allowed potential arbitrary code execution by crafting a malicious operation payload.
+**Learning:** `eval()` should never be used, especially when interpolating any form of runtime data into it. Even simple transform pipelines need strict input validation.
+**Prevention:** If evaluating math expressions is required, use a strict regular expression (like `/^[-+*/().\s\d]+$/`) to whitelist acceptable characters, and use `new Function()` as a slightly safer (and more easily tested) alternative to `eval()` when parsing dynamic, pre-validated logic. In a real-world scenario, a dedicated math parsing library like `mathjs` is even better.
