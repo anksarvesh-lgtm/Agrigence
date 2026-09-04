@@ -109,9 +109,18 @@ const applyTransform = (data: any[], config: any) => {
       // Note: eval is used here for prototyping as per guide. 
       // In production, use a safe math parser like mathjs.
       const safeOp = operation.replace(/x/g, String(row[column]));
+
+      // 🛡️ Sentinel: Prevent RCE by validating mathematical operations before execution
+      if (!/^[-+*/().\s\deE]+$/.test(safeOp)) {
+        throw new Error("Invalid mathematical operation detected. Execution aborted for security.");
+      }
+
+      // 🛡️ Sentinel: Replaced eval() with a strictly scoped new Function()
+      const result = new Function(`return ${safeOp}`)();
+
       return {
         ...row,
-        [column]: eval(safeOp)
+        [column]: result
       };
     } catch (e) {
       console.error("Transform error:", e);
