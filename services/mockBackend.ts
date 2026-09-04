@@ -1289,9 +1289,13 @@ class FirebaseBackendService {
 
   async deleteFromBlob(url: string): Promise<void> {
       try {
+          const adminKey = localStorage.getItem('admin_api_key') || '';
           const response = await fetch('/api/admin/blob/delete', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: {
+                  'Content-Type': 'application/json',
+                  'x-admin-key': adminKey
+              },
               body: JSON.stringify({ url })
           });
           if (!response.ok) {
@@ -1310,8 +1314,12 @@ class FirebaseBackendService {
       formData.append('path', path);
 
       try {
+          const adminKey = localStorage.getItem('admin_api_key') || '';
           const response = await fetch('/api/admin/blob/upload', {
               method: 'POST',
+              headers: {
+                  'x-admin-key': adminKey
+              },
               body: formData
           });
 
