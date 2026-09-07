@@ -106,12 +106,20 @@ const applyTransform = (data: any[], config: any) => {
 
   return data.map((row) => {
     try {
-      // Note: eval is used here for prototyping as per guide. 
-      // In production, use a safe math parser like mathjs.
+      // Security fix: Replaced eval with new Function and added whitelist validation
+      // to prevent RCE vulnerabilities. Only allows mathematical operations.
       const safeOp = operation.replace(/x/g, String(row[column]));
+
+      if (!/^[-+*/().\s\deE]+$/.test(safeOp)) {
+          throw new Error("Invalid characters in transform operation");
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval
+      const result = new Function(`return ${safeOp}`)();
+
       return {
         ...row,
-        [column]: eval(safeOp)
+        [column]: result
       };
     } catch (e) {
       console.error("Transform error:", e);
