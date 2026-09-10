@@ -106,12 +106,23 @@ const applyTransform = (data: any[], config: any) => {
 
   return data.map((row) => {
     try {
-      // Note: eval is used here for prototyping as per guide. 
-      // In production, use a safe math parser like mathjs.
-      const safeOp = operation.replace(/x/g, String(row[column]));
+      // Security fix: Replaced eval with new Function and added strict whitelist validation
+      // to prevent Remote Code Execution (RCE) via untrusted transform operations.
+      // We also handle null or undefined gracefully.
+      const val = row[column] != null ? row[column] : 0;
+      const safeOp = operation.replace(/x/g, String(val));
+
+      // Validate that the operation contains only mathematical characters
+      if (!/^[-+*/().%\s\deE]+$/.test(safeOp)) {
+        throw new Error("Invalid characters in transformation operation");
+      }
+
+      // Use new Function as a safer alternative to eval for pure mathematical expressions
+      const result = new Function(`return ${safeOp}`)();
+
       return {
         ...row,
-        [column]: eval(safeOp)
+        [column]: result
       };
     } catch (e) {
       console.error("Transform error:", e);
