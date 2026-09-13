@@ -104,14 +104,29 @@ const applyTransform = (data: any[], config: any) => {
   const { column, operation } = config;
   if (!column || !operation) return data;
 
+  // Security: Prevent RCE by enforcing strict character whitelist.
+  // Validate the mathematical expression before execution.
+  const validationOp = operation.replace(/x/g, '0');
+  if (!/^[-+*/().%\s\deE]+$/.test(validationOp)) {
+    console.error("Transform error: Invalid operation - RCE risk detected.");
+    return data;
+  }
+
   return data.map((row) => {
     try {
-      // Note: eval is used here for prototyping as per guide. 
-      // In production, use a safe math parser like mathjs.
-      const safeOp = operation.replace(/x/g, String(row[column]));
+      // Ensure null/undefined values are handled correctly to prevent regex failure
+      const val = row[column] ?? 0;
+      const safeOp = operation.replace(/x/g, String(val));
+
+      // Secondary check per row just in case
+      if (!/^[-+*/().%\s\deE]+$/.test(safeOp)) {
+          throw new Error("Invalid characters in expression");
+      }
+
+      // Use new Function instead of eval for safer evaluation
       return {
         ...row,
-        [column]: eval(safeOp)
+        [column]: new Function('return ' + safeOp)()
       };
     } catch (e) {
       console.error("Transform error:", e);
