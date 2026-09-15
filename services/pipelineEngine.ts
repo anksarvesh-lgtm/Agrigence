@@ -106,12 +106,21 @@ const applyTransform = (data: any[], config: any) => {
 
   return data.map((row) => {
     try {
-      // Note: eval is used here for prototyping as per guide. 
-      // In production, use a safe math parser like mathjs.
-      const safeOp = operation.replace(/x/g, String(row[column]));
+      // Note: Replaced eval with new Function and added strict whitelist regex for security
+      const val = row[column] ?? 0;
+      const safeOp = operation.replace(/x/g, String(val));
+
+      // Strict regex to allow only math operations and numbers (including modulo)
+      if (!/^[-+*/().%\s\deE]+$/.test(safeOp)) {
+        throw new Error("Invalid characters in transform operation");
+      }
+
+      // eslint-disable-next-line no-new-func
+      const result = new Function(`return ${safeOp}`)();
+
       return {
         ...row,
-        [column]: eval(safeOp)
+        [column]: result
       };
     } catch (e) {
       console.error("Transform error:", e);
