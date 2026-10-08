@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 650" width="100%" height="100%">
+  <!-- Background -->
+  <rect width="500" height="650" fill="transparent"/>
+
+  <g id="logo-mark">
+    <!-- Dark Green Nib - Upper Left -->
+    <path d="M 246,40 L 115,305 L 246,470 Z" fill="#1C4B35" />
+    
+    <!-- Dark Green Nib - Upper Right -->
+    <path d="M 254,40 L 385,305 L 254,470 Z" fill="#1C4B35" />
+
+    <!-- Dark Green Nib - Lower Left -->
+    <path d="M 246,210 L 115,375 L 246,600 Z" fill="#1C4B35" />
+    
+    <!-- Dark Green Nib - Lower Right -->
+    <path d="M 254,210 L 385,375 L 254,600 Z" fill="#1C4B35" />
+
+    <!-- Sprouting Leaves - Left Leaf -->
+    <path d="M 246,340 C 180,280 130,290 85,310 C 130,380 180,420 246,410 Z" fill="#3DA872" />
+
+    <!-- Sprouting Leaves - Right Leaf -->
+    <path d="M 254,340 C 320,280 370,290 415,310 C 370,380 320,420 254,410 Z" fill="#3DA872" />
+
+    <!-- Breather Hole (White Circle) -->
+    <circle cx="250" cy="340" r="18" fill="#FFFFFF" />
+
+    <!-- Center Nib Split Line (White Vertical Gap) -->
+    <line x1="250" y1="35" x2="250" y2="605" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" />
+  </g>
+</svg>

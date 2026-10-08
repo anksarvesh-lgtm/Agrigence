@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0">
+    <title>Secure PDF Viewer</title>
+    <!-- PDF.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --toolbar-bg: #1f2937;
+            --toolbar-text: #ffffff;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #111827;
+                --container-bg: #1f2937;
+                --text-color: #f9fafb;
+                --toolbar-bg: #000000;
+                --toolbar-text: #ffffff;
+            }
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #toolbar {
+            background-color: rgba(31, 41, 55, 0.95);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: var(--toolbar-text);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        button {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+        }
+        button:hover:not(:disabled) { 
+            background: rgba(255, 255, 255, 0.15); 
+            transform: translateY(-1px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
+        
+        #btn-download {
+            background: #c29263;
+            border: none;
+            width: auto;
+            padding: 0 16px;
+            font-weight: 600;
+            gap: 8px;
+        }
+        #btn-download:hover {
+            background: #d4a373;
+            box-shadow: 0 4px 12px rgba(194, 146, 99, 0.3);
+        }
+        #btn-download.hidden {
+            display: none;
+        }
+        
+        #pdf-container {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            gap: 32px;
+            scroll-behavior: smooth;
+        }
+        .page-wrapper {
+            position: relative;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.2);
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+            transition: transform 0.3s ease, opacity 0.5s ease;
+            opacity: 0;
+        }
+        .page-wrapper.visible {
+            opacity: 1;
+        }
+        .page-wrapper:hover {
+            transform: translateY(-2px);
+        }
+        .pdf-page-canvas {
+            display: block;
+            max-width: 100%;
+            height: auto !important;
+        }
+        /* Mobile responsive adjustments */
+        @media (max-width: 600px) {
+            #toolbar { flex-direction: column; gap: 10px; padding: 10px; }
+            .controls { width: 100%; justify-content: center; }
+            button { padding: 4px 8px; font-size: 12px; }
+        }
+        
+        #loader {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.3s ease;
+        }
+        .progress-container {
+            width: 250px;
+            height: 8px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #c29263;
+            transition: width 0.3s ease;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(0,0,0,0.1);
+            border-left-color: #c29263;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        /* Prevent right-click and selection for extra security */
+        .no-select {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body class="no-select" oncontextmenu="return false;">
+
+    <div id="toolbar">
+        <div style="display: flex; items-center; gap: 12px;">
+            <span style="font-weight: 700; color: #c29263; letter-spacing: 0.1em; text-transform: uppercase; font-size: 12px;" id="file-name">Secure Viewer</span>
+            <div id="loading-mini" style="display: none;">
+                <div class="spinner" style="width: 14px; height: 14px; border-width: 2px;"></div>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="btn-zoom-out" title="Zoom Out">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <span id="page-info" style="font-size: 11px; font-weight: 800; min-width: 60px; text-align: center; color: #888;">0 / 0</span>
+            <button id="btn-zoom-in" title="Zoom In">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <div style="width: 1px; height: 16px; background: rgba(0,0,0,0.1); margin: 0 4px;"></div>
+            <button id="btn-download" title="Download PDF" style="background: #c29263; color: white;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <div class="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+        <p id="loader-text" style="margin-top: 15px; font-weight: 600; font-size: 14px; color: var(--text-color);">Initializing Secure Engine...</p>
+    </div>
+
+    <div id="pdf-container"></div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const fileId = urlParams.get('file');
+        const allowDownload = urlParams.get('download') !== 'false';
+
+        if (!allowDownload) {
+            document.getElementById('btn-download').classList.add('hidden');
+        }
+
+        let pdfDoc = null;
+        let scale = window.innerWidth < 600 ? 1.0 : 1.5;
+        let defaultViewport = null;
+        const container = document.getElementById('pdf-container');
+        const progressBar = document.getElementById('progress-bar');
+        const loaderText = document.getElementById('loader-text');
+
+        if (!fileId) {
+            document.getElementById('loader').innerHTML = '<p style="color:red;">Error: No Document ID Provided.</p>';
+        } else {
+            const pdfUrl = '/api/pdf/' + fileId;
+            
+            // Optimization: Use ranged requests and stream better
+            const loadingTask = pdfjsLib.getDocument({
+                url: pdfUrl,
+                disableAutoFetch: false,
+                disableStream: false,
+                cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+                cMapPacked: true,
+            });
+
+            loadingTask.onProgress = (progress) => {
+                if (progress.total > 0) {
+                    const percent = Math.round((progress.loaded / progress.total) * 100);
+                    progressBar.style.width = percent + '%';
+                    loaderText.textContent = `Downloading: ${percent}%`;
+                } else {
+                    loaderText.textContent = `Streaming data: ${Math.round(progress.loaded / 1024)} KB`;
+                }
+            };
+
+            loadingTask.promise.then(async pdf => {
+                pdfDoc = pdf;
+                
+                // Keep loader visible for a tiny bit to avoid flicker if it was super fast
+                setTimeout(() => {
+                    document.getElementById('loader').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loader').style.display = 'none';
+                    }, 300);
+                }, 100);
+
+                // Notify parent
+                if (window.parent) {
+                    window.parent.postMessage({ type: 'PDF_READY' }, '*');
+                }
+
+                document.getElementById('page-info').textContent = `1 / ${pdf.numPages} Pages`;
+                
+                // Get page 1 metadata immediately to calculate layout
+                const page1 = await pdf.getPage(1);
+                defaultViewport = page1.getViewport({ scale: scale });
+                
+                renderAllPages();
+            }).catch(err => {
+                console.error(err);
+                document.getElementById('loader').innerHTML = `<p style="color:red; padding: 20px; text-align: center;">Failed to load PDF. It may be restricted, deleted, or connection was interrupted.</p>`;
+            });
+        }
+        
+        const pageObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const wrapper = entry.target;
+                    const pageNum = parseInt(wrapper.id.split('-').pop());
+                    
+                    // Update current page text (heuristic based on which page is intersecting)
+                    if (entry.intersectionRatio > 0.1) {
+                         document.getElementById('page-info').textContent = `${pageNum} / ${pdfDoc.numPages} Pages`;
+                    }
+                    
+                    if (!wrapper.dataset.rendered && !wrapper.dataset.rendering) {
+                        wrapper.dataset.rendering = "true";
+                        renderPageAsync(pageNum, wrapper);
+                    }
+                }
+            });
+        }, { root: document.getElementById('pdf-container'), rootMargin: '200% 0px', threshold: [0.1, 0.5] });
+
+        async function renderAllPages() {
+            container.innerHTML = ''; // clear
+            
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'page-wrapper';
+                wrapper.id = `page-wrapper-${i}`;
+                
+                wrapper.style.width = `${defaultViewport.width}px`;
+                wrapper.style.height = `${defaultViewport.height}px`;
+                wrapper.style.display = 'flex';
+                wrapper.style.justifyContent = 'center';
+                wrapper.style.alignItems = 'center';
+                wrapper.style.margin = '0 auto';
+                
+                wrapper.innerHTML = `<div class="spinner"></div>`;
+                container.appendChild(wrapper);
+                
+                pageObserver.observe(wrapper);
+            }
+        }
+
+        async function renderPageAsync(num, wrapper) {
+            try {
+                const page = await pdfDoc.getPage(num);
+                const pixelRatio = window.devicePixelRatio || 1;
+                const viewport = page.getViewport({ scale: scale * pixelRatio });
+                
+                // Set the display size of the wrapper (CSS pixels)
+                const cssViewport = page.getViewport({ scale: scale });
+                wrapper.style.width = `${cssViewport.width}px`;
+                wrapper.style.height = `${cssViewport.height}px`;
+                
+                // Background rendering check - if user scrolled way past before we started
+                if (wrapper.innerHTML === '' && wrapper.dataset.rendered) return;
+
+                const canvas = document.createElement('canvas');
+                canvas.className = 'pdf-page-canvas';
+                const ctx = canvas.getContext('2d', { alpha: false });
+                
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                // Scale back down with CSS so it looks sharp
+                canvas.style.width = `${cssViewport.width}px`;
+                canvas.style.height = `${cssViewport.height}px`;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport,
+                    intent: 'display'
+                };
+                
+                wrapper.innerHTML = '';
+                wrapper.appendChild(canvas);
+                
+                await page.render(renderContext).promise;
+                wrapper.dataset.rendered = "true";
+                wrapper.dataset.rendering = "false";
+                wrapper.classList.add('visible');
+            } catch (err) {
+                console.error(`Error rendering page ${num}:`, err);
+                wrapper.innerHTML = `<p style="color:red; font-size:12px;">Failed rendering page ${num}</p>`;
+                wrapper.dataset.rendering = "false";
+            }
+        }
+
+        async function updateZoom() {
+            if (!pdfDoc) return;
+            const page1 = await pdfDoc.getPage(1);
+            defaultViewport = page1.getViewport({ scale: scale });
+            renderAllPages();
+        }
+
+        document.getElementById('btn-zoom-in').addEventListener('click', () => {
+            if (scale > 2.5) return;
+            scale += 0.25;
+            updateZoom();
+        });
+
+        document.getElementById('btn-zoom-out').addEventListener('click', () => {
+            if (scale < 0.75) return;
+            scale -= 0.25;
+            updateZoom();
+        });
+
+        document.getElementById('btn-download').addEventListener('click', () => {
+            if (!fileId) return;
+            window.open(`/api/pdf/${fileId}?download=true`, '_blank');
+        });
+        
+        // Anti-print measures (Optional, but let's keep it minimal if we allow download)
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                alert('Use the download button to save document.');
+            }
+        });
+    </script>
+</body>
+</html>
